@@ -7,10 +7,10 @@
     <style>
         /* WEIZEND RENK PALETİ VE TASARIM AYARLARI */
         :root {
-            --bg-color: #050505; /* Koyu siyah arka plan */
-            --card-bg: #111111; /* Kart arka planı */
+            --bg-color: #050505; 
+            --card-bg: #111111; 
             --border-color: #2a2a2a; 
-            --weizend-red: #e31b1b; /* Logondaki kırmızı */
+            --weizend-red: #e31b1b; 
             --weizend-white: #ffffff;
             --text-muted: #a0a0a0;
         }
@@ -34,15 +34,19 @@
         .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; transition: 0.3s; display: flex; flex-direction: column; }
         .card:hover { border-color: var(--weizend-red); transform: translateY(-5px); box-shadow: 0 5px 20px rgba(227, 27, 27, 0.15); }
         
-        /* Resim Alanı */
-        .img-container { width: 100%; height: 250px; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 15px; position: relative; border: 1px solid var(--border-color);}
-        .img-container img { width: 100%; height: 100%; object-fit: contain; }
-        .category-badge { position: absolute; top: 10px; right: 10px; background: var(--weizend-red); color: white; padding: 4px 10px; font-size: 0.75rem; font-weight: bold; border-radius: 4px; }
-        
-        /* Ön/Arka Butonları */
-        .toggle-btns { display: flex; gap: 10px; margin-bottom: 15px; }
-        .toggle-btns button { flex: 1; background: #1a1a1a; border: 1px solid var(--border-color); color: var(--text-muted); padding: 8px; border-radius: 6px; cursor: pointer; transition: 0.3s; }
-        .toggle-btns button.active { background: rgba(227, 27, 27, 0.2); color: var(--weizend-red); border-color: var(--weizend-red); }
+        /* Resim Alanı & Büyütme Tıklaması */
+        .img-container { width: 100%; height: 280px; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 10px; position: relative; border: 1px solid var(--border-color); cursor: pointer; touch-action: pan-y; }
+        .img-container img { width: 100%; height: 100%; object-fit: contain; transition: 0.3s; }
+        .category-badge { position: absolute; top: 10px; right: 10px; background: var(--weizend-red); color: white; padding: 4px 10px; font-size: 0.75rem; font-weight: bold; border-radius: 4px; z-index: 2; }
+        .zoom-hint { position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.8); border: 1px solid var(--weizend-red); color: white; padding: 5px 10px; border-radius: 6px; font-size: 0.8rem; opacity: 0; transition: 0.3s; pointer-events: none; }
+        .img-container:hover .zoom-hint { opacity: 1; }
+
+        /* Kart İçi Küçük Görseller (Thumbnails) */
+        .card-thumbnails { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
+        .card-thumbnails::-webkit-scrollbar { display: none; }
+        .card-thumb { width: 55px; height: 55px; object-fit: contain; border-radius: 6px; border: 2px solid #222; cursor: pointer; opacity: 0.5; transition: 0.2s; background: #000; flex-shrink: 0; }
+        .card-thumb:hover { opacity: 1; }
+        .card-thumb.active { border-color: var(--weizend-red); opacity: 1; }
 
         /* Ürün Bilgileri */
         .product-title { margin: 0 0 10px 0; font-size: 1.3rem; }
@@ -57,52 +61,111 @@
         summary::after { content: '+'; color: var(--weizend-red); font-weight: bold; font-size: 1.2rem; }
         details[open] summary::after { content: '-'; }
         .details-content { padding: 15px; background: var(--card-bg); font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; border-top: 1px solid var(--border-color); }
+        
+        .details-content ul { margin: 0; padding-left: 20px; }
+        .details-content li { margin-bottom: 6px; }
+
+        /* MODAL (AÇILIR GALERİ) TASARIMI */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.95); z-index: 999; justify-content: center; align-items: center; padding: 20px; }
+        .modal-content { background: var(--card-bg); width: 100%; max-width: 600px; border-radius: 12px; border: 1px solid var(--border-color); overflow: hidden; display: flex; flex-direction: column; }
+        
+        .modal-header { padding: 15px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h3 { margin: 0; font-size: 1.2rem; }
+        .close-icon { background: none; border: none; color: var(--weizend-white); font-size: 1.5rem; cursor: pointer; transition: 0.2s; line-height: 1; }
+        .close-icon:hover { color: var(--weizend-red); }
+
+        .modal-body { padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .main-slider { position: relative; width: 100%; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
+        .main-slider img { width: 100%; max-height: 350px; object-fit: contain; border-radius: 8px; }
+        
+        /* Modal İçi Oklar */
+        .nav-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.8); color: white; border: 1px solid var(--weizend-red); width: 45px; height: 45px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; z-index: 5; }
+        .nav-btn:hover { background: var(--weizend-red); }
+        .prev-btn { left: 10px; }
+        .next-btn { right: 10px; }
+
+        .thumbnail-list { display: flex; gap: 10px; justify-content: center; overflow-x: auto; padding-bottom: 5px; width: 100%; }
+        .modal-thumb { width: 70px; height: 70px; object-fit: contain; border: 2px solid #222; border-radius: 6px; cursor: pointer; transition: 0.2s; opacity: 0.5; background: #000; }
+        .modal-thumb:hover { opacity: 1; }
+        .modal-thumb.active { border-color: var(--weizend-red); opacity: 1; }
     </style>
 </head>
 <body>
 
-    <!-- BURASI SENİN ÜRÜNLERİ EKLEYECEĞİN YER KANKA -->
     <script>
+        // ÜRÜNLERİ BURAYA EKLİYORSUN
         const URUNLER = [
             {
                 kategori: "Fiziksel Ürün",
-                ad: "Weizend Logo Hoodie",
-                puan: "45.000 Puan",
-                komut: "!al hoodie",
-                // İki resim eklersen butonlar otomatik çıkar
+                ad: "Kapüşonlu Kanguru Cepli Siyah Sweatshirt",
+                puan: "350.000 Puan",
+                komut: "!sweatshirt",
                 gorseller: [
-                    "https://picsum.photos/seed/on/500/500", // 1. Resim (Ön Yüz)
-                    "https://picsum.photos/seed/arka/500/500" // 2. Resim (Arka Yüz)
+                    "https://i.hizliresim.com/zuhelzqa.png", // Ön
+                    "https://i.hizliresim.com/jcbegwjq.png", // Arka
+                    "https://i.hizliresim.com/lvkogmqn.jpg"  // Beden Tablosu
                 ],
-                aciklama: "Yüksek kaliteli %100 pamuklu siyah kapşonlu.",
-                detaylar: "Baskılar yıkamaya dayanıklıdır. Beden seçenekleri için DM'den bilgi veriniz."
+                ozellikler: `
+                    <ul>
+                        <li>Renk: Siyah</li>
+                        <li>Uzun kollu ve kapüşonlu formda</li>
+                        <li>Kanguru cepli şık tasarımıyla ön plana çıkar</li>
+                        <li>Şardonlu kumaşıyla sıcak tutan yapıdadır</li>
+                        <li>Polyester katkılı pamuklu kumaş yapısı</li>
+                        <li>Kolay kırışmayan esnek kumaş yapısı bulunur</li>
+                        <li>Hava alan ve terletmeyen dokuya sahiptir</li>
+                        <li>Unisex ürünüdür, erkek ve kadınlar kullanabilir</li>
+                        <li>Her yaştan bireyin kullanımına uygundur</li>
+                        <li>Estetik, spor ve şık bir duruşa sahiptir</li>
+                        <li>S, M, L, XL olmak üzere dört farklı bedeni bulunur</li>
+                        <li>Öne, arkaya veya her iki yüze baskı yapılabilmektedir</li>
+                        <li>Sağlığa zarar vermeyen özel mürekkep kullanılır</li>
+                        <li>Sipariş panelinden beden ve baskı alanını seçiniz</li>
+                        <li>Sizlere maksimum 30x30 cm baskı alanı sunar</li>
+                        <li>Metin, logo, vektörel tasarım ve resim baskı yapılabilir</li>
+                        <li>30°C’de kısa programda ve tersten yıkanmalıdır</li>
+                        <li>Kuru temizlemeye ve kurutma makinesine uygun değildir</li>
+                        <li>Düşük ısıda ve tersten ütüleme yapınız</li>
+                        <li>Hediyelik ürün veya promosyon olarak da tercih edilebilir</li>
+                    </ul>
+                `
             },
             {
                 kategori: "Dijital Kod",
-                ad: "100 TL Steam Cüzdan Kodu",
-                puan: "50.000 Puan",
-                komut: "!al steam100",
-                // Tek resim eklersen ön/arka butonları ÇIKMAZ
+                ad: "375 VP Valorant Points",
+                puan: "75.000 Puan",
+                komut: "!375vp",
                 gorseller: [
-                    "https://picsum.photos/seed/steam/500/500"
+                    "https://picsum.photos/seed/vp/500/500" // Buraya VP kod görselini ekleyebilirsin
                 ],
-                aciklama: "Steam hesabınıza bakiye yükleyebileceğiniz 100 TL değerinde dijital kod.",
-                detaylar: "Kod Türkiye (TR) hesaplarında geçerlidir."
+                ozellikler: `
+                    <ul>
+                        <li>Riot Games - Valorant TR sunucularında geçerlidir.</li>
+                        <li>Oyun içi mağazadan silah kaplaması almak için kullanılabilir.</li>
+                        <li>Kod tek kullanımlıktır ve iadesi yoktur.</li>
+                    </ul>
+                `
             },
             {
                 kategori: "Turnuva",
-                ad: "Valorant 1v1 Turnuva Katılım Bileti",
+                ad: "1 VS 1 Valorant Turnuva Katılım Bileti",
                 puan: "10.000 Puan",
-                komut: "!al turnuva",
+                komut: "!turnuva",
                 gorseller: [
-                    "https://picsum.photos/seed/valo/500/500"
+                    "https://picsum.photos/seed/tourney/500/500" // Turnuva görselin
                 ],
-                aciklama: "Düzenlenecek olan sıradaki 1vs1 Valorant turnuvasına direkt katılım hakkı sağlar.",
-                detaylar: "Turnuva tarihleri Discord sunucumuzdan duyurulacaktır."
+                ozellikler: `
+                    <ul>
+                        <li>Sıradaki 1vs1 Valorant turnuvasına direkt katılım hakkı sağlar.</li>
+                        <li>Turnuva kuralları ve eşleşmeler Discord sunucumuzdan duyurulacaktır.</li>
+                        <li>Sadece TR sunucusu oyuncuları katılabilir.</li>
+                    </ul>
+                `
             }
         ];
+        
+        URUNLER.forEach((urun, index) => urun.orijinalId = index);
     </script>
-    <!-- ÜRÜN EKLEME ALANI BİTTİ, AŞAĞISINA DOKUNMANA GEREK YOK -->
 
     <div class="container">
         <header>
@@ -120,41 +183,84 @@
         </div>
 
         <div class="grid" id="urunGrid">
-            <!-- Ürünler buraya otomatik yüklenecek -->
+            <!-- Ürünler buraya yüklenecek -->
+        </div>
+    </div>
+
+    <!-- MODAL (AÇILIR PENCERE) HTML KODLARI -->
+    <div id="imageModal" class="modal-overlay" onclick="disariTiklaKapat(event)">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Tasarım Önizleme</h3>
+                <button class="close-icon" onclick="modaliKapat()">✖</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="main-slider">
+                    <button class="nav-btn prev-btn" id="prevBtn" onclick="oncekiResim(event)">❮</button>
+                    <img id="modalMainImg" src="" alt="Önizleme">
+                    <button class="nav-btn next-btn" id="nextBtn" onclick="sonrakiResim(event)">❯</button>
+                </div>
+                <div class="thumbnail-list" id="modalThumbnails"></div>
+            </div>
         </div>
     </div>
 
     <script>
         const grid = document.getElementById('urunGrid');
+        
+        let aktifGorselListesi = [];
+        let aktifResimIndex = 0;
 
         function urunleriYukle(filtreKategori) {
-            grid.innerHTML = ''; // Önce ekranı temizle
+            grid.innerHTML = ''; 
             
-            URUNLER.forEach((urun, index) => {
-                if (filtreKategori !== 'Tümü' && urun.kategori !== filtreKategori) return;
+            let gosterilecekUrunler = URUNLER.filter(urun => filtreKategori === 'Tümü' || urun.kategori === filtreKategori);
 
-                // Kaç görsel olduğuna bakıyoruz
-                const tekGorselMi = urun.gorseller.length === 1;
-                
-                // Butonların HTML kodunu hazırlıyoruz (Eğer 2 resim varsa)
-                let butonHTML = '';
-                if (!tekGorselMi) {
-                    butonHTML = `
-                        <div class="toggle-btns">
-                            <button class="active" onclick="resimDegistir(this, '${urun.gorseller[0]}', 'on')">Ön Yüz</button>
-                            <button onclick="resimDegistir(this, '${urun.gorseller[1]}', 'arka')">Arka Yüz</button>
-                        </div>
-                    `;
+            gosterilecekUrunler.sort((a, b) => {
+                let puanA = parseInt(a.puan.replace(/[^0-9]/g, ''));
+                let puanB = parseInt(b.puan.replace(/[^0-9]/g, ''));
+                return puanA - puanB;
+            });
+            
+            gosterilecekUrunler.forEach(urun => {
+                const ilkGorsel = urun.gorseller[0];
+
+                let thumbnailsHTML = '';
+                if (urun.gorseller.length > 1) {
+                    thumbnailsHTML = '<div class="card-thumbnails">';
+                    urun.gorseller.forEach((url, i) => {
+                        const aktifClass = i === 0 ? 'active' : '';
+                        thumbnailsHTML += `<img src="${url}" class="card-thumb ${aktifClass}" onclick="kartIciResimDegistir(event, this, ${urun.orijinalId}, ${i}, '${url}')">`;
+                    });
+                    thumbnailsHTML += '</div>';
                 }
+
+                // DİNAMİK TESLİMAT BİLGİSİ (Kategoriye Göre Otomatik)
+                let teslimatKutusuHTML = '';
+                if (urun.kategori === 'Fiziksel Ürün') {
+                    const yazi = `Ürünü Kick sohbetimizden <b><span style="color:var(--weizend-red);">${urun.komut}</span></b> yazıp aldıktan sonra İnstagram <b><a href="https://instagram.com/weizendtv" target="_blank" style="color:var(--weizend-red);">@weizendtv</a></b> adresine mesaj atarak teslimat işlemlerini halledebilirsiniz.<br><br><b>🚚 Ne Zaman Kargolanır?</b><br>En geç 5 iş gününde kargoda. Tüm ürünlerde kargo ücreti bize aittir.`;
+                    teslimatKutusuHTML = `<details><summary>Teslimat ve Kargo Bilgileri</summary><div class="details-content">${yazi}</div></details>`;
+                } 
+                else if (urun.kategori === 'Dijital Kod') {
+                    const yazi = `Ürünü Kick sohbetimizden <b><span style="color:var(--weizend-red);">${urun.komut}</span></b> yazıp aldıktan sonra Discord üzerinden yetkililere mesaj atarak veya İnstagram <b><a href="https://instagram.com/weizendtv" target="_blank" style="color:var(--weizend-red);">@weizendtv</a></b> adresine ulaşarak dijital kodunuzu anında teslim alabilirsiniz.`;
+                    teslimatKutusuHTML = `<details><summary>Teslimat Bilgileri</summary><div class="details-content">${yazi}</div></details>`;
+                }
+                // Turnuva için kutu tamamen yok (boş kalıyor)
 
                 const kart = `
                     <div class="card">
-                        <div class="img-container">
+                        <!-- swipe özellikleri eklendi -->
+                        <div class="img-container" data-current-index="0" 
+                             ontouchstart="onTouchStart(event)" 
+                             ontouchend="onTouchEnd(event, ${urun.orijinalId})" 
+                             onclick="onImgClick(event, ${urun.orijinalId})">
                             <span class="category-badge">${urun.kategori}</span>
-                            <img src="${urun.gorseller[0]}" alt="${urun.ad}">
+                            <img class="main-card-img" src="${ilkGorsel}" alt="${urun.ad}">
+                            <div class="zoom-hint">🔍 Büyüt</div>
                         </div>
                         
-                        ${butonHTML}
+                        ${thumbnailsHTML}
 
                         <h3 class="product-title">${urun.ad}</h3>
                         <div class="price-command">
@@ -163,54 +269,152 @@
                         </div>
 
                         <details>
-                            <summary>Ürün Açıklaması</summary>
-                            <div class="details-content">${urun.aciklama}</div>
+                            <summary>Detaylar</summary>
+                            <div class="details-content">${urun.ozellikler}</div>
                         </details>
                         
-                        <details>
-                            <summary>Ürün Detayları</summary>
-                            <div class="details-content">${urun.detaylar}</div>
-                        </details>
-
-                        <details>
-                            <summary>Teslimat Bilgileri</summary>
-                            <div class="details-content">
-                                Ürünü Kick sohbetinden komut ile satın aldıktan sonra Instagram <b><a href="https://instagram.com/weizendtv" target="_blank" style="color:var(--weizend-red);">@weizendtv</a></b> adresine mesaj atarak teslimat veya kod işlemlerini halledebilirsiniz.
-                            </div>
-                        </details>
+                        ${teslimatKutusuHTML}
                     </div>
                 `;
                 grid.innerHTML += kart;
             });
         }
 
-        // Resim değiştirme (Ön/Arka) fonksiyonu
-        function resimDegistir(buton, resimUrl, yon) {
-            // Butonun bulunduğu kartı bul
-            const card = buton.closest('.card');
-            // Kartın içindeki resmi bul ve URL'sini değiştir
-            const img = card.querySelector('.img-container img');
-            img.src = resimUrl;
+        // --- KART İÇİ RESİM DEĞİŞTİRME TIKLAMA ---
+        function kartIciResimDegistir(event, thumbElement, urunId, resimIndex, url) {
+            event.stopPropagation();
+            const card = thumbElement.closest('.card');
+            const mainImg = card.querySelector('.main-card-img');
+            const imgContainer = card.querySelector('.img-container');
 
-            // Tıklanan butonu aktif (kırmızı) yap, diğerini pasif yap
-            const butonlar = card.querySelectorAll('.toggle-btns button');
-            butonlar.forEach(b => b.classList.remove('active'));
-            buton.classList.add('active');
+            mainImg.src = url;
+            imgContainer.dataset.currentIndex = resimIndex;
+
+            card.querySelectorAll('.card-thumb').forEach(t => t.classList.remove('active'));
+            thumbElement.classList.add('active');
         }
 
-        // Kategori filtreleme fonksiyonu
+        // --- KART İÇİ KAYDIRMA (SWIPE) ÖZELLİĞİ ---
+        let touchStartX = 0;
+        let isSwiping = false;
+
+        function onTouchStart(e) {
+            touchStartX = e.touches[0].clientX;
+            isSwiping = false;
+        }
+
+        function onTouchEnd(e, urunId) {
+            let touchEndX = e.changedTouches[0].clientX;
+            let diffX = touchStartX - touchEndX;
+
+            if (Math.abs(diffX) > 40) {
+                isSwiping = true;
+                
+                const container = e.currentTarget;
+                const urun = URUNLER.find(u => u.orijinalId === urunId);
+                if (!urun || urun.gorseller.length <= 1) return;
+
+                let currentIndex = parseInt(container.dataset.currentIndex);
+                
+                if (diffX > 0) {
+                    // Sola kaydır -> Sonraki
+                    currentIndex++;
+                    if (currentIndex >= urun.gorseller.length) currentIndex = 0;
+                } else {
+                    // Sağa kaydır -> Önceki
+                    currentIndex--;
+                    if (currentIndex < 0) currentIndex = urun.gorseller.length - 1;
+                }
+
+                const url = urun.gorseller[currentIndex];
+                const card = container.closest('.card');
+                
+                card.querySelector('.main-card-img').src = url;
+                container.dataset.currentIndex = currentIndex;
+
+                const thumbs = card.querySelectorAll('.card-thumb');
+                thumbs.forEach(t => t.classList.remove('active'));
+                if (thumbs[currentIndex]) thumbs[currentIndex].classList.add('active');
+            }
+        }
+
+        function onImgClick(e, urunId) {
+            if (isSwiping) {
+                isSwiping = false;
+                return; // Eğer kaydırma yapılmışsa modalı açmayı engeller
+            }
+            modaliAc(urunId, e.currentTarget.dataset.currentIndex);
+        }
+
+        // --- MODAL (GALERİ) FONKSİYONLARI ---
+        function modaliAc(urunId, baslangicIndex) {
+            const urun = URUNLER.find(u => u.orijinalId === urunId);
+            if(!urun) return;
+
+            aktifGorselListesi = urun.gorseller;
+            aktifResimIndex = parseInt(baslangicIndex);
+            
+            document.getElementById('modalTitle').innerText = urun.ad;
+            
+            document.getElementById('prevBtn').style.display = aktifGorselListesi.length > 1 ? 'flex' : 'none';
+            document.getElementById('nextBtn').style.display = aktifGorselListesi.length > 1 ? 'flex' : 'none';
+
+            galeriyiGuncelle();
+            document.getElementById('imageModal').style.display = 'flex';
+        }
+
+        function modaliKapat() {
+            document.getElementById('imageModal').style.display = 'none';
+        }
+
+        function disariTiklaKapat(event) {
+            if (event.target.id === 'imageModal') {
+                modaliKapat();
+            }
+        }
+
+        function oncekiResim(event) {
+            event.stopPropagation(); 
+            aktifResimIndex--;
+            if(aktifResimIndex < 0) aktifResimIndex = aktifGorselListesi.length - 1;
+            galeriyiGuncelle();
+        }
+
+        function sonrakiResim(event) {
+            event.stopPropagation(); 
+            aktifResimIndex++;
+            if(aktifResimIndex >= aktifGorselListesi.length) aktifResimIndex = 0;
+            galeriyiGuncelle();
+        }
+
+        function modalResmeAtla(index) {
+            aktifResimIndex = index;
+            galeriyiGuncelle();
+        }
+
+        function galeriyiGuncelle() {
+            document.getElementById('modalMainImg').src = aktifGorselListesi[aktifResimIndex];
+            
+            const thumbContainer = document.getElementById('modalThumbnails');
+            thumbContainer.innerHTML = '';
+            
+            if(aktifGorselListesi.length > 1) {
+                aktifGorselListesi.forEach((gorselUrl, i) => {
+                    const aktifClass = i === aktifResimIndex ? 'active' : '';
+                    thumbContainer.innerHTML += `<img src="${gorselUrl}" class="modal-thumb ${aktifClass}" onclick="modalResmeAtla(${i})">`;
+                });
+            }
+        }
+
         function filtrele(kategori) {
-            // Buton renklerini ayarla
             const butonlar = document.querySelectorAll('.filter-btn');
             butonlar.forEach(b => {
                 if (b.innerText === kategori) b.classList.add('active');
                 else b.classList.remove('active');
             });
-            // Ürünleri yeniden yükle
             urunleriYukle(kategori);
         }
 
-        // Sayfa açıldığında tüm ürünleri yükle
         urunleriYukle('Tümü');
     </script>
 </body>
