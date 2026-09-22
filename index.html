@@ -22,7 +22,6 @@
         header { text-align: center; padding: 20px 0; border-bottom: 2px solid var(--border-color); margin-bottom: 30px; }
         .logo-img { width: 120px; border-radius: 50%; box-shadow: 0 0 20px rgba(227, 27, 27, 0.4); margin-bottom: 15px; }
         header h1 { margin: 0; font-size: 2.2rem; color: var(--weizend-white); text-transform: uppercase; letter-spacing: 2px; }
-        header h1 span { color: var(--weizend-red); }
         .ig-contact { display: inline-block; margin-top: 10px; padding: 8px 15px; background: rgba(227, 27, 27, 0.1); border: 1px solid var(--weizend-red); border-radius: 20px; color: var(--weizend-red); text-decoration: none; font-weight: bold; font-size: 0.9rem; }
         
         .category-filters { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; }
@@ -35,9 +34,19 @@
         .card:hover { border-color: var(--weizend-red); transform: translateY(-5px); box-shadow: 0 5px 20px rgba(227, 27, 27, 0.15); }
         
         /* Resim Alanı & Büyütme Tıklaması */
-        .img-container { width: 100%; height: 280px; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 10px; position: relative; border: 1px solid var(--border-color); cursor: pointer; touch-action: pan-y; }
+        .img-container { width: 100%; height: 280px; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 10px; position: relative; border: 1px solid var(--border-color); cursor: pointer; }
         .img-container img { width: 100%; height: 100%; object-fit: contain; transition: 0.3s; }
+        .img-container:hover img { transform: scale(1.03); }
         .category-badge { position: absolute; top: 10px; right: 10px; background: var(--weizend-red); color: white; padding: 4px 10px; font-size: 0.75rem; font-weight: bold; border-radius: 4px; z-index: 2; }
+        
+        /* Stok ve Tükenmişlik Etiketleri */
+        .stock-wrapper { margin-bottom: 15px; }
+        .stock-badge { display: inline-block; background: rgba(0,0,0,0.8); border: 1px solid var(--weizend-red); color: var(--weizend-white); padding: 4px 10px; font-size: 0.8rem; font-weight: bold; border-radius: 4px; }
+        .stock-info-text { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; font-style: italic; }
+
+        .out-of-stock-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 3; }
+        .out-of-stock-text { background: var(--weizend-red); color: white; padding: 8px 20px; font-weight: bold; border-radius: 6px; font-size: 1.1rem; letter-spacing: 1px; }
+
         .zoom-hint { position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.8); border: 1px solid var(--weizend-red); color: white; padding: 5px 10px; border-radius: 6px; font-size: 0.8rem; opacity: 0; transition: 0.3s; pointer-events: none; }
         .img-container:hover .zoom-hint { opacity: 1; }
 
@@ -53,6 +62,12 @@
         .price-command { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); }
         .price { color: var(--weizend-red); font-weight: bold; font-size: 1.1rem; }
         .command { background: #000; border: 1px dashed var(--weizend-red); padding: 5px 10px; border-radius: 4px; color: var(--weizend-red); font-family: monospace; }
+        .command.disabled { border-color: #555; color: #772ce8; text-decoration: line-through; }
+
+        /* İşlem Yap Butonu */
+        .action-btn { width: 100%; background: var(--weizend-red); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.2s; margin-bottom: 12px; box-shadow: 0 4px 15px rgba(227, 27, 27, 0.3); }
+        .action-btn:hover { background: #c21414; transform: translateY(-2px); }
+        .action-btn.disabled { background: #333; color: #777; cursor: not-allowed; box-shadow: none; transform: none; }
 
         /* Açılır Kutular (Accordion) */
         details { background: #1a1a1a; border-radius: 6px; margin-bottom: 8px; overflow: hidden; border: 1px solid var(--border-color); }
@@ -78,7 +93,6 @@
         .main-slider { position: relative; width: 100%; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
         .main-slider img { width: 100%; max-height: 350px; object-fit: contain; border-radius: 8px; }
         
-        /* Modal İçi Oklar */
         .nav-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.8); color: white; border: 1px solid var(--weizend-red); width: 45px; height: 45px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; z-index: 5; }
         .nav-btn:hover { background: var(--weizend-red); }
         .prev-btn { left: 10px; }
@@ -88,6 +102,13 @@
         .modal-thumb { width: 70px; height: 70px; object-fit: contain; border: 2px solid #222; border-radius: 6px; cursor: pointer; transition: 0.2s; opacity: 0.5; background: #000; }
         .modal-thumb:hover { opacity: 1; }
         .modal-thumb.active { border-color: var(--weizend-red); opacity: 1; }
+
+        /* SATIN ALMA YÖNLENDİRME MODALI */
+        .redirect-modal-body { padding: 30px; text-align: center; }
+        .redirect-command-box { background: #000; border: 2px dashed var(--weizend-red); padding: 15px; border-radius: 8px; font-size: 1.4rem; color: var(--weizend-red); font-family: monospace; margin: 20px 0; font-weight: bold; }
+        .redirect-timer { color: var(--weizend-white); font-size: 1rem; margin-top: 15px; }
+        .cancel-btn { background: #222; color: var(--text-muted); border: 1px solid var(--border-color); padding: 10px 25px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 20px; width: 100%; }
+        .cancel-btn:hover { background: #333; color: white; }
     </style>
 </head>
 <body>
@@ -96,19 +117,21 @@
         // ÜRÜNLERİ BURAYA EKLİYORSUN
         const URUNLER = [
             {
+                durum: "on", 
+                stok: 10,    
                 kategori: "Fiziksel Ürün",
                 ad: "Kapüşonlu Kanguru Cepli Siyah Sweatshirt",
                 puan: "350.000 Puan",
                 komut: "!sweatshirt",
                 gorseller: [
-                    "https://i.hizliresim.com/zuhelzqa.png", // Ön
-                    "https://i.hizliresim.com/jcbegwjq.png", // Arka
-                    "https://i.hizliresim.com/lvkogmqn.jpg"  // Beden Tablosu
+                    "https://i.hizliresim.com/zuhelzqa.png", 
+                    "https://i.hizliresim.com/jcbegwjq.png", 
+                    "https://i.hizliresim.com/lvkogmqn.jpg"  
                 ],
                 ozellikler: `
                     <ul>
                         <li>Renk: Siyah</li>
-                        <li>Uzun kollu ve kapüşonlu formda</li>
+                        <li>Uzun kollu dan kapüşonlu formda</li>
                         <li>Kanguru cepli şık tasarımıyla ön plana çıkar</li>
                         <li>Şardonlu kumaşıyla sıcak tutan yapıdadır</li>
                         <li>Polyester katkılı pamuklu kumaş yapısı</li>
@@ -131,12 +154,14 @@
                 `
             },
             {
+                durum: "on",
+                stok: 50,
                 kategori: "Dijital Kod",
                 ad: "375 VP Valorant Points",
                 puan: "75.000 Puan",
                 komut: "!375vp",
                 gorseller: [
-                    "https://picsum.photos/seed/vp/500/500" // Buraya VP kod görselini ekleyebilirsin
+                    "https://picsum.photos/seed/vp/500/500"
                 ],
                 ozellikler: `
                     <ul>
@@ -147,12 +172,14 @@
                 `
             },
             {
+                durum: "on", 
+                stok: 100,
                 kategori: "Turnuva",
                 ad: "1 VS 1 Valorant Turnuva Katılım Bileti",
                 puan: "10.000 Puan",
                 komut: "!turnuva",
                 gorseller: [
-                    "https://picsum.photos/seed/tourney/500/500" // Turnuva görselin
+                    "https://picsum.photos/seed/tourney/500/500"
                 ],
                 ozellikler: `
                     <ul>
@@ -170,7 +197,7 @@
     <div class="container">
         <header>
             <img src="https://i.hizliresim.com/fo5evkh4.png" alt="Weizend Logo" class="logo-img">
-            <h1>WEIZEND <span>MAĞAZA</span></h1>
+            <h1>WEİZEND MAĞAZA</h1>
             <p style="color: var(--text-muted);">Yayını izleyerek biriktirdiğin puanlarla ödülleri kap!</p>
             <a href="https://instagram.com/weizendtv" target="_blank" class="ig-contact">📸 İletişim: @weizendtv</a>
         </header>
@@ -187,7 +214,7 @@
         </div>
     </div>
 
-    <!-- MODAL (AÇILIR PENCERE) HTML KODLARI -->
+    <!-- MODAL 1: GÖRSEL BÜYÜTME GALERİSİ -->
     <div id="imageModal" class="modal-overlay" onclick="disariTiklaKapat(event)">
         <div class="modal-content">
             <div class="modal-header">
@@ -206,16 +233,33 @@
         </div>
     </div>
 
+    <!-- MODAL 2: KICK SOHBET YÖNLENDİRME PENCERESİ -->
+    <div id="redirectModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3>Sipariş Onayı</h3>
+                <button class="close-icon" onclick="yonlendirmeyiIptalEt()">✖</button>
+            </div>
+            <div class="redirect-modal-body">
+                <p style="color: #fff; margin: 0; font-size: 1.05rem;">Komut kopyalandı, Kick sohbete yönlendiriliyorsunuz:</p>
+                <div class="redirect-command-box" id="modalCommandText">!komut</div>
+                <div class="redirect-timer" id="timerText">5 saniye içinde yönlendirileceksiniz...</div>
+                <button class="cancel-btn" onclick="yonlendirmeyiIptalEt()">İptal Et</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const grid = document.getElementById('urunGrid');
         
         let aktifGorselListesi = [];
         let aktifResimIndex = 0;
+        let redirectTimer = null;
 
         function urunleriYukle(filtreKategori) {
             grid.innerHTML = ''; 
             
-            let gosterilecekUrunler = URUNLER.filter(urun => filtreKategori === 'Tümü' || urun.kategori === filtreKategori);
+            let gosterilecekUrunler = URUNLER.filter(urun => urun.durum === "on" && (filtreKategori === 'Tümü' || urun.kategori === filtreKategori));
 
             gosterilecekUrunler.sort((a, b) => {
                 let puanA = parseInt(a.puan.replace(/[^0-9]/g, ''));
@@ -225,6 +269,7 @@
             
             gosterilecekUrunler.forEach(urun => {
                 const ilkGorsel = urun.gorseller[0];
+                const tukendiMi = urun.stok <= 0;
 
                 let thumbnailsHTML = '';
                 if (urun.gorseller.length > 1) {
@@ -236,7 +281,25 @@
                     thumbnailsHTML += '</div>';
                 }
 
-                // DİNAMİK TESLİMAT BİLGİSİ (Kategoriye Göre Otomatik)
+                // Stok alanı ve bilgilendirmesi
+                let stokAlaniHTML = `
+                    <div class="stock-wrapper">
+                        <span class="stock-badge">Stok: ${urun.stok}</span>
+                        <div class="stock-info-text">İşlem onaylandıktan sonra stok bilgisi güncellenmektedir.</div>
+                    </div>
+                `;
+                let tukendiOverlayHTML = '';
+                if (tukendiMi) {
+                    stokAlaniHTML = `
+                        <div class="stock-wrapper">
+                            <span class="stock-badge" style="background:var(--weizend-red);">Tükendi</span>
+                            <div class="stock-info-text">İşlem onaylandıktan sonra stok bilgisi güncellenmektedir.</div>
+                        </div>
+                    `;
+                    tukendiOverlayHTML = `<div class="out-of-stock-overlay"><div class="out-of-stock-text">TÜKENDİ</div></div>`;
+                }
+
+                // DİNAMİK TESLİMAT BİLGİSİ
                 let teslimatKutusuHTML = '';
                 if (urun.kategori === 'Fiziksel Ürün') {
                     const yazi = `Ürünü Kick sohbetimizden <b><span style="color:var(--weizend-red);">${urun.komut}</span></b> yazıp aldıktan sonra İnstagram <b><a href="https://instagram.com/weizendtv" target="_blank" style="color:var(--weizend-red);">@weizendtv</a></b> adresine mesaj atarak teslimat işlemlerini halledebilirsiniz.<br><br><b>🚚 Ne Zaman Kargolanır?</b><br>En geç 5 iş gününde kargoda. Tüm ürünlerde kargo ücreti bize aittir.`;
@@ -246,16 +309,17 @@
                     const yazi = `Ürünü Kick sohbetimizden <b><span style="color:var(--weizend-red);">${urun.komut}</span></b> yazıp aldıktan sonra Discord üzerinden yetkililere mesaj atarak veya İnstagram <b><a href="https://instagram.com/weizendtv" target="_blank" style="color:var(--weizend-red);">@weizendtv</a></b> adresine ulaşarak dijital kodunuzu anında teslim alabilirsiniz.`;
                     teslimatKutusuHTML = `<details><summary>Teslimat Bilgileri</summary><div class="details-content">${yazi}</div></details>`;
                 }
-                // Turnuva için kutu tamamen yok (boş kalıyor)
+
+                const komutClass = tukendiMi ? "command disabled" : "command";
+                const actionBtnClass = tukendiMi ? "action-btn disabled" : "action-btn";
+                const actionBtnText = tukendiMi ? "TÜKENDİ" : "İşlem Yap";
+                const actionBtnClick = tukendiMi ? "" : `onclick="islemYapBaslat('${urun.komut}')"`;
 
                 const kart = `
                     <div class="card">
-                        <!-- swipe özellikleri eklendi -->
-                        <div class="img-container" data-current-index="0" 
-                             ontouchstart="onTouchStart(event)" 
-                             ontouchend="onTouchEnd(event, ${urun.orijinalId})" 
-                             onclick="onImgClick(event, ${urun.orijinalId})">
+                        <div class="img-container" data-current-index="0" onclick="modaliAc(${urun.orijinalId}, this.dataset.currentIndex)">
                             <span class="category-badge">${urun.kategori}</span>
+                            ${tukendiOverlayHTML}
                             <img class="main-card-img" src="${ilkGorsel}" alt="${urun.ad}">
                             <div class="zoom-hint">🔍 Büyüt</div>
                         </div>
@@ -263,10 +327,15 @@
                         ${thumbnailsHTML}
 
                         <h3 class="product-title">${urun.ad}</h3>
+                        
+                        ${stokAlaniHTML}
+
                         <div class="price-command">
                             <span class="price">${urun.puan}</span>
-                            <span class="command">${urun.komut}</span>
+                            <span class="${komutClass}">${tukendiMi ? 'TÜKENDİ' : urun.komut}</span>
                         </div>
+
+                        <button class="${actionBtnClass}" ${actionBtnClick}>${actionBtnText}</button>
 
                         <details>
                             <summary>Detaylar</summary>
@@ -280,9 +349,37 @@
             });
         }
 
-        // --- KART İÇİ RESİM DEĞİŞTİRME TIKLAMA ---
+        // --- İŞLEM YAP & KİCK YÖNLENDİRME FONKSİYONLARI ---
+        function islemYapBaslat(komut) {
+            // Panoya kopyala
+            navigator.clipboard.writeText(komut).catch(() => {});
+
+            document.getElementById('modalCommandText').innerText = komut;
+            document.getElementById('redirectModal').style.display = 'flex';
+
+            let kalanSaniye = 5;
+            document.getElementById('timerText').innerText = `${kalanSaniye} saniye içinde yönlendirileceksiniz...`;
+
+            if(redirectTimer) clearInterval(redirectTimer);
+
+            redirectTimer = setInterval(() => {
+                kalanSaniye--;
+                if (kalanSaniye > 0) {
+                    document.getElementById('timerText').innerText = `${kalanSaniye} saniye içinde yönlendirileceksiniz...`;
+                } else {
+                    clearInterval(redirectTimer);
+                    window.location.href = "https://kick.com/popout/weizend/chat";
+                }
+            }, 1000);
+        }
+
+        function yonlendirmeyiIptalEt() {
+            if(redirectTimer) clearInterval(redirectTimer);
+            document.getElementById('redirectModal').style.display = 'none';
+        }
+
         function kartIciResimDegistir(event, thumbElement, urunId, resimIndex, url) {
-            event.stopPropagation();
+            event.stopPropagation(); 
             const card = thumbElement.closest('.card');
             const mainImg = card.querySelector('.main-card-img');
             const imgContainer = card.querySelector('.img-container');
@@ -294,59 +391,6 @@
             thumbElement.classList.add('active');
         }
 
-        // --- KART İÇİ KAYDIRMA (SWIPE) ÖZELLİĞİ ---
-        let touchStartX = 0;
-        let isSwiping = false;
-
-        function onTouchStart(e) {
-            touchStartX = e.touches[0].clientX;
-            isSwiping = false;
-        }
-
-        function onTouchEnd(e, urunId) {
-            let touchEndX = e.changedTouches[0].clientX;
-            let diffX = touchStartX - touchEndX;
-
-            if (Math.abs(diffX) > 40) {
-                isSwiping = true;
-                
-                const container = e.currentTarget;
-                const urun = URUNLER.find(u => u.orijinalId === urunId);
-                if (!urun || urun.gorseller.length <= 1) return;
-
-                let currentIndex = parseInt(container.dataset.currentIndex);
-                
-                if (diffX > 0) {
-                    // Sola kaydır -> Sonraki
-                    currentIndex++;
-                    if (currentIndex >= urun.gorseller.length) currentIndex = 0;
-                } else {
-                    // Sağa kaydır -> Önceki
-                    currentIndex--;
-                    if (currentIndex < 0) currentIndex = urun.gorseller.length - 1;
-                }
-
-                const url = urun.gorseller[currentIndex];
-                const card = container.closest('.card');
-                
-                card.querySelector('.main-card-img').src = url;
-                container.dataset.currentIndex = currentIndex;
-
-                const thumbs = card.querySelectorAll('.card-thumb');
-                thumbs.forEach(t => t.classList.remove('active'));
-                if (thumbs[currentIndex]) thumbs[currentIndex].classList.add('active');
-            }
-        }
-
-        function onImgClick(e, urunId) {
-            if (isSwiping) {
-                isSwiping = false;
-                return; // Eğer kaydırma yapılmışsa modalı açmayı engeller
-            }
-            modaliAc(urunId, e.currentTarget.dataset.currentIndex);
-        }
-
-        // --- MODAL (GALERİ) FONKSİYONLARI ---
         function modaliAc(urunId, baslangicIndex) {
             const urun = URUNLER.find(u => u.orijinalId === urunId);
             if(!urun) return;
