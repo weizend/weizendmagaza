@@ -27,11 +27,14 @@
         .category-filters { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; }
         .filter-btn { background: var(--card-bg); border: 1px solid var(--border-color); color: var(--weizend-white); padding: 8px 20px; border-radius: 6px; cursor: pointer; transition: 0.3s; font-weight: 600; }
         .filter-btn.active, .filter-btn:hover { background: var(--weizend-red); border-color: var(--weizend-red); }
+        .filter-btn.tukenenler-btn { color: var(--weizend-red); border-color: var(--weizend-red); background: rgba(227, 27, 27, 0.1); }
+        .filter-btn.tukenenler-btn.active, .filter-btn.tukenenler-btn:hover { background: var(--weizend-red); color: var(--weizend-white); }
 
         /* Ürün Grid ve Kartlar */
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; }
         .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; transition: 0.3s; display: flex; flex-direction: column; }
         .card:hover { border-color: var(--weizend-red); transform: translateY(-5px); box-shadow: 0 5px 20px rgba(227, 27, 27, 0.15); }
+        .card.out-of-stock { opacity: 0.75; }
         
         /* Resim Alanı & Büyütme Tıklaması */
         .img-container { width: 100%; height: 280px; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 10px; position: relative; border: 1px solid var(--border-color); cursor: pointer; }
@@ -45,7 +48,7 @@
         .stock-info-text { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; font-style: italic; }
 
         .out-of-stock-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 3; }
-        .out-of-stock-text { background: var(--weizend-red); color: white; padding: 8px 20px; font-weight: bold; border-radius: 6px; font-size: 1.1rem; letter-spacing: 1px; }
+        .out-of-stock-text { background: var(--weizend-red); color: white; padding: 8px 20px; font-weight: bold; border-radius: 6px; font-size: 1.1rem; letter-spacing: 1px; transform: rotate(-5deg); }
 
         .zoom-hint { position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.8); border: 1px solid var(--weizend-red); color: white; padding: 5px 10px; border-radius: 6px; font-size: 0.8rem; opacity: 0; transition: 0.3s; pointer-events: none; }
         .img-container:hover .zoom-hint { opacity: 1; }
@@ -58,15 +61,15 @@
         .card-thumb.active { border-color: var(--weizend-red); opacity: 1; }
 
         /* Ürün Bilgileri */
-        .product-title { margin: 0 0 10px 0; font-size: 1.3rem; }
+        .product-title { margin: 0 0 10px 0; font-size: 1.3rem; min-height: 55px;}
         .price-command { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); }
         .price { color: var(--weizend-red); font-weight: bold; font-size: 1.1rem; }
         .command { background: #000; border: 1px dashed var(--weizend-red); padding: 5px 10px; border-radius: 4px; color: var(--weizend-red); font-family: monospace; }
         .command.disabled { border-color: #555; color: #772ce8; text-decoration: line-through; }
 
         /* İşlem Yap Butonu */
-        .action-btn { width: 100%; background: var(--weizend-red); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.2s; margin-bottom: 12px; box-shadow: 0 4px 15px rgba(227, 27, 27, 0.3); }
-        .action-btn:hover { background: #c21414; transform: translateY(-2px); }
+        .action-btn { width: 100%; background: var(--weizend-red); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.2s; margin-top: auto; margin-bottom: 12px; box-shadow: 0 4px 15px rgba(227, 27, 27, 0.3); }
+        .action-btn:hover:not(.disabled) { background: #c21414; transform: translateY(-2px); }
         .action-btn.disabled { background: #333; color: #777; cursor: not-allowed; box-shadow: none; transform: none; }
 
         /* Açılır Kutular (Accordion) */
@@ -114,20 +117,14 @@
 <body>
 
     <script>
-        // ÜRÜNLERİ BURAYA EKLİYORSUN
+        // TÜM ÜRÜN TASLAKLARI (durum: "off" olanlar sitede görünmez, "on" yapınca görünür)
         const URUNLER = [
+            // --- FİZİKSEL ÜRÜNLER ---
             {
-                durum: "on", 
-                stok: 10,    
-                kategori: "Fiziksel Ürün",
+                durum: "on", stok: 1, kategori: "Fiziksel Ürün",
                 ad: "Kapüşonlu Kanguru Cepli Siyah Sweatshirt",
-                puan: "350.000 Puan",
-                komut: "!sweatshirt",
-                gorseller: [
-                    "https://i.hizliresim.com/zuhelzqa.png", 
-                    "https://i.hizliresim.com/jcbegwjq.png", 
-                    "https://i.hizliresim.com/lvkogmqn.jpg"  
-                ],
+                puan: "375.000 Puan", komut: "!alsweatshirt",
+                gorseller: ["https://i.hizliresim.com/zuhelzqa.png", "https://i.hizliresim.com/jcbegwjq.png", "https://i.hizliresim.com/lvkogmqn.jpg"],
                 ozellikler: `
                     <ul>
                         <li>Renk: Siyah</li>
@@ -150,45 +147,170 @@
                         <li>Kuru temizlemeye ve kurutma makinesine uygun değildir</li>
                         <li>Düşük ısıda ve tersten ütüleme yapınız</li>
                         <li>Hediyelik ürün veya promosyon olarak da tercih edilebilir</li>
-                    </ul>
-                `
+                    </ul>`
             },
             {
-                durum: "on",
-                stok: 50,
-                kategori: "Dijital Kod",
-                ad: "375 VP Valorant Points",
-                puan: "75.000 Puan",
-                komut: "!375vp",
-                gorseller: [
-                    "https://picsum.photos/seed/vp/500/500"
-                ],
+                durum: "on", stok: 1, kategori: "Fiziksel Ürün",
+                ad: "Porselen Bella Beyaz Kupa Bardak",
+                puan: "135.000 Puan", komut: "!alkupabardak",
+                tukenmeZamani: "2024-05-15", /* ORTA ZAMANLI TÜKENEN (2. Sırada Çıkar) */
+                gorseller: ["https://i.hizliresim.com/onelstci.jpg", "https://i.hizliresim.com/jdnvgo9f.jpg", "https://i.hizliresim.com/bx5uveba.jpg"],
                 ozellikler: `
                     <ul>
-                        <li>Riot Games - Valorant TR sunucularında geçerlidir.</li>
-                        <li>Oyun içi mağazadan silah kaplaması almak için kullanılabilir.</li>
-                        <li>Kod tek kullanımlıktır ve iadesi yoktur.</li>
-                    </ul>
-                `
+                    <li>8 cm bardak ağız çapı</li>
+                        <li>9,5 cm yüksekliğe sahiptir</li>
+                        <li>3,5 cm kulp parmak açıklığı</li>
+                        <li>Yaklaşık 325 ml iç hacim sunar</li>
+                        <li>7.5x20 cm baskı alanı bulunur</li>
+                        <li>Estetik ve dekoratif görünüme sahiptir</li>
+                        <li>Beyaz renkte yüksek kalite seramik malzeme</li>
+                        <li>Sağlığa zararlı kimyasallar içermeyen yapıdadır</li>
+                        <li>Çamaşır makinesinde yıkamaya uygun değildir</li>
+                        <li>30°C ılık su ve elde yıkamanız daha uzun süreler dayanan baskılar sağlar</li>
+                        <li>CMYK süblimasyon baskı sayesinde uzun yıllar renklerini kaybetmez</li>
+                    </ul>`
             },
             {
-                durum: "on", 
-                stok: 100,
-                kategori: "Turnuva",
+                durum: "on", stok: 1, kategori: "Fiziksel Ürün",
+                ad: "Paslanmaz Çelik Siyah Termos 500Ml",
+                puan: "280.000 Puan", komut: "!altermos",
+                tukenmeZamani: "2024-05-15", /* ORTA ZAMANLI TÜKENEN (2. Sırada Çıkar) */
+                gorseller: ["https://i.hizliresim.com/bsjhkxee.jpg"],
+                ozellikler: `
+                    <ul>
+                        <li>Mat siyah renkte dış yüzey</li>
+                        <li>19,5 cm yükseklğe sahiptir</li>
+                        <li>8 cm ağız çapı bulunur</li>
+                        <li>7 cm çapta taban genişliği sunar</li>
+                        <li>Tabana doğru daralan formdadır</li>
+                        <li>500 ml geniş iç hacmiyle işlevseldir</li>
+                        <li>Ürünün iç yüzeyi SUS 304 paslanmaz çeliktir</li>
+                        <li>Ürünün dış yüzeyi SUS 201 paslanmaz çeliktir</li>
+                        <li>Sıcak ve soğuk içecekleriniz için ısı yalıtımı sağlar</li>
+                        <li>İçeceklerinizin ısısını yaklaşık 3-4 saat muhafaza eder</li>
+                        <li>Pratik aç-kapa ağızlık tasarımıyla rahat kullanım sağlar</li>
+                        <li>Ergonomik, estetik ve dekoratif bir görünüm sunar</li>
+                        <li>Kapak yapısı sızdırmaz nitelikte silikon contaya sahiptir</li>
+                        <li>Ağızlık kısmı tamamen sızdırmaz değildir, dik taşımanız önerilir</li>
+                        <li>Logo, vektörel tasarım ve isimleriniz lazer kazıma ile gövde üzerine işlenir</li>
+                        <li>Bireysel, hediyelik ve promosyon amaçlı kullanımlara uygundur</li>
+                        <li>Sağlığa zararlı BPA, fitalat ve azo boyar madde içermez</li>
+                        <li>Ürün bulaşık makinesinde yıkamaya uygun değildir</li>
+                        <li>Elde ve düşük sıcaklıkta yıkanmalıdır</li>
+                    </ul>`
+            },
+            {
+                durum: "off", stok: 1, kategori: "Fiziksel Ürün",
+                ad: "Porselen Bella Beyaz Kupa Bardak",
+                puan: "135.000 Puan", komut: "!alkupabardak",
+                tukenmeZamani: "2024-05-15", /* ORTA ZAMANLI TÜKENEN (2. Sırada Çıkar) */
+                gorseller: ["https://i.hizliresim.com/onelstci.jpg", "https://i.hizliresim.com/jdnvgo9f.jpg", "https://i.hizliresim.com/bx5uveba.jpg"],
+                ozellikler: `
+                    <ul>
+                    <li>Renk: Beyaz</li>
+                        <li>8 cm bardak ağız çapı</li>
+                        <li>9,5 cm yüksekliğe sahiptir</li>
+                        <li>3,5 cm kulp parmak açıklığı</li>
+                        <li>Yaklaşık 325 ml iç hacim sunar</li>
+                        <li>7.5x20 cm baskı alanı bulunur</li>
+                        <li>Estetik ve dekoratif görünüme sahiptir</li>
+                        <li>Beyaz renkte yüksek kalite seramik malzeme</li>
+                        <li>Sağlığa zararlı kimyasallar içermeyen yapıdadır</li>
+                        <li>Çamaşır makinesinde yıkamaya uygun değildir</li>
+                        <li>30°C ılık su ve elde yıkamanız daha uzun süreler dayanan baskılar sağlar</li>
+                        <li>CMYK süblimasyon baskı sayesinde uzun yıllar renklerini kaybetmez</li>
+                    </ul>`
+            },
+            {
+                durum: "off", stok: 1, kategori: "Fiziksel Ürün",
+                ad: "Porselen Bella Beyaz Kupa Bardak",
+                puan: "135.000 Puan", komut: "!alkupabardak",
+                tukenmeZamani: "2024-05-15", /* ORTA ZAMANLI TÜKENEN (2. Sırada Çıkar) */
+                gorseller: ["https://i.hizliresim.com/onelstci.jpg", "https://i.hizliresim.com/jdnvgo9f.jpg", "https://i.hizliresim.com/bx5uveba.jpg"],
+                ozellikler: `
+                    <ul>
+                    <li>Renk: Beyaz</li>
+                        <li>8 cm bardak ağız çapı</li>
+                        <li>9,5 cm yüksekliğe sahiptir</li>
+                        <li>3,5 cm kulp parmak açıklığı</li>
+                        <li>Yaklaşık 325 ml iç hacim sunar</li>
+                        <li>7.5x20 cm baskı alanı bulunur</li>
+                        <li>Estetik ve dekoratif görünüme sahiptir</li>
+                        <li>Beyaz renkte yüksek kalite seramik malzeme</li>
+                        <li>Sağlığa zararlı kimyasallar içermeyen yapıdadır</li>
+                        <li>Çamaşır makinesinde yıkamaya uygun değildir</li>
+                        <li>30°C ılık su ve elde yıkamanız daha uzun süreler dayanan baskılar sağlar</li>
+                        <li>CMYK süblimasyon baskı sayesinde uzun yıllar renklerini kaybetmez</li>
+                    </ul>`
+            },
+            {
+                durum: "off", stok: 1, kategori: "Fiziksel Ürün",
+                ad: "Porselen Bella Beyaz Kupa Bardak",
+                puan: "135.000 Puan", komut: "!alkupabardak",
+                tukenmeZamani: "2024-05-15", /* ORTA ZAMANLI TÜKENEN (2. Sırada Çıkar) */
+                gorseller: ["https://i.hizliresim.com/onelstci.jpg", "https://i.hizliresim.com/jdnvgo9f.jpg", "https://i.hizliresim.com/bx5uveba.jpg"],
+                ozellikler: `
+                    <ul>
+                    <li>Renk: Beyaz</li>
+                        <li>8 cm bardak ağız çapı</li>
+                        <li>9,5 cm yüksekliğe sahiptir</li>
+                        <li>3,5 cm kulp parmak açıklığı</li>
+                        <li>Yaklaşık 325 ml iç hacim sunar</li>
+                        <li>7.5x20 cm baskı alanı bulunur</li>
+                        <li>Estetik ve dekoratif görünüme sahiptir</li>
+                        <li>Beyaz renkte yüksek kalite seramik malzeme</li>
+                        <li>Sağlığa zararlı kimyasallar içermeyen yapıdadır</li>
+                        <li>Çamaşır makinesinde yıkamaya uygun değildir</li>
+                        <li>30°C ılık su ve elde yıkamanız daha uzun süreler dayanan baskılar sağlar</li>
+                        <li>CMYK süblimasyon baskı sayesinde uzun yıllar renklerini kaybetmez</li>
+                    </ul>`
+            },
+            
+            // --- VALORANT ---
+            {
+                durum: "on", stok: 3, kategori: "Valorant",
+                ad: "375 VP KODU Valorant Points",
+                puan: "45.000 Puan", komut: "!alvalorant375vp",
+                gorseller: ["https://i.hizliresim.com/npqe9gqv.png"],
+                ozellikler: `<ul><li>Riot Games - Valorant TR sunucularında geçerlidir.</li></ul>`
+            },
+            { durum: "on", stok: 2, kategori: "Valorant", ad: "825 VP KODU Valorant Points", puan: "95.000 Puan", komut: "!alvalorant825vp", gorseller: ["https://i.hizliresim.com/wn2mxmkr.png"], ozellikler: `<ul><li>Riot Games - Valorant TR sunucularında geçerlidir.</li></ul>`},
+            { durum: "on", stok: 1, kategori: "Valorant", ad: "1.700 VP KODU Valorant Points", puan: "190.000 Puan", komut: "!alvalorant1700vp", gorseller: ["https://i.hizliresim.com/8u85rolc.png"], ozellikler: `<ul><li>Riot Games - Valorant TR sunucularında geçerlidir.</li></ul>`},
+            
+            // --- STEAM ---
+            {
+                durum: "on", stok: 3, kategori: "Steam",
+                ad: "5 USD Steam Cüzdan Kodu",
+                puan: "105.000 Puan", komut: "!alsteam5usd",
+                gorseller: ["https://i.hizliresim.com/tbbn5il5.png"],
+                ozellikler: `<ul><li>Steam TR hesaplarında geçerlidir.</li></ul>`
+            },
+            {
+                durum: "off", stok: 0, kategori: "Steam",
+                ad: "50 USD Steam Cüzdan Kodu (ÖRNEK TÜKENEN)",
+                puan: "1.000.000 Puan", komut: "!alsteam50usd",
+                tukenmeZamani: "2023-10-01", /* EN ESKİ TÜKENEN (En Altta Çıkar) */
+                gorseller: ["https://picsum.photos/seed/steam/500/500"],
+                ozellikler: `<ul><li>Anında teslim.</li></ul>`
+            },
+            { durum: "on", stok: 2, kategori: "Steam", ad: "10 USD Steam Cüzdan Kodu", puan: "210.000 Puan", komut: "!alsteam10usd", gorseller: ["https://i.hizliresim.com/6ibndvmu.png"], ozellikler: `<ul><li>Detaylar</li></ul>` },
+            
+        // --- TURNUVA (10 ADET TASLAK) ---
+            {
+                durum: "on", stok: 0, kategori: "Turnuva",
                 ad: "1 VS 1 Valorant Turnuva Katılım Bileti",
-                puan: "10.000 Puan",
-                komut: "!turnuva",
-                gorseller: [
-                    "https://picsum.photos/seed/tourney/500/500"
-                ],
-                ozellikler: `
-                    <ul>
-                        <li>Sıradaki 1vs1 Valorant turnuvasına direkt katılım hakkı sağlar.</li>
-                        <li>Turnuva kuralları ve eşleşmeler Discord sunucumuzdan duyurulacaktır.</li>
-                        <li>Sadece TR sunucusu oyuncuları katılabilir.</li>
-                    </ul>
-                `
-            }
+                puan: "ÜCRETSİZ", komut: "!alturnuva1vs1",
+                tukenmeZamani: "2024-05-15", /* YENİ: Tükenme tarihi eklendi */
+                gorseller: ["https://i.hizliresim.com/joby9cul.png"],
+                ozellikler: `<ul><li>Sıradaki turnuvaya katılım hakkı sağlar.</li><li>Discord ve İnstagram üzerinden duyuru yapılır.</li></ul>`},
+            {
+                durum: "on", stok: 0, kategori: "Turnuva",
+                ad: "2 VS 2 Valorant Turnuva Katılım Bileti",
+                puan: "200 TL", komut: "!alturnuva2vs2",
+                tukenmeZamani: "2024-06-15", /* YENİ: Tükenme tarihi eklendi */
+                gorseller: ["https://i.hizliresim.com/9asvvsvl.png"],
+                ozellikler: `<ul><li>Sıradaki turnuvaya katılım hakkı sağlar.</li><li>Discord ve İnstagram üzerinden duyuru yapılır.</li></ul>`
+            },,
         ];
         
         URUNLER.forEach((urun, index) => urun.orijinalId = index);
@@ -202,16 +324,10 @@
             <a href="https://instagram.com/weizendtv" target="_blank" class="ig-contact">📸 İletişim: @weizendtv</a>
         </header>
 
-        <div class="category-filters" id="filters">
-            <button class="filter-btn active" onclick="filtrele('Tümü')">Tümü</button>
-            <button class="filter-btn" onclick="filtrele('Fiziksel Ürün')">Fiziksel Ürün</button>
-            <button class="filter-btn" onclick="filtrele('Dijital Kod')">Dijital Kod</button>
-            <button class="filter-btn" onclick="filtrele('Turnuva')">Turnuva</button>
-        </div>
+        <!-- KATEGORİ BUTONLARI OTOMATİK OLUŞTURULACAK -->
+        <div class="category-filters" id="filters"></div>
 
-        <div class="grid" id="urunGrid">
-            <!-- Ürünler buraya yüklenecek -->
-        </div>
+        <div class="grid" id="urunGrid"></div>
     </div>
 
     <!-- MODAL 1: GÖRSEL BÜYÜTME GALERİSİ -->
@@ -251,21 +367,72 @@
 
     <script>
         const grid = document.getElementById('urunGrid');
-        
+        let aktifKategori = 'Tümü';
         let aktifGorselListesi = [];
         let aktifResimIndex = 0;
         let redirectTimer = null;
 
+        // --- KATEGORİLERİ OTOMATİK OLUŞTURMA ---
+        function kategorileriOlustur() {
+            const filterContainer = document.getElementById('filters');
+            filterContainer.innerHTML = `<button class="filter-btn ${aktifKategori === 'Tümü' ? 'active' : ''}" onclick="filtrele('Tümü')">Tümü</button>`;
+
+            // Sadece "on" olan ürünlerin kategorilerini topla
+            const benzersizKategoriler = [...new Set(URUNLER.filter(u => u.durum === "on").map(u => u.kategori))];
+
+            benzersizKategoriler.forEach(kat => {
+                const aktifClass = aktifKategori === kat ? 'active' : '';
+                filterContainer.innerHTML += `<button class="filter-btn ${aktifClass}" onclick="filtrele('${kat}')">${kat}</button>`;
+            });
+
+            // "TÜKENDİ" Butonunu En Sona Ekle
+            const tukendiClass = aktifKategori === 'Tükendi' ? 'active' : '';
+            filterContainer.innerHTML += `<button class="filter-btn tukenenler-btn ${tukendiClass}" onclick="filtrele('Tükendi')">Tükendi</button>`;
+        }
+
         function urunleriYukle(filtreKategori) {
+            aktifKategori = filtreKategori;
+            kategorileriOlustur();
             grid.innerHTML = ''; 
             
-            let gosterilecekUrunler = URUNLER.filter(urun => urun.durum === "on" && (filtreKategori === 'Tümü' || urun.kategori === filtreKategori));
+            let gosterilecekUrunler = URUNLER.filter(urun => urun.durum === "on");
 
-            gosterilecekUrunler.sort((a, b) => {
-                let puanA = parseInt(a.puan.replace(/[^0-9]/g, ''));
-                let puanB = parseInt(b.puan.replace(/[^0-9]/g, ''));
-                return puanA - puanB;
-            });
+            if (filtreKategori === 'Tükendi') {
+                // SADECE TÜKENENLERİ GÖSTER
+                gosterilecekUrunler = gosterilecekUrunler.filter(urun => urun.stok <= 0);
+
+                // TÜKENME TARİHİNE GÖRE SIRALA (En yeni tarihli en üstte)
+                gosterilecekUrunler.sort((a, b) => {
+                    let tarihA = a.tukenmeZamani ? new Date(a.tukenmeZamani).getTime() : 0;
+                    let tarihB = b.tukenmeZamani ? new Date(b.tukenmeZamani).getTime() : 0;
+                    return tarihB - tarihA;
+                });
+            } else {
+                // NORMAL FİLTRELEME
+                if (filtreKategori !== 'Tümü') {
+                    gosterilecekUrunler = gosterilecekUrunler.filter(urun => urun.kategori === filtreKategori);
+                }
+
+                // SIRALAMA: Önce stok (stok>0 olanlar üstte)
+                gosterilecekUrunler.sort((a, b) => {
+                    let stokA = a.stok > 0 ? 1 : 0;
+                    let stokB = b.stok > 0 ? 1 : 0;
+                    
+                    if (stokA !== stokB) {
+                        return stokB - stokA; // Stokta olanı başa at
+                    } else if (stokA === 0 && stokB === 0) {
+                        // İKİSİ DE TÜKENMİŞSE: En son tükeneni (en yeni tarihli olanı) en üstte göster
+                        let tarihA = a.tukenmeZamani ? new Date(a.tukenmeZamani).getTime() : 0;
+                        let tarihB = b.tukenmeZamani ? new Date(b.tukenmeZamani).getTime() : 0;
+                        return tarihB - tarihA;
+                    } else {
+                        // İKİSİ DE STOKTAYSA: Puana göre ucuzdan pahalıya sırala
+                        let puanA = parseInt(a.puan.replace(/[^0-9]/g, '')) || 0;
+                        let puanB = parseInt(b.puan.replace(/[^0-9]/g, '')) || 0;
+                        return puanA - puanB;
+                    }
+                });
+            }
             
             gosterilecekUrunler.forEach(urun => {
                 const ilkGorsel = urun.gorseller[0];
@@ -281,7 +448,6 @@
                     thumbnailsHTML += '</div>';
                 }
 
-                // Stok alanı ve bilgilendirmesi
                 let stokAlaniHTML = `
                     <div class="stock-wrapper">
                         <span class="stock-badge">Stok: ${urun.stok}</span>
@@ -299,14 +465,14 @@
                     tukendiOverlayHTML = `<div class="out-of-stock-overlay"><div class="out-of-stock-text">TÜKENDİ</div></div>`;
                 }
 
-                // DİNAMİK TESLİMAT BİLGİSİ
+                // KATEGORİYE ÖZEL TESLİMAT KUTULARI
                 let teslimatKutusuHTML = '';
                 if (urun.kategori === 'Fiziksel Ürün') {
                     const yazi = `Ürünü Kick sohbetimizden <b><span style="color:var(--weizend-red);">${urun.komut}</span></b> yazıp aldıktan sonra İnstagram <b><a href="https://instagram.com/weizendtv" target="_blank" style="color:var(--weizend-red);">@weizendtv</a></b> adresine mesaj atarak teslimat işlemlerini halledebilirsiniz.<br><br><b>🚚 Ne Zaman Kargolanır?</b><br>En geç 5 iş gününde kargoda. Tüm ürünlerde kargo ücreti bize aittir.`;
                     teslimatKutusuHTML = `<details><summary>Teslimat ve Kargo Bilgileri</summary><div class="details-content">${yazi}</div></details>`;
                 } 
-                else if (urun.kategori === 'Dijital Kod') {
-                    const yazi = `Ürünü Kick sohbetimizden <b><span style="color:var(--weizend-red);">${urun.komut}</span></b> yazıp aldıktan sonra Discord üzerinden yetkililere mesaj atarak veya İnstagram <b><a href="https://instagram.com/weizendtv" target="_blank" style="color:var(--weizend-red);">@weizendtv</a></b> adresine ulaşarak dijital kodunuzu anında teslim alabilirsiniz.`;
+                else if (urun.kategori === 'Valorant' || urun.kategori === 'Steam') {
+                    const yazi = `Ürünü Kick sohbetimizden <b><span style="color:var(--weizend-red);">${urun.komut}</span></b> yazıp aldıktan sonra Discord üzerinden yetkililere mesaj atarak veya İnstagram <b><a href="https://instagram.com/weizendtv" target="_blank" style="color:var(--weizend-red);">@weizendtv</a></b> adresine ulaşarak kodunuzu anında teslim alabilirsiniz.`;
                     teslimatKutusuHTML = `<details><summary>Teslimat Bilgileri</summary><div class="details-content">${yazi}</div></details>`;
                 }
 
@@ -315,8 +481,11 @@
                 const actionBtnText = tukendiMi ? "TÜKENDİ" : "İşlem Yap";
                 const actionBtnClick = tukendiMi ? "" : `onclick="islemYapBaslat('${urun.komut}')"`;
 
+                // Kartın ana div'ine tükenenler için ek class veriyoruz
+                const kartClass = tukendiMi ? "card out-of-stock" : "card";
+
                 const kart = `
-                    <div class="card">
+                    <div class="${kartClass}">
                         <div class="img-container" data-current-index="0" onclick="modaliAc(${urun.orijinalId}, this.dataset.currentIndex)">
                             <span class="category-badge">${urun.kategori}</span>
                             ${tukendiOverlayHTML}
@@ -349,11 +518,8 @@
             });
         }
 
-        // --- İŞLEM YAP & KİCK YÖNLENDİRME FONKSİYONLARI ---
         function islemYapBaslat(komut) {
-            // Panoya kopyala
             navigator.clipboard.writeText(komut).catch(() => {});
-
             document.getElementById('modalCommandText').innerText = komut;
             document.getElementById('redirectModal').style.display = 'flex';
 
@@ -451,14 +617,10 @@
         }
 
         function filtrele(kategori) {
-            const butonlar = document.querySelectorAll('.filter-btn');
-            butonlar.forEach(b => {
-                if (b.innerText === kategori) b.classList.add('active');
-                else b.classList.remove('active');
-            });
             urunleriYukle(kategori);
         }
 
+        // Başlangıç
         urunleriYukle('Tümü');
     </script>
 </body>
