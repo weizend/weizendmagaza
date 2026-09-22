@@ -83,25 +83,29 @@
         .details-content ul { margin: 0; padding-left: 20px; }
         .details-content li { margin-bottom: 6px; }
 
-        /* MODAL (AÇILIR GALERİ) TASARIMI */
+        /* MODAL (AÇILIR GALERİ VE ZOOM) TASARIMI */
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.95); z-index: 999; justify-content: center; align-items: center; padding: 20px; }
-        .modal-content { background: var(--card-bg); width: 100%; max-width: 600px; border-radius: 12px; border: 1px solid var(--border-color); overflow: hidden; display: flex; flex-direction: column; }
+        .modal-content { background: var(--card-bg); width: 100%; max-width: 900px; /* Daha büyük ekran için genişletildi */ border-radius: 12px; border: 1px solid var(--border-color); display: flex; flex-direction: column; overflow: hidden;}
         
-        .modal-header { padding: 15px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        .modal-header { padding: 15px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; z-index: 10; background: var(--card-bg); }
         .modal-header h3 { margin: 0; font-size: 1.2rem; }
         .close-icon { background: none; border: none; color: var(--weizend-white); font-size: 1.5rem; cursor: pointer; transition: 0.2s; line-height: 1; }
         .close-icon:hover { color: var(--weizend-red); }
 
         .modal-body { padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .main-slider { position: relative; width: 100%; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
-        .main-slider img { width: 100%; max-height: 350px; object-fit: contain; border-radius: 8px; }
         
+        /* Zoom Alanı */
+        .main-slider { position: relative; width: 100%; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; overflow: hidden; /* Zoom yapınca taşmaması için */ cursor: zoom-in;}
+        .main-slider img { width: 100%; max-height: 70vh; /* Ekranda daha büyük görünmesi için height artırıldı */ object-fit: contain; border-radius: 8px; transition: transform 0.15s ease-out; /* Yumuşak zoom efekti */ transform-origin: center; }
+        
+        .zoom-info { position: absolute; bottom: 10px; background: rgba(0,0,0,0.7); padding: 5px 15px; border-radius: 15px; font-size: 0.8rem; color: var(--text-muted); pointer-events: none; z-index: 5;}
+
         .nav-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.8); color: white; border: 1px solid var(--weizend-red); width: 45px; height: 45px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; z-index: 5; }
         .nav-btn:hover { background: var(--weizend-red); }
         .prev-btn { left: 10px; }
         .next-btn { right: 10px; }
 
-        .thumbnail-list { display: flex; gap: 10px; justify-content: center; overflow-x: auto; padding-bottom: 5px; width: 100%; }
+        .thumbnail-list { display: flex; gap: 10px; justify-content: center; overflow-x: auto; padding-bottom: 5px; width: 100%; z-index: 10; background: var(--card-bg); }
         .modal-thumb { width: 70px; height: 70px; object-fit: contain; border: 2px solid #222; border-radius: 6px; cursor: pointer; transition: 0.2s; opacity: 0.5; background: #000; }
         .modal-thumb:hover { opacity: 1; }
         .modal-thumb.active { border-color: var(--weizend-red); opacity: 1; }
@@ -117,110 +121,156 @@
 <body>
 
     <script>
-        // TÜM ÜRÜN TASLAKLARI (durum: "off" olanlar sitede görünmez, "on" yapınca görünür)
-        // NOT: Sınırsız stok için stok değerini "Sınırsız" (tırnak içinde) yapman yeterlidir.
+        // TÜM ÜRÜN TASLAKLARI
         const URUNLER = [
-            // --- FİZİKSEL ÜRÜNLER ---
+            // --- FİZİKSEL ÜRÜNLER (YENİ LİSTE) ---
             {
                 durum: "on", stok: 1, kategori: "Fiziksel Ürün",
-                ad: "Kapüşonlu Kanguru Cepli Siyah Sweatshirt",
-                puan: "375.000 Puan", komut: "!alsweatshirt",
-                tukenmeZamani: "2024-05-15",
-                gorseller: ["https://i.hizliresim.com/zuhelzqa.png", "https://i.hizliresim.com/jcbegwjq.png", "https://i.hizliresim.com/lvkogmqn.jpg"],
+                ad: "Siyah Bez Şapka",
+                puan: "120.000 Puan", komut: "!alsapka",
+                gorseller: ["https://i.hizliresim.com/scvyurdk.jpg"],
                 ozellikler: `
                     <ul>
                         <li>Renk: Siyah</li>
-                        <li>Uzun kollu dan kapüşonlu formda</li>
-                        <li>Kanguru cepli şık tasarımıyla ön plana çıkar</li>
-                        <li>Şardonlu kumaşıyla sıcak tutan yapıdadır</li>
-                        <li>Polyester katkılı pamuklu kumaş yapısı</li>
-                        <li>Kolay kırışmayan esnek kumaş yapısı bulunur</li>
-                        <li>Hava alan ve terletmeyen dokuya sahiptir</li>
-                        <li>Unisex ürünüdür, erkek ve kadınlar kullanabilir</li>
-                        <li>Her yaştan bireyin kullanımına uygundur</li>
+                        <li>Standart ebat ölçüye sahip</li>
+                        <li>Pamuklu kumaşıyla rahat kullanım</li>
+                        <li>Nefes alan ve terletmeyen dokudadır</li>
+                        <li>Siperlik kısmı deformasyona karşı dirençlidir</li>
+                        <li>Estetik, spor ve şık görünüme sahiptir</li>
+                        <li>Arka kısımda cırtlı ayar bölgesi bulunur</li>
+                        <li>Kafa ölçünüze göre kolayca ayarlayabilirsiniz</li>
+                        <li>Gündelik kullanım ve spor faaliyetleriniz için idealdir</li>
+                        <li>30°C’de tersten, elde yıkayınız ve asarak kurutunuz</li>
+                        <li>Ekonomik fiyatıyla promosyon ürün olarak tercih edilebilir</li>
+                    </ul>`
+            },
+            {
+                durum: "on", stok: 1, kategori: "Fiziksel Ürün",
+                ad: "Mouse Pad",
+                puan: "90.000 Puan", komut: "!almousepad",
+                gorseller: ["https://i.hizliresim.com/beb4m3ta.jpg"],
+                ozellikler: `
+                    <ul>
+                        <li>175x210 mm ebatlar</li>
+                        <li>2 mm kalınlık</li>
+                        <li>Polyester dayanıklılık kaplaması</li>
+                        <li>Kaydırmaz hammadde özelliklerine sahiptir</li>
+                        <li>Sağlığa zararlı kimyasalların dağıtımı yapıdadır</li>
+                    </ul>`
+            },
+            {
+                durum: "on", stok: 1, kategori: "Fiziksel Ürün",
+                ad: "Yastık Kılıfı",
+                puan: "105.000 Puan", komut: "!alyastıkklıfı",
+                gorseller: ["https://i.hizliresim.com/3xvtef5k.jpg"],
+                ozellikler: `
+                    <ul>
+                        <li>Renk: Beyaz</li>
+                        <li>Ebat: 38x38 cm</li>
+                        <li>Saten kumaşa sahiptir</li>
+                        <li>İçten gizli dikiş formu bulunur</li>
+                        <li>Fermuarlı yapısıyla kolay kullanım sunar</li>
+                        <li>Sağlığa zararsız, sertifikalı, özel mürekkep kullanılır</li>
+                        <li>30°C kısa programda, tersten, ağartıcı kullanmadan yıkayabilirsiniz</li>
+                        <li>Ürün, kurutma makinesine ve kuru temizlemeye uygun değildir</li>
+                        <li>Eğer ütüleme yapılacaksa tersten ve düşük ısıda yapılmalıdır</li>
+                        <li>Ürün sadece kılıf olarak gelmektedir, iç kısmı yoktur</li>
+                    </ul>`
+            },
+            {
+                durum: "on", stok: 1, kategori: "Fiziksel Ürün",
+                ad: "Siyah Erkek Tişört",
+                puan: "255.000 Puan", komut: "!altshirt",
+                gorseller: ["https://i.hizliresim.com/v3dcbfps.jpg", "https://i.hizliresim.com/4qjxy0gw.jpg", "https://i.hizliresim.com/e12ap6ck.jpg"],
+                ozellikler: `
+                    <ul>
+                        <li>Beden kesimlerinden dolayı bir beden büyük almanız tavsiye edilir</li>
+                        <li>Beden tablosuna dikkat ediniz</li>
+                        <li>Renk: Siyah</li>
+                        <li>%100 pamuklu kumaş yapısı</li>
                         <li>Estetik, spor ve şık bir duruşa sahiptir</li>
-                        <li>S, M, L, XL olmak üzere dört farklı bedeni bulunur</li>
-                        <li>Öne, arkaya veya her iki yüze baskı yapılabilmektedir</li>
+                        <li>Hava alan ve terletmeyen kumaş dokusu</li>
+                        <li>Kolay kırışmayan esnek kumaş yapısı bulunur</li>
                         <li>Sağlığa zarar vermeyen özel mürekkep kullanılır</li>
-                        <li>Sipariş panelinden beden ve baskı alanını seçiniz</li>
-                        <li>Sizlere maksimum 30x30 cm baskı alanı sunar</li>
-                        <li>Metin, logo, vektörel tasarım ve resim baskı yapılabilir</li>
                         <li>30°C’de kısa programda ve tersten yıkanmalıdır</li>
                         <li>Kuru temizlemeye ve kurutma makinesine uygun değildir</li>
-                        <li>Düşük ısıda ve tersten ütüleme yapınız</li>
-                        <li>Hediyelik ürün veya promosyon olarak da tercih edilebilir</li>
+                        <li>Düşük ısıda ve tersten ütüleme yapılmalıdır</li>
                     </ul>`
             },
             {
                 durum: "on", stok: 1, kategori: "Fiziksel Ürün",
-                ad: "Porselen Bella Beyaz Kupa Bardak",
-                puan: "135.000 Puan", komut: "!alkupabardak",
-                tukenmeZamani: "2024-05-15",
-                gorseller: ["https://i.hizliresim.com/onelstci.jpg", "https://i.hizliresim.com/jdnvgo9f.jpg", "https://i.hizliresim.com/bx5uveba.jpg"],
+                ad: "Kahverengi Peluş Ayıcık",
+                puan: "175.000 Puan", komut: "!alayıcık",
+                gorseller: ["https://i.hizliresim.com/jvm31sgk.jpg"],
                 ozellikler: `
                     <ul>
-                    <li>8 cm bardak ağız çapı</li>
-                        <li>9,5 cm yüksekliğe sahiptir</li>
-                        <li>3,5 cm kulp parmak açıklığı</li>
-                        <li>Yaklaşık 325 ml iç hacim sunar</li>
-                        <li>7.5x20 cm baskı alanı bulunur</li>
-                        <li>Estetik ve dekoratif görünüme sahiptir</li>
-                        <li>Beyaz renkte yüksek kalite seramik malzeme</li>
-                        <li>Sağlığa zararlı kimyasallar içermeyen yapıdadır</li>
-                        <li>Çamaşır makinesinde yıkamaya uygun değildir</li>
-                        <li>30°C ılık su ve elde yıkamanız daha uzun süreler dayanan baskılar sağlar</li>
-                        <li>CMYK süblimasyon baskı sayesinde uzun yıllar renklerini kaybetmez</li>
+                        <li>Renk: Kahverengi</li>
+                        <li>22x12x20 cm boyutlarda</li>
+                        <li>Sağlığa zararsız peluş kumaş</li>
+                        <li>Kaliteli elyaf dolgu malzemesi</li>
+                        <li>Sempatik ve tatlı bir hediyelik ürün</li>
+                        <li>Baskı yapılan alan ılık suda ve elde yıkanmalıdır</li>
                     </ul>`
             },
             {
                 durum: "on", stok: 1, kategori: "Fiziksel Ürün",
-                ad: "Paslanmaz Çelik Siyah Termos 500Ml",
-                puan: "280.000 Puan", komut: "!altermos",
-                tukenmeZamani: "2024-05-15",
-                gorseller: ["https://i.hizliresim.com/bsjhkxee.jpg"],
+                ad: "Siyah Powerbank",
+                puan: "235.000 Puan", komut: "!alpowerbank",
+                gorseller: ["https://i.hizliresim.com/twgj1q8q.jpg"],
                 ozellikler: `
                     <ul>
-                        <li>Mat siyah renkte dış yüzey</li>
-                        <li>19,5 cm yükseklğe sahiptir</li>
-                        <li>8 cm ağız çapı bulunur</li>
-                        <li>7 cm çapta taban genişliği sunar</li>
-                        <li>Tabana doğru daralan formdadır</li>
-                        <li>500 ml geniş iç hacmiyle işlevseldir</li>
-                        <li>Ürünün iç yüzeyi SUS 304 paslanmaz çeliktir</li>
-                        <li>Ürünün dış yüzeyi SUS 201 paslanmaz çeliktir</li>
-                        <li>Sıcak ve soğuk içecekleriniz için ısı yalıtımı sağlar</li>
-                        <li>İçeceklerinizin ısısını yaklaşık 3-4 saat muhafaza eder</li>
-                        <li>Pratik aç-kapa ağızlık tasarımıyla rahat kullanım sağlar</li>
-                        <li>Ergonomik, estetik ve dekoratif bir görünüm sunar</li>
-                        <li>Kapak yapısı sızdırmaz nitelikte silikon contaya sahiptir</li>
-                        <li>Ağızlık kısmı tamamen sızdırmaz değildir, dik taşımanız önerilir</li>
-                        <li>Logo, vektörel tasarım ve isimleriniz lazer kazıma ile gövde üzerine işlenir</li>
-                        <li>Bireysel, hediyelik ve promosyon amaçlı kullanımlara uygundur</li>
-                        <li>Sağlığa zararlı BPA, fitalat ve azo boyar madde içermez</li>
-                        <li>Ürün bulaşık makinesinde yıkamaya uygun değildir</li>
-                        <li>Elde ve düşük sıcaklıkta yıkanmalıdır</li>
+                        <li>Siyah renktedir</li>
+                        <li>70x140x14 mm boyutlara sahiptir</li>
+                        <li>Uzun ömürlü lityum polimer batarya tipi</li>
+                        <li>Darbeye dirençli mat ABS plastik kasa tasarımı</li>
+                        <li>5V-2A mikro USB giriş bağlantı noktasına sahiptir</li>
+                        <li>2 adet USB-A çıkış portu ve 1 adet Type-C giriş portu bulunur</li>
+                        <li>Aynı anda iki cihazı birden şarj edebilmesiyle ön plana çıkmaktadır</li>
+                        <li>10.000 mAh pil kapasitesine sahip oldukça işlevsel bir güç bankasıdır</li>
+                        <li>4 adet LED ışığı sayesinde batarya durumunu kolayca görebilirsiniz</li>
+                        <li>Uçak yolculuğu güvenliği için gerekli seyahat sertifikası bulunur</li>
+                        <li>Ergonomik, estetik, dekoratif ve kompakt tasarımı ile fazla yer işgal etmez</li>
+                        <li>Kısa devre koruması ve aşırı akım koruması ile güvenli kullanım sunar</li>
+                        <li>Uluslararası RoHS, CE, FCC sertifikalarına sahip, nitelikli bir güç bankasıdır</li>
+                        <li>Ürünle birlikte 20 cm uzunlukta USB-Type C şarj kablosu gelmektedir</li>
+                        <li>Ev, ofis, iş yeri, seyahat, kamp ve açık alan etkinliklerinde tercih edilebilir</li>
                     </ul>`
             },
             {
-                durum: "off", stok: 1, kategori: "Fiziksel Ürün",
-                ad: "Porselen Bella Beyaz Kupa Bardak",
-                puan: "135.000 Puan", komut: "!alkupabardak",
-                tukenmeZamani: "2024-05-15",
-                gorseller: ["https://i.hizliresim.com/onelstci.jpg", "https://i.hizliresim.com/jdnvgo9f.jpg", "https://i.hizliresim.com/bx5uveba.jpg"],
+                durum: "on", stok: 1, kategori: "Fiziksel Ürün",
+                ad: "Siyah Masa Saati – Ahşap Standlı",
+                puan: "150.000 Puan", komut: "!alsaat",
+                gorseller: ["https://i.hizliresim.com/ddzlvrx3.jpg"],
                 ozellikler: `
                     <ul>
-                    <li>Renk: Beyaz</li>
-                        <li>8 cm bardak ağız çapı</li>
-                        <li>9,5 cm yüksekliğe sahiptir</li>
-                        <li>3,5 cm kulp parmak açıklığı</li>
-                        <li>Yaklaşık 325 ml iç hacim sunar</li>
-                        <li>7.5x20 cm baskı alanı bulunur</li>
-                        <li>Estetik ve dekoratif görünüme sahiptir</li>
-                        <li>Beyaz renkte yüksek kalite seramik malzeme</li>
-                        <li>Sağlığa zararlı kimyasallar içermeyen yapıdadır</li>
-                        <li>Çamaşır makinesinde yıkamaya uygun değildir</li>
-                        <li>30°C ılık su ve elde yıkamanız daha uzun süreler dayanan baskılar sağlar</li>
-                        <li>CMYK süblimasyon baskı sayesinde uzun yıllar renklerini kaybetmez</li>
+                        <li>20x10 cm</li>
+                        <li>Şık siyah masa saati tasarımı</li>
+                        <li>Ahşap masa standı</li>
+                        <li>Dekoratif ve kullanışlı tasarım</li>
+                        <li>Ev ve ofis kullanımına uygun</li>
+                        <li>Sevgiliye ve sevdiklerinize özel hediye alternatifi</li>
+                    </ul>`
+            },
+            {
+                durum: "on", stok: 1, kategori: "Fiziksel Ürün",
+                ad: "Keten Kalemlik / Makyaj Çantası",
+                puan: "110.000 Puan", komut: "!alcanta",
+                gorseller: ["https://i.hizliresim.com/0pjcynbp.jpg"],
+                ozellikler: `
+                    <ul>
+                        <li>Renk: Bej</li>
+                        <li>Ebat: 7x6x20 cm</li>
+                        <li>Baskı alanı: 7x12 cm</li>
+                        <li>Tek gözlü kullanım</li>
+                        <li>Bozulmaya dirençli fermuar</li>
+                        <li>Paslanmaz metal fermuar sapları</li>
+                        <li>Fermuar üzerinde şık kumaş detaylar</li>
+                        <li>Nefes alabilen ham keten kumaş</li>
+                        <li>Deformasyona dirençli yapıda</li>
+                        <li>Kullanışlı geniş iç hacim</li>
+                        <li>Non-toxic, astarsız kumaş yapısı</li>
+                        <li>Fonksiyonel kullanım özellikleri</li>
+                        <li>Kalıcı süblimasyon baskı tekniği</li>
                     </ul>`
             },
             
@@ -305,17 +355,18 @@
 
     <!-- MODAL 1: GÖRSEL BÜYÜTME GALERİSİ -->
     <div id="imageModal" class="modal-overlay" onclick="disariTiklaKapat(event)">
-        <div class="modal-content">
+        <div class="modal-content" onclick="event.stopPropagation()">
             <div class="modal-header">
                 <h3 id="modalTitle">Tasarım Önizleme</h3>
                 <button class="close-icon" onclick="modaliKapat()">✖</button>
             </div>
             
             <div class="modal-body">
-                <div class="main-slider">
+                <div class="main-slider" id="modalSlider">
                     <button class="nav-btn prev-btn" id="prevBtn" onclick="oncekiResim(event)">❮</button>
                     <img id="modalMainImg" src="" alt="Önizleme">
                     <button class="nav-btn next-btn" id="nextBtn" onclick="sonrakiResim(event)">❯</button>
+                    <div class="zoom-info">Fare tekerleği ile yakınlaştır</div>
                 </div>
                 <div class="thumbnail-list" id="modalThumbnails"></div>
             </div>
@@ -344,6 +395,7 @@
         let aktifGorselListesi = [];
         let aktifResimIndex = 0;
         let redirectTimer = null;
+        let zoomLevel = 1;
 
         // --- KATEGORİLERİ OTOMATİK OLUŞTURMA ---
         function kategorileriOlustur() {
@@ -365,7 +417,7 @@
 
         // STOK DURUMUNU KONTROL EDEN YARDIMCI FONKSİYON
         function stokDurumu(stokDegeri) {
-            if (stokDegeri === "Sınırsız") return 999999; // Sıralama için yüksek bir değer dönüyoruz
+            if (stokDegeri === "Sınırsız") return 999999; 
             return parseInt(stokDegeri) || 0;
         }
 
@@ -377,35 +429,27 @@
             let gosterilecekUrunler = URUNLER.filter(urun => urun.durum === "on");
 
             if (filtreKategori === 'Tükendi') {
-                // SADECE TÜKENENLERİ GÖSTER
                 gosterilecekUrunler = gosterilecekUrunler.filter(urun => stokDurumu(urun.stok) <= 0);
-
-                // TÜKENME TARİHİNE GÖRE SIRALA (En yeni tarihli en üstte)
                 gosterilecekUrunler.sort((a, b) => {
                     let tarihA = a.tukenmeZamani ? new Date(a.tukenmeZamani).getTime() : 0;
                     let tarihB = b.tukenmeZamani ? new Date(b.tukenmeZamani).getTime() : 0;
                     return tarihB - tarihA;
                 });
             } else {
-                // NORMAL FİLTRELEME
                 if (filtreKategori !== 'Tümü') {
                     gosterilecekUrunler = gosterilecekUrunler.filter(urun => urun.kategori === filtreKategori);
                 }
-
-                // SIRALAMA: Önce stok (stok>0 olanlar üstte)
                 gosterilecekUrunler.sort((a, b) => {
                     let stokA = stokDurumu(a.stok) > 0 ? 1 : 0;
                     let stokB = stokDurumu(b.stok) > 0 ? 1 : 0;
                     
                     if (stokA !== stokB) {
-                        return stokB - stokA; // Stokta olanı başa at
+                        return stokB - stokA; 
                     } else if (stokA === 0 && stokB === 0) {
-                        // İKİSİ DE TÜKENMİŞSE: En son tükeneni (en yeni tarihli olanı) en üstte göster
                         let tarihA = a.tukenmeZamani ? new Date(a.tukenmeZamani).getTime() : 0;
                         let tarihB = b.tukenmeZamani ? new Date(b.tukenmeZamani).getTime() : 0;
                         return tarihB - tarihA;
                     } else {
-                        // İKİSİ DE STOKTAYSA: Puana göre ucuzdan pahalıya sırala
                         let puanA = parseInt(a.puan.replace(/[^0-9]/g, '')) || 0;
                         let puanB = parseInt(b.puan.replace(/[^0-9]/g, '')) || 0;
                         return puanA - puanB;
@@ -427,7 +471,6 @@
                     thumbnailsHTML += '</div>';
                 }
 
-                // EĞER STOK "Sınırsız" İSE ALTINDAKİ YAZIYI GÖSTERME
                 let stokAlaniHTML = `
                     <div class="stock-wrapper">
                         <span class="stock-badge">Stok: ${urun.stok}</span>
@@ -446,7 +489,6 @@
                     tukendiOverlayHTML = `<div class="out-of-stock-overlay"><div class="out-of-stock-text">TÜKENDİ</div></div>`;
                 }
 
-                // KATEGORİYE ÖZEL TESLİMAT KUTULARI
                 let teslimatKutusuHTML = '';
                 if (urun.kategori === 'Fiziksel Ürün') {
                     const yazi = `Ürünü Kick sohbetimizden <b><span style="color:var(--weizend-red);">${urun.komut}</span></b> yazıp aldıktan sonra İnstagram <b><a href="https://instagram.com/weizendtv" target="_blank" style="color:var(--weizend-red);">@weizendtv</a></b> adresine mesaj atarak teslimat işlemlerini halledebilirsiniz.<br><br><b>🚚 Ne Zaman Kargolanır?</b><br>En geç 5 iş gününde kargoda. Tüm ürünlerde kargo ücreti bize aittir.`;
@@ -462,7 +504,6 @@
                 const actionBtnText = tukendiMi ? "TÜKENDİ" : "İşlem Yap";
                 const actionBtnClick = tukendiMi ? "" : `onclick="islemYapBaslat('${urun.komut}')"`;
 
-                // Kartın ana div'ine tükenenler için ek class veriyoruz
                 const kartClass = tukendiMi ? "card out-of-stock" : "card";
 
                 const kart = `
@@ -538,6 +579,24 @@
             thumbElement.classList.add('active');
         }
 
+        function zoomSifirla() {
+            zoomLevel = 1;
+            document.getElementById('modalMainImg').style.transform = `scale(1)`;
+        }
+
+        // Fare Tekerleği ile Zoom İşlevi
+        document.getElementById('modalSlider').addEventListener('wheel', function(e) {
+            e.preventDefault();
+            if (e.deltaY < 0) {
+                zoomLevel += 0.2; // Yakınlaştır
+            } else {
+                zoomLevel -= 0.2; // Uzaklaştır
+            }
+            // Zoom sınırları (1x ile 4x arası)
+            zoomLevel = Math.min(Math.max(1, zoomLevel), 4);
+            document.getElementById('modalMainImg').style.transform = `scale(${zoomLevel})`;
+        });
+
         function modaliAc(urunId, baslangicIndex) {
             const urun = URUNLER.find(u => u.orijinalId === urunId);
             if(!urun) return;
@@ -550,11 +609,13 @@
             document.getElementById('prevBtn').style.display = aktifGorselListesi.length > 1 ? 'flex' : 'none';
             document.getElementById('nextBtn').style.display = aktifGorselListesi.length > 1 ? 'flex' : 'none';
 
+            zoomSifirla(); // Modalı açarken zoomu sıfırla
             galeriyiGuncelle();
             document.getElementById('imageModal').style.display = 'flex';
         }
 
         function modaliKapat() {
+            zoomSifirla(); // Modalı kapatırken zoomu sıfırla
             document.getElementById('imageModal').style.display = 'none';
         }
 
@@ -568,6 +629,7 @@
             event.stopPropagation(); 
             aktifResimIndex--;
             if(aktifResimIndex < 0) aktifResimIndex = aktifGorselListesi.length - 1;
+            zoomSifirla();
             galeriyiGuncelle();
         }
 
@@ -575,11 +637,13 @@
             event.stopPropagation(); 
             aktifResimIndex++;
             if(aktifResimIndex >= aktifGorselListesi.length) aktifResimIndex = 0;
+            zoomSifirla();
             galeriyiGuncelle();
         }
 
         function modalResmeAtla(index) {
             aktifResimIndex = index;
+            zoomSifirla();
             galeriyiGuncelle();
         }
 
