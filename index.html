@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weizend Mağaza</title>
+    <style>
+        /* WEIZEND RENK PALETİ VE TASARIM AYARLARI */
+        :root {
+            --bg-color: #050505; /* Koyu siyah arka plan */
+            --card-bg: #111111; /* Kart arka planı */
+            --border-color: #2a2a2a; 
+            --weizend-red: #e31b1b; /* Logondaki kırmızı */
+            --weizend-white: #ffffff;
+            --text-muted: #a0a0a0;
+        }
+
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--weizend-white); margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        /* Header & Kategori */
+        header { text-align: center; padding: 20px 0; border-bottom: 2px solid var(--border-color); margin-bottom: 30px; }
+        .logo-img { width: 120px; border-radius: 50%; box-shadow: 0 0 20px rgba(227, 27, 27, 0.4); margin-bottom: 15px; }
+        header h1 { margin: 0; font-size: 2.2rem; color: var(--weizend-white); text-transform: uppercase; letter-spacing: 2px; }
+        header h1 span { color: var(--weizend-red); }
+        .ig-contact { display: inline-block; margin-top: 10px; padding: 8px 15px; background: rgba(227, 27, 27, 0.1); border: 1px solid var(--weizend-red); border-radius: 20px; color: var(--weizend-red); text-decoration: none; font-weight: bold; font-size: 0.9rem; }
+        
+        .category-filters { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; }
+        .filter-btn { background: var(--card-bg); border: 1px solid var(--border-color); color: var(--weizend-white); padding: 8px 20px; border-radius: 6px; cursor: pointer; transition: 0.3s; font-weight: 600; }
+        .filter-btn.active, .filter-btn:hover { background: var(--weizend-red); border-color: var(--weizend-red); }
+
+        /* Ürün Grid ve Kartlar */
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; }
+        .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; transition: 0.3s; display: flex; flex-direction: column; }
+        .card:hover { border-color: var(--weizend-red); transform: translateY(-5px); box-shadow: 0 5px 20px rgba(227, 27, 27, 0.15); }
+        
+        /* Resim Alanı */
+        .img-container { width: 100%; height: 250px; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 15px; position: relative; border: 1px solid var(--border-color);}
+        .img-container img { width: 100%; height: 100%; object-fit: contain; }
+        .category-badge { position: absolute; top: 10px; right: 10px; background: var(--weizend-red); color: white; padding: 4px 10px; font-size: 0.75rem; font-weight: bold; border-radius: 4px; }
+        
+        /* Ön/Arka Butonları */
+        .toggle-btns { display: flex; gap: 10px; margin-bottom: 15px; }
+        .toggle-btns button { flex: 1; background: #1a1a1a; border: 1px solid var(--border-color); color: var(--text-muted); padding: 8px; border-radius: 6px; cursor: pointer; transition: 0.3s; }
+        .toggle-btns button.active { background: rgba(227, 27, 27, 0.2); color: var(--weizend-red); border-color: var(--weizend-red); }
+
+        /* Ürün Bilgileri */
+        .product-title { margin: 0 0 10px 0; font-size: 1.3rem; }
+        .price-command { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); }
+        .price { color: var(--weizend-red); font-weight: bold; font-size: 1.1rem; }
+        .command { background: #000; border: 1px dashed var(--weizend-red); padding: 5px 10px; border-radius: 4px; color: var(--weizend-red); font-family: monospace; }
+
+        /* Açılır Kutular (Accordion) */
+        details { background: #1a1a1a; border-radius: 6px; margin-bottom: 8px; overflow: hidden; border: 1px solid var(--border-color); }
+        summary { padding: 12px 15px; cursor: pointer; font-weight: 600; color: var(--weizend-white); outline: none; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+        summary::-webkit-details-marker { display: none; }
+        summary::after { content: '+'; color: var(--weizend-red); font-weight: bold; font-size: 1.2rem; }
+        details[open] summary::after { content: '-'; }
+        .details-content { padding: 15px; background: var(--card-bg); font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; border-top: 1px solid var(--border-color); }
+    </style>
+</head>
+<body>
+
+    <!-- BURASI SENİN ÜRÜNLERİ EKLEYECEĞİN YER KANKA -->
+    <script>
+        const URUNLER = [
+            {
+                kategori: "Fiziksel Ürün",
+                ad: "Weizend Logo Hoodie",
+                puan: "45.000 Puan",
+                komut: "!al hoodie",
+                // İki resim eklersen butonlar otomatik çıkar
+                gorseller: [
+                    "https://picsum.photos/seed/on/500/500", // 1. Resim (Ön Yüz)
+                    "https://picsum.photos/seed/arka/500/500" // 2. Resim (Arka Yüz)
+                ],
+                aciklama: "Yüksek kaliteli %100 pamuklu siyah kapşonlu.",
+                detaylar: "Baskılar yıkamaya dayanıklıdır. Beden seçenekleri için DM'den bilgi veriniz."
+            },
+            {
+                kategori: "Dijital Kod",
+                ad: "100 TL Steam Cüzdan Kodu",
+                puan: "50.000 Puan",
+                komut: "!al steam100",
+                // Tek resim eklersen ön/arka butonları ÇIKMAZ
+                gorseller: [
+                    "https://picsum.photos/seed/steam/500/500"
+                ],
+                aciklama: "Steam hesabınıza bakiye yükleyebileceğiniz 100 TL değerinde dijital kod.",
+                detaylar: "Kod Türkiye (TR) hesaplarında geçerlidir."
+            },
+            {
+                kategori: "Turnuva",
+                ad: "Valorant 1v1 Turnuva Katılım Bileti",
+                puan: "10.000 Puan",
+                komut: "!al turnuva",
+                gorseller: [
+                    "https://picsum.photos/seed/valo/500/500"
+                ],
+                aciklama: "Düzenlenecek olan sıradaki 1vs1 Valorant turnuvasına direkt katılım hakkı sağlar.",
+                detaylar: "Turnuva tarihleri Discord sunucumuzdan duyurulacaktır."
+            }
+        ];
+    </script>
+    <!-- ÜRÜN EKLEME ALANI BİTTİ, AŞAĞISINA DOKUNMANA GEREK YOK -->
+
+    <div class="container">
+        <header>
+            <img src="https://i.hizliresim.com/fo5evkh4.png" alt="Weizend Logo" class="logo-img">
+            <h1>WEIZEND <span>MAĞAZA</span></h1>
+            <p style="color: var(--text-muted);">Yayını izleyerek biriktirdiğin puanlarla ödülleri kap!</p>
+            <a href="https://instagram.com/weizendtv" target="_blank" class="ig-contact">📸 İletişim: @weizendtv</a>
+        </header>
+
+        <div class="category-filters" id="filters">
+            <button class="filter-btn active" onclick="filtrele('Tümü')">Tümü</button>
+            <button class="filter-btn" onclick="filtrele('Fiziksel Ürün')">Fiziksel Ürün</button>
+            <button class="filter-btn" onclick="filtrele('Dijital Kod')">Dijital Kod</button>
+            <button class="filter-btn" onclick="filtrele('Turnuva')">Turnuva</button>
+        </div>
+
+        <div class="grid" id="urunGrid">
+            <!-- Ürünler buraya otomatik yüklenecek -->
+        </div>
+    </div>
+
+    <script>
+        const grid = document.getElementById('urunGrid');
+
+        function urunleriYukle(filtreKategori) {
+            grid.innerHTML = ''; // Önce ekranı temizle
+            
+            URUNLER.forEach((urun, index) => {
+                if (filtreKategori !== 'Tümü' && urun.kategori !== filtreKategori) return;
+
+                // Kaç görsel olduğuna bakıyoruz
+                const tekGorselMi = urun.gorseller.length === 1;
+                
+                // Butonların HTML kodunu hazırlıyoruz (Eğer 2 resim varsa)
+                let butonHTML = '';
+                if (!tekGorselMi) {
+                    butonHTML = `
+                        <div class="toggle-btns">
+                            <button class="active" onclick="resimDegistir(this, '${urun.gorseller[0]}', 'on')">Ön Yüz</button>
+                            <button onclick="resimDegistir(this, '${urun.gorseller[1]}', 'arka')">Arka Yüz</button>
+                        </div>
+                    `;
+                }
+
+                const kart = `
+                    <div class="card">
+                        <div class="img-container">
+                            <span class="category-badge">${urun.kategori}</span>
+                            <img src="${urun.gorseller[0]}" alt="${urun.ad}">
+                        </div>
+                        
+                        ${butonHTML}
+
+                        <h3 class="product-title">${urun.ad}</h3>
+                        <div class="price-command">
+                            <span class="price">${urun.puan}</span>
+                            <span class="command">${urun.komut}</span>
+                        </div>
+
+                        <details>
+                            <summary>Ürün Açıklaması</summary>
+                            <div class="details-content">${urun.aciklama}</div>
+                        </details>
+                        
+                        <details>
+                            <summary>Ürün Detayları</summary>
+                            <div class="details-content">${urun.detaylar}</div>
+                        </details>
+
+                        <details>
+                            <summary>Teslimat Bilgileri</summary>
+                            <div class="details-content">
+                                Ürünü Kick sohbetinden komut ile satın aldıktan sonra Instagram <b><a href="https://instagram.com/weizendtv" target="_blank" style="color:var(--weizend-red);">@weizendtv</a></b> adresine mesaj atarak teslimat veya kod işlemlerini halledebilirsiniz.
+                            </div>
+                        </details>
+                    </div>
+                `;
+                grid.innerHTML += kart;
+            });
+        }
+
+        // Resim değiştirme (Ön/Arka) fonksiyonu
+        function resimDegistir(buton, resimUrl, yon) {
+            // Butonun bulunduğu kartı bul
+            const card = buton.closest('.card');
+            // Kartın içindeki resmi bul ve URL'sini değiştir
+            const img = card.querySelector('.img-container img');
+            img.src = resimUrl;
+
+            // Tıklanan butonu aktif (kırmızı) yap, diğerini pasif yap
+            const butonlar = card.querySelectorAll('.toggle-btns button');
+            butonlar.forEach(b => b.classList.remove('active'));
+            buton.classList.add('active');
+        }
+
+        // Kategori filtreleme fonksiyonu
+        function filtrele(kategori) {
+            // Buton renklerini ayarla
+            const butonlar = document.querySelectorAll('.filter-btn');
+            butonlar.forEach(b => {
+                if (b.innerText === kategori) b.classList.add('active');
+                else b.classList.remove('active');
+            });
+            // Ürünleri yeniden yükle
+            urunleriYukle(kategori);
+        }
+
+        // Sayfa açıldığında tüm ürünleri yükle
+        urunleriYukle('Tümü');
+    </script>
+</body>
+</html>
