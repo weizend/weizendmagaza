@@ -22,7 +22,13 @@
         header { text-align: center; padding: 20px 0; border-bottom: 2px solid var(--border-color); margin-bottom: 30px; }
         .logo-img { width: 120px; border-radius: 50%; box-shadow: 0 0 20px rgba(227, 27, 27, 0.4); margin-bottom: 15px; }
         header h1 { margin: 0; font-size: 2.2rem; color: var(--weizend-white); text-transform: uppercase; letter-spacing: 2px; }
-        .ig-contact { display: inline-block; margin-top: 10px; padding: 8px 15px; background: rgba(227, 27, 27, 0.1); border: 1px solid var(--weizend-red); border-radius: 20px; color: var(--weizend-red); text-decoration: none; font-weight: bold; font-size: 0.9rem; }
+        .header-buttons { display: flex; justify-content: center; gap: 15px; margin-top: 15px; flex-wrap: wrap; }
+        
+        .ig-contact { display: inline-block; padding: 8px 15px; background: rgba(227, 27, 27, 0.1); border: 1px solid var(--weizend-red); border-radius: 20px; color: var(--weizend-red); text-decoration: none; font-weight: bold; font-size: 0.9rem; transition: 0.3s; }
+        .ig-contact:hover { background: rgba(227, 27, 27, 0.3); }
+        
+        .wcoin-btn { display: inline-block; padding: 8px 15px; background: var(--weizend-red); border: 1px solid var(--weizend-red); border-radius: 20px; color: var(--weizend-white); text-decoration: none; font-weight: bold; font-size: 0.9rem; transition: 0.3s; box-shadow: 0 0 10px rgba(227, 27, 27, 0.4); }
+        .wcoin-btn:hover { background: #c21414; transform: translateY(-2px); box-shadow: 0 4px 15px rgba(227, 27, 27, 0.6); }
         
         .category-filters { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; }
         .filter-btn { background: var(--card-bg); border: 1px solid var(--border-color); color: var(--weizend-white); padding: 8px 20px; border-radius: 6px; cursor: pointer; transition: 0.3s; font-weight: 600; }
@@ -469,7 +475,12 @@
             <img src="https://i.hizliresim.com/fo5evkh4.png" alt="Weizend Logo" class="logo-img">
             <h1>WEİZEND MAĞAZA</h1>
             <p style="color: var(--text-muted);">Yayını izleyerek kazandığın puanlarla ödülleri kap!</p>
-            <a href="https://instagram.com/weizendtv" target="_blank" class="ig-contact">📸 İletişim: @weizendtv</a>
+            
+            <!-- Butonlar -->
+            <div class="header-buttons">
+                <a href="https://weizend.github.io/weizendbilgi/" class="ig-contact">❓ Wcoin Nasıl Kazanılır?</a>
+                <a href="https://instagram.com/weizendtv" target="_blank" class="ig-contact">📸 İletişim: @weizendtv</a>
+            </div>
         </header>
 
         <!-- KATEGORİ BUTONLARI OTOMATİK OLUŞTURULACAK -->
