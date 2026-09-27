@@ -7,15 +7,25 @@
     <style>
         /* WEIZEND RENK PALETİ VE TASARIM AYARLARI */
         :root {
-            --bg-color: #050505; 
-            --card-bg: #111111; 
-            --border-color: #2a2a2a; 
-            --weizend-red: #e31b1b; 
-            --weizend-white: #ffffff;
-            --text-muted: #a0a0a0;
-        }
+    --bg-color: #050505; 
+    --card-bg: rgba(17, 17, 17, 0.70); /* Arka planı gösterecek saydamlık eklendi */
+    --border-color: rgba(42, 42, 42, 0.8); 
+    --weizend-red: #e31b1b; 
+    --weizend-white: #ffffff;
+    --text-muted: #a0a0a0;
+}
 
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--weizend-white); margin: 0; padding: 20px; }
+        body { 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    background-color: var(--bg-color); 
+    background-image: url('GORSELIN_LINKI_BURAYA_GELECEK.jpg'); /* Görsel eklendi */
+    background-size: cover; /* Görselin tüm ekranı kaplamasını sağlar */
+    background-attachment: fixed; /* Aşağı kaydırınca arka planın sabit kalmasını sağlar */
+    background-position: center;
+    color: var(--weizend-white); 
+    margin: 0; 
+    padding: 20px; 
+}
         .container { max-width: 1200px; margin: 0 auto; }
         
         /* Header & Kategori */
@@ -38,7 +48,17 @@
 
         /* Ürün Grid ve Kartlar */
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; }
-        .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; transition: 0.3s; display: flex; flex-direction: column; }
+        .card { 
+    background: var(--card-bg); 
+    border: 1px solid var(--border-color); 
+    border-radius: 12px; 
+    padding: 20px; 
+    transition: 0.3s; 
+    display: flex; 
+    flex-direction: column;
+    backdrop-filter: blur(8px); /* Cam bulanıklığı efekti */
+    -webkit-backdrop-filter: blur(8px);
+}
         .card:hover { border-color: var(--weizend-red); transform: translateY(-5px); box-shadow: 0 5px 20px rgba(227, 27, 27, 0.15); }
         .card.out-of-stock { opacity: 0.75; }
         
