@@ -7,43 +7,15 @@
     <style>
         /* WEIZEND RENK PALETİ VE TASARIM AYARLARI */
         :root {
-            --bg-dark: #0a0a0a;
-            --bg-card: rgba(21, 21, 21, 0.85); /* Kart arka planı biraz saydam */
-            --border-color: #222222; 
-            --weizend-red: #e60000; 
+            --bg-color: #050505; 
+            --card-bg: #111111; 
+            --border-color: #2a2a2a; 
+            --weizend-red: #e31b1b; 
             --weizend-white: #ffffff;
-            --text-muted: #b3b3b3;
-            --glow-red: rgba(230, 0, 0, 0.4);
+            --text-muted: #a0a0a0;
         }
 
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background: linear-gradient(180deg, #1a0505 0%, var(--bg-dark) 100%); /* Rehber sitendeki geçişli arka plan */
-            background-attachment: fixed; /* Arka plan sabit kalsın */
-            color: var(--weizend-white); 
-            margin: 0; 
-            padding: 20px; 
-            min-height: 100vh; /* Tam ekran yüksekliği */
-        }/* WEIZEND RENK PALETİ VE TASARIM AYARLARI */
-        :root {
-            --bg-dark: #0a0a0a;
-            --bg-card: rgba(21, 21, 21, 0.85); /* Kart arka planı biraz saydam */
-            --border-color: #222222; 
-            --weizend-red: #e60000; 
-            --weizend-white: #ffffff;
-            --text-muted: #b3b3b3;
-            --glow-red: rgba(230, 0, 0, 0.4);
-        }
-
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background: linear-gradient(180deg, #1a0505 0%, var(--bg-dark) 100%); /* Rehber sitendeki geçişli arka plan */
-            background-attachment: fixed; /* Arka plan sabit kalsın */
-            color: var(--weizend-white); 
-            margin: 0; 
-            padding: 20px; 
-            min-height: 100vh; /* Tam ekran yüksekliği */
-        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--weizend-white); margin: 0; padding: 20px; }
         .container { max-width: 1200px; margin: 0 auto; }
         
         /* Header & Kategori */
@@ -66,17 +38,7 @@
 
         /* Ürün Grid ve Kartlar */
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; }
-        .card { 
-            background: var(--bg-card); 
-            border: 1px solid var(--border-color); 
-            border-radius: 12px; 
-            padding: 20px; 
-            transition: all 0.3s ease; 
-            display: flex; 
-            flex-direction: column; 
-            backdrop-filter: blur(5px); /* Kartın arkasını hafif bulanık yapar */
-            -webkit-backdrop-filter: blur(5px);
-        }
+        .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; transition: 0.3s; display: flex; flex-direction: column; }
         .card:hover { border-color: var(--weizend-red); transform: translateY(-5px); box-shadow: 0 5px 20px rgba(227, 27, 27, 0.15); }
         .card.out-of-stock { opacity: 0.75; }
         
