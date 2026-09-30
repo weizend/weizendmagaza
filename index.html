@@ -646,7 +646,7 @@
             <div id="verificationWaitCounter" class="verify-wait-counter">0 sn</div>
             <div id="verificationWaitStep" class="verify-wait-step">1 · Hesap bilgilerinize erişiliyor...</div>
             <div class="verify-progress"><div id="verificationProgressBar" class="verify-progress-bar"></div></div>
-            <div id="verificationWaitNote" class="verify-wait-note">Doğrulama işlemi ortalama 30–60 saniye sürebilir. Lütfen bu pencere açıkken bekleyiniz.</div>
+            <div id="verificationWaitNote" class="verify-wait-note">Doğrulama kontrolü en fazla 60 saniye sürecektir. Lütfen bekleyiniz.</div>
         </div>
     </div>
 
@@ -668,6 +668,7 @@
         const AUTH_STATE_KEY = 'weizend_market_auth_state_secure_v2';
         const PROFILE_CACHE_KEY = 'weizend_market_profile_secure_v2';
         const VERIFY_WAIT_STATE_KEY = 'weizend_market_verify_wait_v1';
+        const VERIFY_WAIT_MAX_SECONDS = 60;
         const PROFILE_REFRESH_MS = 1500;
         const AUTH_REFRESH_MS = 1000;
         let activationPollTimer = null;
@@ -1220,6 +1221,14 @@
                 return;
             }
 
+            const elapsed = Math.max(0, Math.floor((Date.now() - Number(state.startedAt)) / 1000));
+
+            // Sayfa yenilense bile toplam bekleme süresi 60 saniyeyi geçmez.
+            if (elapsed >= VERIFY_WAIT_MAX_SECONDS) {
+                handleVerificationWaitTimeout();
+                return;
+            }
+
             // Doğrulama isteği hâlâ varsa sayaç kaldığı yerden devam eder.
             if (getAuthState()) {
                 openVerificationWaitModal();
@@ -1233,12 +1242,19 @@
             if (!state) return;
 
             const elapsed = Math.max(0, Math.floor((Date.now() - Number(state.startedAt)) / 1000));
+
+            // Kullanıcı hiçbir zaman bu pencerede sonsuza kadar kilitli kalmasın.
+            if (elapsed >= VERIFY_WAIT_MAX_SECONDS) {
+                handleVerificationWaitTimeout();
+                return;
+            }
+
             const counter = document.getElementById('verificationWaitCounter');
             const step = document.getElementById('verificationWaitStep');
             const note = document.getElementById('verificationWaitNote');
             const bar = document.getElementById('verificationProgressBar');
 
-            counter.innerText = `${elapsed} sn`;
+            counter.innerText = `${elapsed} / ${VERIFY_WAIT_MAX_SECONDS} sn`;
 
             if (elapsed < 10) {
                 step.innerText = '1 · Hesap bilgilerinize erişiliyor...';
@@ -1254,12 +1270,26 @@
                 step.innerText = 'Hesabınız doğrulanıyor · BotRix yanıtı bekleniyor...';
             }
 
-            const progress = Math.min(95, Math.max(5, (elapsed / 60) * 95));
+            const progress = Math.min(98, Math.max(5, (elapsed / VERIFY_WAIT_MAX_SECONDS) * 100));
             bar.style.width = `${progress}%`;
 
-            note.innerText = elapsed < 60
-                ? 'Doğrulama işlemi ortalama 30–60 saniye sürebilir. Lütfen bekleyiniz. Doğrulama tamamlanır tamamlanmaz bu pencere otomatik kapanacaktır.'
-                : 'İşlem 1 dakikayı geçti. BotRix yanıtı bekleniyor; pencere doğrulama tamamlandığında otomatik kapanacaktır.';
+            note.innerText = `Doğrulama kontrolü en fazla ${VERIFY_WAIT_MAX_SECONDS} saniye sürer. Doğrulama gelirse pencere anında kapanır; gelmezse kodu Kick sohbetine göndermen istenir.`;
+        }
+
+        function handleVerificationWaitTimeout() {
+            if (verificationFinishRunning) return;
+
+            closeVerificationWaitModal(true);
+
+            const authState = getAuthState();
+            if (authState) {
+                showVerificationActivation(authState.username, authState.code);
+                document.getElementById('accessTitle').innerText = '⚠️ Doğrulama Henüz Gelmedi';
+                document.getElementById('accessText').innerHTML = `60 saniye içinde doğrulama yanıtı alınamadı. Kick sohbetine <b>!doğrula ${escapeHtml(authState.code)}</b> komutunu gönderip tekrar deneyebilirsin. Sistem arka planda doğrulamayı kontrol etmeye devam eder.`;
+                showStatusToast('⏱️ 60 saniye doldu · Doğrulama kodunu Kick sohbetine gönder', 5000);
+            } else {
+                showUsernameForm('⏱️ 60 saniye içinde doğrulama alınamadı. Yeni doğrulama kodu oluşturup Kick sohbetine gönderebilirsin.');
+            }
         }
 
         async function finishVerificationWaitModal() {
