@@ -46,7 +46,6 @@
         .wallet-stat-label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; }
         .wallet-stat-value { display: block; font-size: 1rem; font-weight: 700; color: var(--weizend-white); }
         .wallet-stat-value.level { color: #ffd166; }
-        .wallet-stat-value.watchtime { color: #7ee787; }
         .wallet-source-note { margin-top: 9px; font-size: 0.72rem; color: #6f6f6f; }
         .access-card { display: none; max-width: 620px; margin: 24px auto 10px; background: linear-gradient(145deg, #111 0%, #090909 100%); border: 1px solid var(--weizend-red); border-radius: 16px; padding: 22px; text-align: center; box-shadow: 0 8px 30px rgba(227,27,27,0.12); }
         .access-card h3 { margin: 0 0 8px; font-size: 1.25rem; }
@@ -79,7 +78,7 @@
             .wallet-info { min-width: 0; }
             .w-username { font-size: 1.1rem; }
             .w-balance { font-size: 1rem; flex-wrap: wrap; row-gap: 6px; }
-            .wallet-stat { min-width: calc(50% - 5px); }
+            .wallet-stat { min-width: 100%; }
             .logout-btn { padding: 9px 10px; font-size: .82rem; }
         }
 
@@ -167,6 +166,29 @@
         .redirect-timer { color: var(--weizend-white); font-size: 1rem; margin-top: 15px; }
         .cancel-btn { background: #222; color: var(--text-muted); border: 1px solid var(--border-color); padding: 10px 25px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 20px; width: 100%; }
         .cancel-btn:hover { background: #333; color: white; }
+
+        /* DOĞRULAMA KONTROL PENCERESİ */
+        .verify-wait-overlay {
+            display: none; position: fixed; inset: 0; z-index: 5000;
+            background: rgba(0,0,0,.97); align-items: center; justify-content: center;
+            padding: 20px; box-sizing: border-box;
+        }
+        .verify-wait-card {
+            width: 100%; max-width: 520px; background: linear-gradient(145deg,#111,#080808);
+            border: 1px solid var(--weizend-red); border-radius: 18px; padding: 28px 22px;
+            text-align: center; box-shadow: 0 12px 45px rgba(227,27,27,.22);
+        }
+        .verify-wait-spinner {
+            width: 52px; height: 52px; border-radius: 50%; margin: 0 auto 16px;
+            border: 4px solid #292929; border-top-color: var(--weizend-red);
+            animation: verifySpin 1s linear infinite;
+        }
+        @keyframes verifySpin { to { transform: rotate(360deg); } }
+        .verify-wait-counter { font-size: 2rem; font-weight: 900; color: var(--weizend-red); margin: 10px 0 8px; }
+        .verify-wait-step { font-size: 1.05rem; font-weight: 800; color: #fff; min-height: 28px; }
+        .verify-wait-note { margin-top: 12px; color: var(--text-muted); line-height: 1.55; font-size: .9rem; }
+        .verify-progress { height: 8px; border-radius: 999px; background: #222; overflow: hidden; margin-top: 18px; }
+        .verify-progress-bar { height: 100%; width: 0%; background: var(--weizend-red); transition: width .35s ease; }
     </style>
 </head>
 <body>
@@ -541,10 +563,6 @@
                                     <span class="wallet-stat-label">⭐ Level</span>
                                     <span class="wallet-stat-value level" id="walletLevel">-</span>
                                 </div>
-                                <div class="wallet-stat">
-                                    <span class="wallet-stat-label">⏱ İzleme Süresi</span>
-                                    <span class="wallet-stat-value watchtime" id="walletWatchtime">-</span>
-                                </div>
                             </div>
                             <div class="wallet-source-note">BotRix hesabından alınan bilgiler · Bakiye otomatik güncellenir</div>
                         </div>
@@ -620,6 +638,18 @@
         </div>
     </div>
 
+    <!-- MODAL 3: KAPATILAMAYAN DOĞRULAMA KONTROL PENCERESİ -->
+    <div id="verificationWaitModal" class="verify-wait-overlay" aria-live="polite" aria-modal="true" role="dialog">
+        <div class="verify-wait-card">
+            <div class="verify-wait-spinner" id="verificationWaitSpinner"></div>
+            <h3 style="margin:0 0 8px;">🔐 Doğrulama Kontrol Ediliyor</h3>
+            <div id="verificationWaitCounter" class="verify-wait-counter">0 sn</div>
+            <div id="verificationWaitStep" class="verify-wait-step">1 · Hesap bilgilerinize erişiliyor...</div>
+            <div class="verify-progress"><div id="verificationProgressBar" class="verify-progress-bar"></div></div>
+            <div id="verificationWaitNote" class="verify-wait-note">Doğrulama işlemi ortalama 30–60 saniye sürebilir. Lütfen bu pencere açıkken bekleyiniz.</div>
+        </div>
+    </div>
+
     <script>
         const grid = document.getElementById('urunGrid');
         let aktifKategori = 'Tümü';
@@ -637,6 +667,7 @@
         const SESSION_STORAGE_KEY = 'weizend_market_session_secure_v2';
         const AUTH_STATE_KEY = 'weizend_market_auth_state_secure_v2';
         const PROFILE_CACHE_KEY = 'weizend_market_profile_secure_v2';
+        const VERIFY_WAIT_STATE_KEY = 'weizend_market_verify_wait_v1';
         const PROFILE_REFRESH_MS = 1500;
         const AUTH_REFRESH_MS = 1000;
         let activationPollTimer = null;
@@ -646,6 +677,8 @@
         let marketInitialized = false;
         let marketAuthenticated = false;
         let sessionGraceUntil = 0;
+        let verificationWaitTimer = null;
+        let verificationFinishRunning = false;
 
         document.addEventListener("DOMContentLoaded", () => {
             // Eski doğrulama sistemiyle açılmış oturumları bu sürümde geçersiz say.
@@ -659,6 +692,7 @@
             urunleriYukle('Tümü');
             marketInitialized = true;
 
+            restoreVerificationWaitModal();
             initializeMarketAccount();
         });
 
@@ -666,21 +700,6 @@
             if (value === null || value === undefined || value === '') return null;
             const numeric = Number(String(value).replace(/[^0-9.-]/g, ''));
             return Number.isFinite(numeric) ? numeric : null;
-        }
-
-        function formatWatchtime(minutes) {
-            const totalMinutes = Number(minutes);
-            if (!Number.isFinite(totalMinutes) || totalMinutes < 0) return '-';
-
-            const days = Math.floor(totalMinutes / 1440);
-            const hours = Math.floor((totalMinutes % 1440) / 60);
-            const mins = Math.floor(totalMinutes % 60);
-            const parts = [];
-
-            if (days > 0) parts.push(`${days}g`);
-            if (hours > 0) parts.push(`${hours}s`);
-            if (mins > 0 || parts.length === 0) parts.push(`${mins}dk`);
-            return parts.join(' ');
         }
 
         function normalizeUsername(value) {
@@ -750,6 +769,7 @@
 
             currentUsername = username;
             marketAuthenticated = true;
+            closeVerificationWaitModal(true);
             document.getElementById('accessCard').style.display = 'none';
             document.getElementById('walletCard').style.display = 'flex';
             document.getElementById('marketContent').style.display = 'block';
@@ -758,7 +778,6 @@
             document.getElementById('walletAvatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=e31b1b&color=fff&bold=true&size=128`;
             document.getElementById('walletPoints').innerText = (points ?? 0).toLocaleString('tr-TR') + ' Puan';
             document.getElementById('walletLevel').innerText = level !== null ? level.toLocaleString('tr-TR') : '-';
-            document.getElementById('walletWatchtime').innerText = formatWatchtime(profile.watchtime);
 
             if (!marketInitialized) {
                 urunleriYukle('Tümü');
@@ -865,9 +884,9 @@
 
             const authState = getAuthState();
             if (authState) {
-                document.getElementById('accessTitle').innerText = '⏳ Doğrulama Kontrol Ediliyor';
-                document.getElementById('accessText').innerHTML = `BotRix'ten doğrulama yanıtı bekleniyor. <b>!doğrula</b> komutunu gönderdiysen lütfen birkaç saniye bekle; doğrulama tamamlanınca hesap otomatik açılacak.`;
-                await checkAuthStatus({ manual: true, silent: false });
+                openVerificationWaitModal();
+                startActivationPolling();
+                await checkAuthStatus({ manual: true, silent: true });
                 return;
             }
 
@@ -910,6 +929,7 @@
                 if (response.status === 410 || data?.status === 'expired') {
                     localStorage.removeItem(AUTH_STATE_KEY);
                     stopActivationPolling();
+                    closeVerificationWaitModal(true);
                     if (!silent) showUsernameForm('⏳ Doğrulama kodunun süresi doldu. Yeni kod oluşturmak için kullanıcı adını tekrar gönder.');
                     return false;
                 }
@@ -939,6 +959,10 @@
                 document.getElementById('accessTitle').innerText = '✅ Doğrulama Başarılı';
                 document.getElementById('accessText').innerHTML = 'Doğrulama işlemi başarılı. Hesap bilgileriniz yükleniyor...';
                 showStatusToast('✅ Doğrulama başarılı · Hesap bilgileriniz yükleniyor...', 3200);
+
+                if (isVerificationWaitModalActive()) {
+                    await finishVerificationWaitModal();
+                }
 
                 // Worker doğrulama yanıtıyla profil anlık geldiyse marketi hemen aç.
                 // Böylece ayrı bir profil isteğinin KV yayılımını beklemek zorunda kalmayız.
@@ -1067,6 +1091,7 @@
             localStorage.removeItem(SESSION_STORAGE_KEY);
             localStorage.removeItem(AUTH_STATE_KEY);
             localStorage.removeItem(PROFILE_CACHE_KEY);
+            localStorage.removeItem(VERIFY_WAIT_STATE_KEY);
 
             stopActivationPolling();
             stopProfileRefresh();
@@ -1095,6 +1120,7 @@
             localStorage.removeItem(SESSION_STORAGE_KEY);
             localStorage.removeItem(AUTH_STATE_KEY);
             localStorage.removeItem(PROFILE_CACHE_KEY);
+            localStorage.removeItem(VERIFY_WAIT_STATE_KEY);
             stopActivationPolling();
             stopProfileRefresh();
             currentUsername = '';
@@ -1141,6 +1167,7 @@
                 if (authState.expiresAt && Date.now() > authState.expiresAt) {
                     localStorage.removeItem(AUTH_STATE_KEY);
                     stopActivationPolling();
+                    closeVerificationWaitModal(true);
                     showUsernameForm('⏳ Doğrulama kodunun süresi doldu. Yeni kod oluşturmak için kullanıcı adını tekrar gönder.');
                     return;
                 }
@@ -1148,6 +1175,131 @@
                 const success = await checkAuthStatus({ silent: true });
                 if (success) stopActivationPolling();
             }, AUTH_REFRESH_MS);
+        }
+
+        function getVerificationWaitState() {
+            try {
+                const state = JSON.parse(localStorage.getItem(VERIFY_WAIT_STATE_KEY) || 'null');
+                if (!state || state.active !== true || !Number.isFinite(Number(state.startedAt))) return null;
+                return state;
+            } catch (_) {
+                return null;
+            }
+        }
+
+        function isVerificationWaitModalActive() {
+            return document.getElementById('verificationWaitModal')?.style.display === 'flex' || !!getVerificationWaitState();
+        }
+
+        function openVerificationWaitModal() {
+            let state = getVerificationWaitState();
+            if (!state) {
+                state = { active: true, startedAt: Date.now() };
+                localStorage.setItem(VERIFY_WAIT_STATE_KEY, JSON.stringify(state));
+            }
+
+            const modal = document.getElementById('verificationWaitModal');
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            updateVerificationWaitUI();
+
+            if (verificationWaitTimer) clearInterval(verificationWaitTimer);
+            verificationWaitTimer = setInterval(() => {
+                updateVerificationWaitUI();
+                if (getAuthState()) checkAuthStatus({ silent: true });
+            }, 1000);
+        }
+
+        function restoreVerificationWaitModal() {
+            const state = getVerificationWaitState();
+            if (!state) return;
+
+            // Oturum zaten oluşmuşsa bekleme penceresini geri getirme.
+            if (localStorage.getItem(SESSION_STORAGE_KEY)) {
+                closeVerificationWaitModal(true);
+                return;
+            }
+
+            // Doğrulama isteği hâlâ varsa sayaç kaldığı yerden devam eder.
+            if (getAuthState()) {
+                openVerificationWaitModal();
+            } else {
+                closeVerificationWaitModal(true);
+            }
+        }
+
+        function updateVerificationWaitUI() {
+            const state = getVerificationWaitState();
+            if (!state) return;
+
+            const elapsed = Math.max(0, Math.floor((Date.now() - Number(state.startedAt)) / 1000));
+            const counter = document.getElementById('verificationWaitCounter');
+            const step = document.getElementById('verificationWaitStep');
+            const note = document.getElementById('verificationWaitNote');
+            const bar = document.getElementById('verificationProgressBar');
+
+            counter.innerText = `${elapsed} sn`;
+
+            if (elapsed < 10) {
+                step.innerText = '1 · Hesap bilgilerinize erişiliyor...';
+            } else if (elapsed < 20) {
+                step.innerText = '1 · Hesap bilgileri için BotRix yanıtı bekleniyor...';
+            } else if (elapsed < 30) {
+                step.innerText = '2 · Puan bakiyeniz sorgulanıyor...';
+            } else if (elapsed < 40) {
+                step.innerText = '2 · Puan bakiyesi için BotRix yanıtı bekleniyor...';
+            } else if (elapsed < 50) {
+                step.innerText = '3 · Level bilgilerinize erişiliyor...';
+            } else {
+                step.innerText = 'Hesabınız doğrulanıyor · BotRix yanıtı bekleniyor...';
+            }
+
+            const progress = Math.min(95, Math.max(5, (elapsed / 60) * 95));
+            bar.style.width = `${progress}%`;
+
+            note.innerText = elapsed < 60
+                ? 'Doğrulama işlemi ortalama 30–60 saniye sürebilir. Lütfen bekleyiniz. Doğrulama tamamlanır tamamlanmaz bu pencere otomatik kapanacaktır.'
+                : 'İşlem 1 dakikayı geçti. BotRix yanıtı bekleniyor; pencere doğrulama tamamlandığında otomatik kapanacaktır.';
+        }
+
+        async function finishVerificationWaitModal() {
+            if (verificationFinishRunning) return;
+            verificationFinishRunning = true;
+
+            const modal = document.getElementById('verificationWaitModal');
+            if (modal) modal.style.display = 'flex';
+            const step = document.getElementById('verificationWaitStep');
+            const bar = document.getElementById('verificationProgressBar');
+            const spinner = document.getElementById('verificationWaitSpinner');
+
+            const successSteps = [
+                '✅ Hesap bilgilerinize erişildi',
+                '✅ Puan bakiyeniz sorgulandı',
+                '✅ Level bilgilerinize erişildi',
+                '✅ Hesabınız doğrulandı'
+            ];
+
+            for (let i = 0; i < successSteps.length; i++) {
+                step.innerText = successSteps[i];
+                bar.style.width = `${Math.min(100, 70 + (i + 1) * 7.5)}%`;
+                await delay(350);
+            }
+
+            if (spinner) spinner.style.animation = 'none';
+            await delay(450);
+            closeVerificationWaitModal(true);
+            verificationFinishRunning = false;
+        }
+
+        function closeVerificationWaitModal(clearState = false) {
+            if (verificationWaitTimer) {
+                clearInterval(verificationWaitTimer);
+                verificationWaitTimer = null;
+            }
+            if (clearState) localStorage.removeItem(VERIFY_WAIT_STATE_KEY);
+            const modal = document.getElementById('verificationWaitModal');
+            if (modal) modal.style.display = 'none';
+            document.body.style.overflow = '';
         }
 
         function copyVerifyAndRedirect() {
