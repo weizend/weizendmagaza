@@ -26,10 +26,60 @@
         
         .ig-contact { display: inline-block; padding: 8px 15px; background: rgba(227, 27, 27, 0.1); border: 1px solid var(--weizend-red); border-radius: 20px; color: var(--weizend-red); text-decoration: none; font-weight: bold; font-size: 0.9rem; transition: 0.3s; }
         .ig-contact:hover { background: rgba(227, 27, 27, 0.3); }
+
+        /* KULLANICI CÜZDANI (WALLET) TASARIMI */
+        .user-wallet-wrapper { margin-top: 25px; display: flex; justify-content: center; min-height: 80px; align-items: center;}
         
-        .wcoin-btn { display: inline-block; padding: 8px 15px; background: var(--weizend-red); border: 1px solid var(--weizend-red); border-radius: 20px; color: var(--weizend-white); text-decoration: none; font-weight: bold; font-size: 0.9rem; transition: 0.3s; box-shadow: 0 0 10px rgba(227, 27, 27, 0.4); }
-        .wcoin-btn:hover { background: #c21414; transform: translateY(-2px); box-shadow: 0 4px 15px rgba(227, 27, 27, 0.6); }
+        .login-btn-large { background: transparent; border: 2px solid var(--weizend-red); color: var(--weizend-white); padding: 12px 30px; border-radius: 30px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: 0.3s; box-shadow: 0 0 15px rgba(227, 27, 27, 0.2); display: flex; align-items: center; gap: 10px; }
+        .login-btn-large:hover { background: var(--weizend-red); box-shadow: 0 0 25px rgba(227, 27, 27, 0.5); transform: translateY(-2px); }
         
+        .wallet-card { background: linear-gradient(145deg, #111 0%, #0a0a0a 100%); border: 1px solid var(--weizend-red); border-radius: 15px; padding: 15px 25px; display: none; align-items: center; gap: 20px; box-shadow: 0 5px 25px rgba(227, 27, 27, 0.15); min-width: 300px; justify-content: space-between; transition: 0.3s; }
+        .wallet-card:hover { border-color: #ff3333; box-shadow: 0 5px 30px rgba(227, 27, 27, 0.3); }
+        .wallet-left { display: flex; align-items: center; gap: 15px; }
+        .wallet-avatar { width: 55px; height: 55px; border-radius: 50%; border: 2px solid var(--weizend-red); padding: 2px; object-fit: cover; background: #000; }
+        .wallet-info { display: flex; flex-direction: column; text-align: left; }
+        .w-username { font-size: 1.25rem; font-weight: bold; color: var(--weizend-white); margin: 0; letter-spacing: 1px; }
+        .w-balance { font-size: 1.1rem; color: var(--text-muted); font-weight: 600; margin-top: 5px; display: flex; align-items: center; gap: 6px; }
+        .w-balance-amount { color: var(--weizend-red); font-weight: bold; font-size: 1.2rem; }
+        .wallet-stats { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+        .wallet-stat { background: rgba(255,255,255,0.04); border: 1px solid var(--border-color); border-radius: 12px; padding: 8px 12px; min-width: 120px; box-sizing: border-box; }
+        .wallet-stat-label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; }
+        .wallet-stat-value { display: block; font-size: 1rem; font-weight: 700; color: var(--weizend-white); }
+        .wallet-stat-value.level { color: #ffd166; }
+        .wallet-stat-value.watchtime { color: #7ee787; }
+        .wallet-source-note { margin-top: 9px; font-size: 0.72rem; color: #6f6f6f; }
+        .access-card { display: none; max-width: 620px; margin: 24px auto 10px; background: linear-gradient(145deg, #111 0%, #090909 100%); border: 1px solid var(--weizend-red); border-radius: 16px; padding: 22px; text-align: center; box-shadow: 0 8px 30px rgba(227,27,27,0.12); }
+        .access-card h3 { margin: 0 0 8px; font-size: 1.25rem; }
+        .access-card p { margin: 0; color: var(--text-muted); line-height: 1.6; }
+        .access-form { display: flex; gap: 10px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
+        .access-input { flex: 1; min-width: 220px; max-width: 360px; background: #050505; color: #fff; border: 1px solid #333; border-radius: 10px; padding: 12px 14px; font-size: 1rem; outline: none; }
+        .access-input:focus { border-color: var(--weizend-red); box-shadow: 0 0 0 3px rgba(227,27,27,.12); }
+        .access-btn { background: var(--weizend-red); color: #fff; border: 0; border-radius: 10px; padding: 12px 18px; font-weight: 800; cursor: pointer; transition: .2s; }
+        .access-btn:hover { background: #c21414; transform: translateY(-1px); }
+        .access-btn.secondary { background: #1b1b1b; border: 1px solid #333; color: #ddd; }
+        .access-btn.secondary:hover { background: #252525; }
+        .access-command { display: inline-flex; align-items: center; justify-content: center; gap: 8px; margin-top: 16px; background: #050505; border: 2px dashed var(--weizend-red); color: var(--weizend-red); padding: 12px 22px; border-radius: 10px; font-family: monospace; font-size: 1.05rem; font-weight: 800; cursor: pointer; transition: .2s; user-select: none; }
+        .access-command:hover { background: rgba(227,27,27,.12); transform: translateY(-1px); }
+        .access-help { margin-top: 12px !important; font-size: .85rem; }
+        .account-name-hint { margin-top: 10px; color: #ddd; font-size: .88rem; }
+        .copy-toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%) translateY(25px); background: #111; border: 1px solid var(--weizend-red); color: #fff; padding: 12px 18px; border-radius: 10px; box-shadow: 0 8px 30px rgba(0,0,0,.45); opacity: 0; pointer-events: none; transition: .25s; z-index: 1200; font-weight: 700; text-align: center; }
+        .copy-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        
+        .refresh-btn { background: none; border: none; cursor: pointer; font-size: 1.1rem; color: var(--text-muted); transition: 0.3s; padding: 0; display: flex; align-items: center; justify-content: center; }
+        .refresh-btn:hover { color: var(--weizend-white); transform: rotate(180deg); }
+
+        .logout-icon { background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-muted); width: 40px; height: 40px; border-radius: 10px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+        .logout-icon:hover { background: var(--weizend-red); color: white; border-color: var(--weizend-red); }
+
+        @media (max-width: 768px) {
+            .wallet-card { width: 100%; min-width: 0; padding: 14px 16px; gap: 14px; }
+            .wallet-left { flex: 1; min-width: 0; }
+            .wallet-info { min-width: 0; }
+            .w-username { font-size: 1.1rem; }
+            .w-balance { font-size: 1rem; flex-wrap: wrap; row-gap: 6px; }
+            .wallet-stat { min-width: calc(50% - 5px); }
+        }
+
         .category-filters { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; }
         .filter-btn { background: var(--card-bg); border: 1px solid var(--border-color); color: var(--weizend-white); padding: 8px 20px; border-radius: 6px; cursor: pointer; transition: 0.3s; font-weight: 600; }
         .filter-btn.active, .filter-btn:hover { background: var(--weizend-red); border-color: var(--weizend-red); }
@@ -42,13 +92,11 @@
         .card:hover { border-color: var(--weizend-red); transform: translateY(-5px); box-shadow: 0 5px 20px rgba(227, 27, 27, 0.15); }
         .card.out-of-stock { opacity: 0.75; }
         
-        /* Resim Alanı & Büyütme Tıklaması */
         .img-container { width: 100%; height: 280px; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 10px; position: relative; border: 1px solid var(--border-color); cursor: pointer; }
         .img-container img { width: 100%; height: 100%; object-fit: contain; transition: 0.3s; }
         .img-container:hover img { transform: scale(1.03); }
         .category-badge { position: absolute; top: 10px; right: 10px; background: var(--weizend-red); color: white; padding: 4px 10px; font-size: 0.75rem; font-weight: bold; border-radius: 4px; z-index: 2; }
         
-        /* Stok ve Tükenmişlik Etiketleri */
         .stock-wrapper { margin-bottom: 15px; }
         .stock-badge { display: inline-block; background: rgba(0,0,0,0.8); border: 1px solid var(--weizend-red); color: var(--weizend-white); padding: 4px 10px; font-size: 0.8rem; font-weight: bold; border-radius: 4px; }
         .stock-info-text { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; font-style: italic; }
@@ -59,39 +107,34 @@
         .zoom-hint { position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.8); border: 1px solid var(--weizend-red); color: white; padding: 5px 10px; border-radius: 6px; font-size: 0.8rem; opacity: 0; transition: 0.3s; pointer-events: none; }
         .img-container:hover .zoom-hint { opacity: 1; }
 
-        /* Kart İçi Küçük Görseller (Thumbnails) */
         .card-thumbnails { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
         .card-thumbnails::-webkit-scrollbar { display: none; }
         .card-thumb { width: 55px; height: 55px; object-fit: contain; border-radius: 6px; border: 2px solid #222; cursor: pointer; opacity: 0.5; transition: 0.2s; background: #000; flex-shrink: 0; }
         .card-thumb:hover { opacity: 1; }
         .card-thumb.active { border-color: var(--weizend-red); opacity: 1; }
 
-        /* Ürün Bilgileri */
         .product-title { margin: 0 0 10px 0; font-size: 1.3rem; min-height: 55px;}
         .price-command { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); }
         .price { color: var(--weizend-red); font-weight: bold; font-size: 1.1rem; }
         .command { background: #000; border: 1px dashed var(--weizend-red); padding: 5px 10px; border-radius: 4px; color: var(--weizend-red); font-family: monospace; }
         .command.disabled { border-color: #555; color: #772ce8; text-decoration: line-through; }
 
-        /* İşlem Yap Butonu */
         .action-btn { width: 100%; background: var(--weizend-red); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.2s; margin-top: auto; margin-bottom: 12px; box-shadow: 0 4px 15px rgba(227, 27, 27, 0.3); }
         .action-btn:hover:not(.disabled) { background: #c21414; transform: translateY(-2px); }
         .action-btn.disabled { background: #333; color: #777; cursor: not-allowed; box-shadow: none; transform: none; }
 
-        /* Açılır Kutular (Accordion) */
         details { background: #1a1a1a; border-radius: 6px; margin-bottom: 8px; overflow: hidden; border: 1px solid var(--border-color); }
         summary { padding: 12px 15px; cursor: pointer; font-weight: 600; color: var(--weizend-white); outline: none; list-style: none; display: flex; justify-content: space-between; align-items: center; }
         summary::-webkit-details-marker { display: none; }
         summary::after { content: '+'; color: var(--weizend-red); font-weight: bold; font-size: 1.2rem; }
         details[open] summary::after { content: '-'; }
         .details-content { padding: 15px; background: var(--card-bg); font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; border-top: 1px solid var(--border-color); }
-        
         .details-content ul { margin: 0; padding-left: 20px; }
         .details-content li { margin-bottom: 6px; }
 
-        /* MODAL (AÇILIR GALERİ VE ZOOM) TASARIMI */
+        /* MODAL TASARIMLARI */
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.95); z-index: 999; justify-content: center; align-items: center; padding: 20px; }
-        .modal-content { background: var(--card-bg); width: 100%; max-width: 900px; /* Daha büyük ekran için genişletildi */ border-radius: 12px; border: 1px solid var(--border-color); display: flex; flex-direction: column; overflow: hidden;}
+        .modal-content { background: var(--card-bg); width: 100%; max-width: 900px; border-radius: 12px; border: 1px solid var(--border-color); display: flex; flex-direction: column; overflow: hidden;}
         
         .modal-header { padding: 15px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; z-index: 10; background: var(--card-bg); }
         .modal-header h3 { margin: 0; font-size: 1.2rem; }
@@ -99,10 +142,8 @@
         .close-icon:hover { color: var(--weizend-red); }
 
         .modal-body { padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        
-        /* Zoom Alanı */
-        .main-slider { position: relative; width: 100%; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; overflow: hidden; /* Zoom yapınca taşmaması için */ cursor: zoom-in;}
-        .main-slider img { width: 100%; max-height: 70vh; /* Ekranda daha büyük görünmesi için height artırıldı */ object-fit: contain; border-radius: 8px; transition: transform 0.15s ease-out; /* Yumuşak zoom efekti */ transform-origin: center; }
+        .main-slider { position: relative; width: 100%; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; overflow: hidden; cursor: zoom-in;}
+        .main-slider img { width: 100%; max-height: 70vh; object-fit: contain; border-radius: 8px; transition: transform 0.15s ease-out; transform-origin: center; }
         
         .zoom-info { position: absolute; bottom: 10px; background: rgba(0,0,0,0.7); padding: 5px 15px; border-radius: 15px; font-size: 0.8rem; color: var(--text-muted); pointer-events: none; z-index: 5;}
 
@@ -116,7 +157,6 @@
         .modal-thumb:hover { opacity: 1; }
         .modal-thumb.active { border-color: var(--weizend-red); opacity: 1; }
 
-        /* SATIN ALMA YÖNLENDİRME MODALI */
         .redirect-modal-body { padding: 30px; text-align: center; }
         .redirect-command-box { background: #000; border: 2px dashed var(--weizend-red); padding: 15px; border-radius: 8px; font-size: 1.4rem; color: var(--weizend-red); font-family: monospace; margin: 20px 0; font-weight: bold; }
         .redirect-timer { color: var(--weizend-white); font-size: 1rem; margin-top: 15px; }
@@ -129,7 +169,6 @@
     <script>
         // TÜM ÜRÜN TASLAKLARI
         const URUNLER = [
-            // --- FİZİKSEL ÜRÜNLER (YENİ LİSTE) ---
             {
                 durum: "on", stok: 1, kategori: "Fiziksel Ürün",
                 ad: "Siyah Bez Şapka",
@@ -481,13 +520,63 @@
                 <a href="https://weizend.github.io/weizendbilgi/" class="ig-contact">❓ Puan Nasıl Kazanılır?</a>
                 <a href="https://instagram.com/weizendtv" target="_blank" class="ig-contact">📸 İletişim: @weizendtv</a>
             </div>
+
+            <!-- BOTRIX !BANKA İLE AKTİFLEŞEN KULLANICI KARTI -->
+            <div class="user-wallet-wrapper">
+                <div id="walletCard" class="wallet-card">
+                    <div class="wallet-left">
+                        <img src="" id="walletAvatar" class="wallet-avatar" alt="Kullanıcı Avatarı">
+                        <div class="wallet-info">
+                            <h3 class="w-username" id="walletUsername">Kullanıcı</h3>
+                            <div class="w-balance">
+                                🪙 Bakiye: <span class="w-balance-amount" id="walletPoints">-</span>
+                            </div>
+                            <div class="wallet-stats">
+                                <div class="wallet-stat">
+                                    <span class="wallet-stat-label">⭐ Level</span>
+                                    <span class="wallet-stat-value level" id="walletLevel">-</span>
+                                </div>
+                                <div class="wallet-stat">
+                                    <span class="wallet-stat-label">⏱ İzleme Süresi</span>
+                                    <span class="wallet-stat-value watchtime" id="walletWatchtime">-</span>
+                                </div>
+                            </div>
+                            <div class="wallet-source-note">BotRix hesabından alınan market bilgileri</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="accessCard" class="access-card">
+                <h3 id="accessTitle">🔒 Weizend Market</h3>
+                <p id="accessText">Kick kullanıcı adını yazarak hesabını kontrol et.</p>
+
+                <div id="usernameForm" class="access-form">
+                    <input id="kickUsernameInput" class="access-input" type="text" autocomplete="off" maxlength="40" placeholder="Kick kullanıcı adın">
+                    <button class="access-btn" onclick="saveAndCheckUsername()">Hesabımı Kontrol Et</button>
+                </div>
+
+                <div id="bankActivation" style="display:none;">
+                    <div id="accountNameHint" class="account-name-hint"></div>
+                    <button class="access-command" onclick="copyBankAndRedirect()" title="!banka komutunu kopyala ve Kick sohbete git">📋 !banka</button>
+                    <p class="access-help">Yukarıdaki <b>!banka</b> alanına dokun. Komut kopyalanır ve Kick sohbeti anında yeni sekmede açılır. Sohbete <b>!banka</b> yazdıktan sonra bu sayfa hesabını otomatik kontrol eder ve marketi açar.</p>
+                    <div class="access-form">
+                        <button class="access-btn secondary" onclick="checkSavedAccount()">🔄 Sayfayı / Hesabı Yenile</button>
+                        <button class="access-btn secondary" onclick="changeUsername()">Kullanıcı Adını Değiştir</button>
+                    </div>
+                </div>
+            </div>
         </header>
 
-        <!-- KATEGORİ BUTONLARI OTOMATİK OLUŞTURULACAK -->
-        <div class="category-filters" id="filters"></div>
+        <div id="marketContent" style="display:none;">
+            <!-- KATEGORİ BUTONLARI -->
+            <div class="category-filters" id="filters"></div>
 
-        <div class="grid" id="urunGrid"></div>
+            <div class="grid" id="urunGrid"></div>
+        </div>
     </div>
+
+    <div id="copyToast" class="copy-toast">✅ !banka kopyalandı</div>
 
     <!-- MODAL 1: GÖRSEL BÜYÜTME GALERİSİ -->
     <div id="imageModal" class="modal-overlay" onclick="disariTiklaKapat(event)">
@@ -532,13 +621,304 @@
         let aktifResimIndex = 0;
         let redirectTimer = null;
         let zoomLevel = 1;
+        let currentUsername = "";
 
-        // --- KATEGORİLERİ OTOMATİK OLUŞTURMA ---
+        // --- BOTRIX !BANKA İLE MARKET HESABI AKTİFLEŞTİRME SİSTEMİ ---
+        const MARKET_WORKER = 'https://weizend-botrix.weizendtv.workers.dev';
+        const KICK_CHAT_URL = 'https://kick.com/weizend/chat';
+        const USER_STORAGE_KEY = 'weizend_market_username';
+        const PROFILE_CACHE_KEY = 'weizend_market_profile';
+        const WAITING_ACTIVATION_KEY = 'weizend_market_waiting_activation';
+        let activationPollTimer = null;
+        let accountCheckInFlight = false;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            initializeMarketAccount();
+        });
+
+        function readNumber(value) {
+            if (value === null || value === undefined || value === '') return null;
+            const numeric = Number(String(value).replace(/[^0-9.-]/g, ''));
+            return Number.isFinite(numeric) ? numeric : null;
+        }
+
+        function formatWatchtime(minutes) {
+            const totalMinutes = Number(minutes);
+            if (!Number.isFinite(totalMinutes) || totalMinutes < 0) return '-';
+
+            const days = Math.floor(totalMinutes / 1440);
+            const hours = Math.floor((totalMinutes % 1440) / 60);
+            const mins = Math.floor(totalMinutes % 60);
+            const parts = [];
+
+            if (days > 0) parts.push(`${days}g`);
+            if (hours > 0) parts.push(`${hours}s`);
+            if (mins > 0 || parts.length === 0) parts.push(`${mins}dk`);
+            return parts.join(' ');
+        }
+
+        function normalizeUsername(value) {
+            return String(value || '').trim().replace(/^@/, '');
+        }
+
+        function showAccessBase() {
+            document.getElementById('walletCard').style.display = 'none';
+            document.getElementById('marketContent').style.display = 'none';
+            document.getElementById('accessCard').style.display = 'block';
+        }
+
+        function showUsernameForm(message = 'Kick kullanıcı adını yazarak hesabını kontrol et.') {
+            showAccessBase();
+            document.getElementById('accessTitle').innerText = '🔒 Weizend Market';
+            document.getElementById('accessText').innerHTML = message;
+            document.getElementById('usernameForm').style.display = 'flex';
+            document.getElementById('bankActivation').style.display = 'none';
+
+            const saved = localStorage.getItem(USER_STORAGE_KEY) || '';
+            document.getElementById('kickUsernameInput').value = saved;
+        }
+
+        function showBankActivation(username) {
+            showAccessBase();
+            document.getElementById('accessTitle').innerText = '🏦 Hesabını Aktifleştir';
+            document.getElementById('accessText').innerHTML = 'Kick sohbete <b>!banka</b> yazın ve sayfayı yenileyin.';
+            document.getElementById('usernameForm').style.display = 'none';
+            document.getElementById('bankActivation').style.display = 'block';
+            document.getElementById('accountNameHint').innerHTML = `Kontrol edilen Kick hesabı: <b>${escapeHtml(username)}</b>`;
+        }
+
+        function showAccount(profile) {
+            const username = normalizeUsername(profile.username);
+            const points = readNumber(profile.points);
+            const level = readNumber(profile.level);
+
+            currentUsername = username;
+            document.getElementById('accessCard').style.display = 'none';
+            document.getElementById('walletCard').style.display = 'flex';
+            document.getElementById('marketContent').style.display = 'block';
+
+            document.getElementById('walletUsername').innerText = username;
+            document.getElementById('walletAvatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=e31b1b&color=fff&bold=true&size=128`;
+            document.getElementById('walletPoints').innerText = (points ?? 0).toLocaleString('tr-TR') + ' Puan';
+            document.getElementById('walletLevel').innerText = level !== null ? level.toLocaleString('tr-TR') : '-';
+            document.getElementById('walletWatchtime').innerText = formatWatchtime(profile.watchtime);
+
+            // Ürünler ilk kez hesap doğrulandıktan sonra yüklenir.
+            urunleriYukle('Tümü');
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#039;');
+        }
+
+        async function initializeMarketAccount() {
+            const savedUsername = normalizeUsername(localStorage.getItem(USER_STORAGE_KEY));
+            if (!savedUsername) {
+                showUsernameForm();
+                return;
+            }
+
+            document.getElementById('kickUsernameInput').value = savedUsername;
+
+            // Daha önce doğrulanmış kullanıcıyı cihazda hatırla ve marketi anında göster.
+            try {
+                const cached = JSON.parse(localStorage.getItem(PROFILE_CACHE_KEY) || 'null');
+                if (cached && normalizeUsername(cached.username).toLowerCase() === savedUsername.toLowerCase()) {
+                    showAccount(cached);
+                }
+            } catch (_) {}
+
+            await checkAccount(savedUsername, { silent: document.getElementById('marketContent').style.display === 'block' });
+        }
+
+        async function saveAndCheckUsername() {
+            const input = document.getElementById('kickUsernameInput');
+            const username = normalizeUsername(input.value);
+
+            if (!username) {
+                showUsernameForm('Lütfen Kick kullanıcı adını yaz.');
+                input.focus();
+                return;
+            }
+
+            localStorage.setItem(USER_STORAGE_KEY, username);
+            await checkAccount(username);
+        }
+
+        async function checkSavedAccount() {
+            const username = normalizeUsername(localStorage.getItem(USER_STORAGE_KEY));
+            if (!username) {
+                showUsernameForm();
+                return;
+            }
+            await checkAccount(username);
+        }
+
+        async function checkAccount(username, options = {}) {
+            if (accountCheckInFlight) return false;
+            accountCheckInFlight = true;
+            const silent = options.silent === true;
+
+            if (!silent) {
+                showAccessBase();
+                document.getElementById('accessTitle').innerText = '🔄 Hesap Kontrol Ediliyor';
+                document.getElementById('accessText').innerText = `${username} için BotRix hesabı kontrol ediliyor...`;
+                document.getElementById('usernameForm').style.display = 'none';
+                document.getElementById('bankActivation').style.display = 'none';
+            }
+
+            try {
+                const response = await fetch(`${MARKET_WORKER}/profile?user=${encodeURIComponent(username)}&_=${Date.now()}`, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' },
+                    cache: 'no-store'
+                });
+
+                let data = null;
+                try {
+                    data = await response.json();
+                } catch (_) {
+                    throw new Error('Sunucudan geçersiz cevap geldi.');
+                }
+
+                console.log('Weizend Market profil cevabı:', data);
+
+                if (response.status === 404 || data?.registered === false) {
+                    if (!silent || document.getElementById('marketContent').style.display !== 'block') {
+                        showBankActivation(username);
+                    }
+                    return false;
+                }
+
+                if (!response.ok || !data || data.success !== true || data.registered !== true) {
+                    throw new Error(data?.error || `HTTP ${response.status}`);
+                }
+
+                localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(data));
+                localStorage.removeItem(WAITING_ACTIVATION_KEY);
+                stopActivationPolling();
+                showAccount(data);
+                return true;
+            } catch (error) {
+                console.error('WEIZEND MARKET HESAP HATASI:', error);
+                if (!silent && document.getElementById('marketContent').style.display !== 'block') {
+                    showUsernameForm('⚠️ Hesap servisine şu an ulaşılamadı. Biraz sonra tekrar deneyebilirsin.');
+                }
+                return false;
+            } finally {
+                accountCheckInFlight = false;
+            }
+        }
+
+        function changeUsername() {
+            localStorage.removeItem(USER_STORAGE_KEY);
+            localStorage.removeItem(PROFILE_CACHE_KEY);
+            localStorage.removeItem(WAITING_ACTIVATION_KEY);
+            stopActivationPolling();
+            currentUsername = '';
+            showUsernameForm('Farklı bir Kick hesabı için kullanıcı adını yaz.');
+            setTimeout(() => document.getElementById('kickUsernameInput').focus(), 50);
+        }
+
+        function stopActivationPolling() {
+            if (activationPollTimer) {
+                clearInterval(activationPollTimer);
+                activationPollTimer = null;
+            }
+        }
+
+        function startActivationPolling(username) {
+            stopActivationPolling();
+            const normalized = normalizeUsername(username);
+            if (!normalized) return;
+
+            localStorage.setItem(WAITING_ACTIVATION_KEY, normalized);
+            const stopAt = Date.now() + (2 * 60 * 1000);
+
+            activationPollTimer = setInterval(async () => {
+                if (Date.now() > stopAt) {
+                    stopActivationPolling();
+                    return;
+                }
+                const success = await checkAccount(normalized, { silent: true });
+                if (success) stopActivationPolling();
+            }, 2000);
+        }
+
+        async function copyBankAndRedirect() {
+            const command = '!banka';
+            const username = normalizeUsername(localStorage.getItem(USER_STORAGE_KEY));
+
+            // Kullanıcı tıkladığı anda Kick sohbetini YENİ SEKMEDE aç.
+            // Popup engelleyiciler için bunu await kullanmadan önce yapıyoruz.
+            const kickTab = window.open(KICK_CHAT_URL, '_blank');
+            if (kickTab) {
+                try { kickTab.opener = null; } catch (_) {}
+            }
+
+            try {
+                await navigator.clipboard.writeText(command);
+            } catch (_) {
+                const temp = document.createElement('textarea');
+                temp.value = command;
+                temp.style.position = 'fixed';
+                temp.style.opacity = '0';
+                document.body.appendChild(temp);
+                temp.select();
+                document.execCommand('copy');
+                temp.remove();
+            }
+
+            const toast = document.getElementById('copyToast');
+            toast.innerText = kickTab
+                ? '✅ !banka kopyalandı · Kick sohbeti yeni sekmede açıldı'
+                : '✅ !banka kopyalandı · Açılır pencere engellendiyse Kick sohbetini manuel aç';
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 4500);
+
+            document.getElementById('accessText').innerHTML = 'Kick sohbetine <b>!banka</b> yaz. Bu sayfa hesabını otomatik kontrol ediyor; kayıt geldiği anda market kendiliğinden açılacak.';
+
+            if (username) {
+                startActivationPolling(username);
+            }
+        }
+
+        // Kullanıcı Kick sekmesinden market sekmesine döndüğünde anında tekrar kontrol et.
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                const username = normalizeUsername(localStorage.getItem(USER_STORAGE_KEY));
+                const waiting = normalizeUsername(localStorage.getItem(WAITING_ACTIVATION_KEY));
+                if (username && waiting && username.toLowerCase() === waiting.toLowerCase()) {
+                    checkAccount(username, { silent: true });
+                    startActivationPolling(username);
+                }
+            }
+        });
+
+        window.addEventListener('focus', () => {
+            const username = normalizeUsername(localStorage.getItem(USER_STORAGE_KEY));
+            const waiting = normalizeUsername(localStorage.getItem(WAITING_ACTIVATION_KEY));
+            if (username && waiting && username.toLowerCase() === waiting.toLowerCase()) {
+                checkAccount(username, { silent: true });
+            }
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' && document.activeElement?.id === 'kickUsernameInput') {
+                saveAndCheckUsername();
+            }
+        });
+
+        // --- MARKET GRID VE KATEGORİ İŞLEMLERİ ---
         function kategorileriOlustur() {
             const filterContainer = document.getElementById('filters');
             filterContainer.innerHTML = `<button class="filter-btn ${aktifKategori === 'Tümü' ? 'active' : ''}" onclick="filtrele('Tümü')">Tümü</button>`;
 
-            // Sadece "on" olan ürünlerin kategorilerini topla
             const benzersizKategoriler = [...new Set(URUNLER.filter(u => u.durum === "on").map(u => u.kategori))];
 
             benzersizKategoriler.forEach(kat => {
@@ -546,12 +926,10 @@
                 filterContainer.innerHTML += `<button class="filter-btn ${aktifClass}" onclick="filtrele('${kat}')">${kat}</button>`;
             });
 
-            // "TÜKENDİ" Butonunu En Sona Ekle
             const tukendiClass = aktifKategori === 'Tükendi' ? 'active' : '';
             filterContainer.innerHTML += `<button class="filter-btn tukenenler-btn ${tukendiClass}" onclick="filtrele('Tükendi')">Tükendi</button>`;
         }
 
-        // STOK DURUMUNU KONTROL EDEN YARDIMCI FONKSİYON
         function stokDurumu(stokDegeri) {
             if (stokDegeri === "Sınırsız") return 999999; 
             return parseInt(stokDegeri) || 0;
@@ -720,15 +1098,13 @@
             document.getElementById('modalMainImg').style.transform = `scale(1)`;
         }
 
-        // Fare Tekerleği ile Zoom İşlevi
         document.getElementById('modalSlider').addEventListener('wheel', function(e) {
             e.preventDefault();
             if (e.deltaY < 0) {
-                zoomLevel += 0.2; // Yakınlaştır
+                zoomLevel += 0.2; 
             } else {
-                zoomLevel -= 0.2; // Uzaklaştır
+                zoomLevel -= 0.2; 
             }
-            // Zoom sınırları (1x ile 4x arası)
             zoomLevel = Math.min(Math.max(1, zoomLevel), 4);
             document.getElementById('modalMainImg').style.transform = `scale(${zoomLevel})`;
         });
@@ -745,13 +1121,13 @@
             document.getElementById('prevBtn').style.display = aktifGorselListesi.length > 1 ? 'flex' : 'none';
             document.getElementById('nextBtn').style.display = aktifGorselListesi.length > 1 ? 'flex' : 'none';
 
-            zoomSifirla(); // Modalı açarken zoomu sıfırla
+            zoomSifirla();
             galeriyiGuncelle();
             document.getElementById('imageModal').style.display = 'flex';
         }
 
         function modaliKapat() {
-            zoomSifirla(); // Modalı kapatırken zoomu sıfırla
+            zoomSifirla(); 
             document.getElementById('imageModal').style.display = 'none';
         }
 
@@ -801,8 +1177,6 @@
             urunleriYukle(kategori);
         }
 
-        // Başlangıç
-        urunleriYukle('Tümü');
     </script>
 </body>
 </html>
