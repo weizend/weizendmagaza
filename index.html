@@ -541,7 +541,7 @@
                                     <span class="wallet-stat-value watchtime" id="walletWatchtime">-</span>
                                 </div>
                             </div>
-                            <div class="wallet-source-note">BotRix hesabından alınan market bilgileri</div>
+                            <div class="wallet-source-note">BotRix hesabından alınan bilgiler · Bakiye otomatik güncellenir</div>
                         </div>
                     </div>
                 </div>
@@ -630,7 +630,9 @@
         const PROFILE_CACHE_KEY = 'weizend_market_profile';
         const WAITING_ACTIVATION_KEY = 'weizend_market_waiting_activation';
         let activationPollTimer = null;
+        let profileRefreshTimer = null;
         let accountCheckInFlight = false;
+        let marketInitialized = false;
 
         document.addEventListener("DOMContentLoaded", () => {
             initializeMarketAccount();
@@ -681,7 +683,7 @@
         function showBankActivation(username) {
             showAccessBase();
             document.getElementById('accessTitle').innerText = '🏦 Hesabını Aktifleştir';
-            document.getElementById('accessText').innerHTML = 'Kick sohbete <b>!banka</b> yazın ve sayfayı yenileyin.';
+            document.getElementById('accessText').innerHTML = 'Kick sohbete <b>!banka</b> yazın. Sayfayı yenilemenize gerek yok; hesap kaydı geldiğinde market otomatik açılır.';
             document.getElementById('usernameForm').style.display = 'none';
             document.getElementById('bankActivation').style.display = 'block';
             document.getElementById('accountNameHint').innerHTML = `Kontrol edilen Kick hesabı: <b>${escapeHtml(username)}</b>`;
@@ -703,8 +705,13 @@
             document.getElementById('walletLevel').innerText = level !== null ? level.toLocaleString('tr-TR') : '-';
             document.getElementById('walletWatchtime').innerText = formatWatchtime(profile.watchtime);
 
-            // Ürünler ilk kez hesap doğrulandıktan sonra yüklenir.
-            urunleriYukle('Tümü');
+            // Ürünleri yalnızca bir kez oluştur. Arka plandaki bakiye kontrolleri sayfayı yeniden çizmez.
+            if (!marketInitialized) {
+                urunleriYukle('Tümü');
+                marketInitialized = true;
+            }
+
+            startProfileRefresh(username);
         }
 
         function escapeHtml(value) {
@@ -820,6 +827,8 @@
             localStorage.removeItem(PROFILE_CACHE_KEY);
             localStorage.removeItem(WAITING_ACTIVATION_KEY);
             stopActivationPolling();
+            stopProfileRefresh();
+            marketInitialized = false;
             currentUsername = '';
             showUsernameForm('Farklı bir Kick hesabı için kullanıcı adını yaz.');
             setTimeout(() => document.getElementById('kickUsernameInput').focus(), 50);
@@ -830,6 +839,28 @@
                 clearInterval(activationPollTimer);
                 activationPollTimer = null;
             }
+        }
+
+        function stopProfileRefresh() {
+            if (profileRefreshTimer) {
+                clearInterval(profileRefreshTimer);
+                profileRefreshTimer = null;
+            }
+        }
+
+        function startProfileRefresh(username) {
+            stopProfileRefresh();
+            const normalized = normalizeUsername(username);
+            if (!normalized) return;
+
+            // Market açıkken Worker'daki güncel bakiyeyi düzenli kontrol eder.
+            // Böylece !banka veya puan harcama komutu Worker'ı güncellediğinde
+            // siteyi yenilemeden bakiye birkaç saniye içinde değişir.
+            profileRefreshTimer = setInterval(() => {
+                if (document.visibilityState === 'visible') {
+                    checkAccount(normalized, { silent: true });
+                }
+            }, 4000);
         }
 
         function startActivationPolling(username) {
@@ -888,13 +919,17 @@
             }
         }
 
-        // Kullanıcı Kick sekmesinden market sekmesine döndüğünde anında tekrar kontrol et.
+        // Kullanıcı Kick sekmesinden markete döndüğünde hem aktivasyonu hem bakiyeyi anında kontrol et.
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {
                 const username = normalizeUsername(localStorage.getItem(USER_STORAGE_KEY));
                 const waiting = normalizeUsername(localStorage.getItem(WAITING_ACTIVATION_KEY));
-                if (username && waiting && username.toLowerCase() === waiting.toLowerCase()) {
+
+                if (username) {
                     checkAccount(username, { silent: true });
+                }
+
+                if (username && waiting && username.toLowerCase() === waiting.toLowerCase()) {
                     startActivationPolling(username);
                 }
             }
@@ -902,8 +937,7 @@
 
         window.addEventListener('focus', () => {
             const username = normalizeUsername(localStorage.getItem(USER_STORAGE_KEY));
-            const waiting = normalizeUsername(localStorage.getItem(WAITING_ACTIVATION_KEY));
-            if (username && waiting && username.toLowerCase() === waiting.toLowerCase()) {
+            if (username) {
                 checkAccount(username, { silent: true });
             }
         });
