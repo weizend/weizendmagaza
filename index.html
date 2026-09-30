@@ -558,10 +558,10 @@
 
                 <div id="bankActivation" style="display:none;">
                     <div id="accountNameHint" class="account-name-hint"></div>
-                    <button class="access-command" onclick="copyBankAndRedirect()" title="!banka komutunu kopyala ve Kick sohbete git">📋 !banka</button>
-                    <p class="access-help">Yukarıdaki <b>!banka</b> alanına dokun. Komut kopyalanır ve Kick sohbeti anında yeni sekmede açılır. Sohbete <b>!banka</b> yazdıktan sonra bu sayfa hesabını otomatik kontrol eder ve marketi açar.</p>
+                    <button id="bankCommandButton" class="access-command" onclick="copyBankAndRedirect()" title="Doğrulama komutunu kopyala ve Kick sohbete git">📋 !banka KOD</button>
+                    <p class="access-help">Yukarıdaki doğrulama komutuna dokun. Komut kopyalanır ve Kick sohbeti yeni sekmede açılır. <b>Komutu yalnızca sitede yazdığın Kick hesabı gönderebilir.</b> Doğrulama tamamlanınca market otomatik açılır.</p>
                     <div class="access-form">
-                        <button class="access-btn secondary" onclick="checkSavedAccount()">🔄 Sayfayı / Hesabı Yenile</button>
+                        <button class="access-btn secondary" onclick="checkSavedAccount()">🔄 Doğrulamayı Kontrol Et</button>
                         <button class="access-btn secondary" onclick="changeUsername()">Kullanıcı Adını Değiştir</button>
                     </div>
                 </div>
@@ -623,15 +623,19 @@
         let zoomLevel = 1;
         let currentUsername = "";
 
-        // --- BOTRIX !BANKA İLE MARKET HESABI AKTİFLEŞTİRME SİSTEMİ ---
+        // --- GÜVENLİ KICK HESABI DOĞRULAMA + MARKET OTURUM SİSTEMİ ---
         const MARKET_WORKER = 'https://weizend-botrix.weizendtv.workers.dev';
         const KICK_CHAT_URL = 'https://kick.com/weizend/chat';
         const USER_STORAGE_KEY = 'weizend_market_username';
+        const SESSION_STORAGE_KEY = 'weizend_market_session';
+        const AUTH_STATE_KEY = 'weizend_market_auth_state';
         const PROFILE_CACHE_KEY = 'weizend_market_profile';
-        const WAITING_ACTIVATION_KEY = 'weizend_market_waiting_activation';
+        const PROFILE_REFRESH_MS = 1500;
+        const AUTH_REFRESH_MS = 1500;
         let activationPollTimer = null;
         let profileRefreshTimer = null;
-        let accountCheckInFlight = false;
+        let profileCheckInFlight = false;
+        let authCheckInFlight = false;
         let marketInitialized = false;
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -663,13 +667,36 @@
             return String(value || '').trim().replace(/^@/, '');
         }
 
+        function escapeHtml(value) {
+            return String(value)
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#039;');
+        }
+
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function getAuthState() {
+            try {
+                const value = JSON.parse(localStorage.getItem(AUTH_STATE_KEY) || 'null');
+                if (!value || !value.challengeId || !value.code || !value.username) return null;
+                return value;
+            } catch (_) {
+                return null;
+            }
+        }
+
         function showAccessBase() {
             document.getElementById('walletCard').style.display = 'none';
             document.getElementById('marketContent').style.display = 'none';
             document.getElementById('accessCard').style.display = 'block';
         }
 
-        function showUsernameForm(message = 'Kick kullanıcı adını yazarak hesabını kontrol et.') {
+        function showUsernameForm(message = 'Kick kullanıcı adını yaz. Sana özel bir doğrulama kodu oluşturacağız.') {
             showAccessBase();
             document.getElementById('accessTitle').innerText = '🔒 Weizend Market';
             document.getElementById('accessText').innerHTML = message;
@@ -680,13 +707,15 @@
             document.getElementById('kickUsernameInput').value = saved;
         }
 
-        function showBankActivation(username) {
+        function showBankActivation(username, code) {
             showAccessBase();
-            document.getElementById('accessTitle').innerText = '🏦 Hesabını Aktifleştir';
-            document.getElementById('accessText').innerHTML = 'Kick sohbete <b>!banka</b> yazın. Sayfayı yenilemenize gerek yok; hesap kaydı geldiğinde market otomatik açılır.';
+            const command = `!banka ${code}`;
+            document.getElementById('accessTitle').innerText = '🔐 Kick Hesabını Doğrula';
+            document.getElementById('accessText').innerHTML = `Kick sohbetine <b>${escapeHtml(command)}</b> yaz. Komutu <b>${escapeHtml(username)}</b> hesabının göndermesi gerekiyor.`;
             document.getElementById('usernameForm').style.display = 'none';
             document.getElementById('bankActivation').style.display = 'block';
-            document.getElementById('accountNameHint').innerHTML = `Kontrol edilen Kick hesabı: <b>${escapeHtml(username)}</b>`;
+            document.getElementById('accountNameHint').innerHTML = `Doğrulanacak Kick hesabı: <b>${escapeHtml(username)}</b>`;
+            document.getElementById('bankCommandButton').innerText = `📋 ${command}`;
         }
 
         function showAccount(profile) {
@@ -705,42 +734,41 @@
             document.getElementById('walletLevel').innerText = level !== null ? level.toLocaleString('tr-TR') : '-';
             document.getElementById('walletWatchtime').innerText = formatWatchtime(profile.watchtime);
 
-            // Ürünleri yalnızca bir kez oluştur. Arka plandaki bakiye kontrolleri sayfayı yeniden çizmez.
             if (!marketInitialized) {
                 urunleriYukle('Tümü');
                 marketInitialized = true;
             }
 
-            startProfileRefresh(username);
-        }
-
-        function escapeHtml(value) {
-            return String(value)
-                .replaceAll('&', '&amp;')
-                .replaceAll('<', '&lt;')
-                .replaceAll('>', '&gt;')
-                .replaceAll('"', '&quot;')
-                .replaceAll("'", '&#039;');
+            startProfileRefresh();
         }
 
         async function initializeMarketAccount() {
-            const savedUsername = normalizeUsername(localStorage.getItem(USER_STORAGE_KEY));
-            if (!savedUsername) {
-                showUsernameForm();
+            const sessionToken = localStorage.getItem(SESSION_STORAGE_KEY) || '';
+
+            if (sessionToken) {
+                try {
+                    const cached = JSON.parse(localStorage.getItem(PROFILE_CACHE_KEY) || 'null');
+                    if (cached?.username) showAccount(cached);
+                } catch (_) {}
+
+                const ok = await checkSession({
+                    silent: document.getElementById('marketContent').style.display === 'block',
+                    retries: 1
+                });
+                if (ok) return;
+            }
+
+            const authState = getAuthState();
+            if (authState && (!authState.expiresAt || authState.expiresAt > Date.now())) {
+                localStorage.setItem(USER_STORAGE_KEY, authState.username);
+                showBankActivation(authState.username, authState.code);
+                startActivationPolling();
+                await checkAuthStatus({ silent: true });
                 return;
             }
 
-            document.getElementById('kickUsernameInput').value = savedUsername;
-
-            // Daha önce doğrulanmış kullanıcıyı cihazda hatırla ve marketi anında göster.
-            try {
-                const cached = JSON.parse(localStorage.getItem(PROFILE_CACHE_KEY) || 'null');
-                if (cached && normalizeUsername(cached.username).toLowerCase() === savedUsername.toLowerCase()) {
-                    showAccount(cached);
-                }
-            } catch (_) {}
-
-            await checkAccount(savedUsername, { silent: document.getElementById('marketContent').style.display === 'block' });
+            localStorage.removeItem(AUTH_STATE_KEY);
+            showUsernameForm();
         }
 
         async function saveAndCheckUsername() {
@@ -753,79 +781,220 @@
                 return;
             }
 
+            if (!/^[A-Za-z0-9_]{2,40}$/.test(username)) {
+                showUsernameForm('⚠️ Kick kullanıcı adı yalnızca harf, rakam ve alt çizgi içermeli.');
+                input.focus();
+                return;
+            }
+
             localStorage.setItem(USER_STORAGE_KEY, username);
-            await checkAccount(username);
+            await startAuthentication(username);
+        }
+
+        async function startAuthentication(username) {
+            stopActivationPolling();
+            stopProfileRefresh();
+            localStorage.removeItem(SESSION_STORAGE_KEY);
+            localStorage.removeItem(PROFILE_CACHE_KEY);
+            localStorage.removeItem(AUTH_STATE_KEY);
+
+            showAccessBase();
+            document.getElementById('accessTitle').innerText = '🔐 Doğrulama Kodu Hazırlanıyor';
+            document.getElementById('accessText').innerText = `${username} hesabı için tek kullanımlık kod oluşturuluyor...`;
+            document.getElementById('usernameForm').style.display = 'none';
+            document.getElementById('bankActivation').style.display = 'none';
+
+            try {
+                const response = await fetch(`${MARKET_WORKER}/auth/start?user=${encodeURIComponent(username)}&_=${Date.now()}`, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' },
+                    cache: 'no-store'
+                });
+
+                const data = await response.json();
+                if (!response.ok || !data?.success || !data?.challengeId || !data?.code) {
+                    throw new Error(data?.error || `HTTP ${response.status}`);
+                }
+
+                const authState = {
+                    challengeId: data.challengeId,
+                    code: data.code,
+                    username: data.username || username,
+                    expiresAt: Date.now() + ((Number(data.expiresIn) || 300) * 1000)
+                };
+
+                localStorage.setItem(AUTH_STATE_KEY, JSON.stringify(authState));
+                showBankActivation(authState.username, authState.code);
+                startActivationPolling();
+            } catch (error) {
+                console.error('AUTH START ERROR:', error);
+                showUsernameForm('⚠️ Doğrulama servisine ulaşılamadı. Biraz sonra tekrar deneyebilirsin.');
+            }
         }
 
         async function checkSavedAccount() {
-            const username = normalizeUsername(localStorage.getItem(USER_STORAGE_KEY));
-            if (!username) {
-                showUsernameForm();
+            const token = localStorage.getItem(SESSION_STORAGE_KEY) || '';
+            if (token) {
+                await checkSession({ retries: 1 });
                 return;
             }
-            await checkAccount(username);
-        }
 
-        async function checkAccount(username, options = {}) {
-            if (accountCheckInFlight) return false;
-            accountCheckInFlight = true;
-            const silent = options.silent === true;
-
-            if (!silent) {
-                showAccessBase();
-                document.getElementById('accessTitle').innerText = '🔄 Hesap Kontrol Ediliyor';
-                document.getElementById('accessText').innerText = `${username} için BotRix hesabı kontrol ediliyor...`;
-                document.getElementById('usernameForm').style.display = 'none';
-                document.getElementById('bankActivation').style.display = 'none';
+            const authState = getAuthState();
+            if (authState) {
+                await checkAuthStatus();
+                return;
             }
 
+            const username = normalizeUsername(localStorage.getItem(USER_STORAGE_KEY));
+            if (username) {
+                await startAuthentication(username);
+                return;
+            }
+
+            showUsernameForm();
+        }
+
+        async function checkAuthStatus(options = {}) {
+            if (authCheckInFlight) return false;
+            const authState = getAuthState();
+            if (!authState) return false;
+
+            authCheckInFlight = true;
+            const silent = options.silent === true;
+
             try {
-                const response = await fetch(`${MARKET_WORKER}/profile?user=${encodeURIComponent(username)}&_=${Date.now()}`, {
+                const response = await fetch(`${MARKET_WORKER}/auth/status?id=${encodeURIComponent(authState.challengeId)}&_=${Date.now()}`, {
                     method: 'GET',
                     headers: { 'Accept': 'application/json' },
                     cache: 'no-store'
                 });
 
                 let data = null;
-                try {
-                    data = await response.json();
-                } catch (_) {
-                    throw new Error('Sunucudan geçersiz cevap geldi.');
-                }
+                try { data = await response.json(); } catch (_) {}
 
-                console.log('Weizend Market profil cevabı:', data);
-
-                if (response.status === 404 || data?.registered === false) {
-                    if (!silent || document.getElementById('marketContent').style.display !== 'block') {
-                        showBankActivation(username);
-                    }
+                if (response.status === 410 || data?.status === 'expired') {
+                    localStorage.removeItem(AUTH_STATE_KEY);
+                    stopActivationPolling();
+                    if (!silent) showUsernameForm('⏳ Doğrulama kodunun süresi doldu. Yeni kod oluşturmak için kullanıcı adını tekrar gönder.');
                     return false;
                 }
 
-                if (!response.ok || !data || data.success !== true || data.registered !== true) {
+                if (!response.ok || !data?.success) {
                     throw new Error(data?.error || `HTTP ${response.status}`);
                 }
 
-                localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(data));
-                localStorage.removeItem(WAITING_ACTIVATION_KEY);
+                if (data.status !== 'verified' || !data.sessionToken) {
+                    return false;
+                }
+
+                // Artık kullanıcı adı değil, bu gizli oturum anahtarı hesabı açar.
+                localStorage.setItem(SESSION_STORAGE_KEY, data.sessionToken);
+                localStorage.setItem(USER_STORAGE_KEY, data.username || authState.username);
+                localStorage.removeItem(AUTH_STATE_KEY);
+                localStorage.removeItem(PROFILE_CACHE_KEY);
                 stopActivationPolling();
-                showAccount(data);
-                return true;
+
+                // KV yayılımı çok kısa gecikebilirse birkaç kez tekrar dene.
+                const opened = await checkSession({ silent: false, retries: 4 });
+                return opened;
             } catch (error) {
-                console.error('WEIZEND MARKET HESAP HATASI:', error);
+                console.error('AUTH STATUS ERROR:', error);
+                if (!silent && document.getElementById('marketContent').style.display !== 'block') {
+                    document.getElementById('accessText').innerHTML = '⚠️ Doğrulama durumu alınamadı. Kodun varsa tekrar deneyebilirsin.';
+                }
+                return false;
+            } finally {
+                authCheckInFlight = false;
+            }
+        }
+
+        async function checkSession(options = {}) {
+            if (profileCheckInFlight) return false;
+
+            const token = localStorage.getItem(SESSION_STORAGE_KEY) || '';
+            if (!token) return false;
+
+            profileCheckInFlight = true;
+            const silent = options.silent === true;
+            const retries = Math.max(0, Number(options.retries) || 0);
+
+            if (!silent && document.getElementById('marketContent').style.display !== 'block') {
+                showAccessBase();
+                document.getElementById('accessTitle').innerText = '🔄 Güvenli Oturum Kontrol Ediliyor';
+                document.getElementById('accessText').innerText = 'Kick hesabın doğrulanıyor...';
+                document.getElementById('usernameForm').style.display = 'none';
+                document.getElementById('bankActivation').style.display = 'none';
+            }
+
+            try {
+                for (let attempt = 0; attempt <= retries; attempt++) {
+                    const response = await fetch(`${MARKET_WORKER}/profile?_=${Date.now()}`, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        cache: 'no-store'
+                    });
+
+                    let data = null;
+                    try { data = await response.json(); } catch (_) {}
+
+                    if (response.status === 401) {
+                        if (attempt < retries) {
+                            await delay(450 * (attempt + 1));
+                            continue;
+                        }
+
+                        localStorage.removeItem(SESSION_STORAGE_KEY);
+                        localStorage.removeItem(PROFILE_CACHE_KEY);
+                        stopProfileRefresh();
+                        if (!silent || document.getElementById('marketContent').style.display !== 'block') {
+                            showUsernameForm('🔒 Oturumun sona erdi. Kick hesabını yeniden doğrulaman gerekiyor.');
+                        }
+                        return false;
+                    }
+
+                    if (!response.ok || !data?.success || data?.authenticated !== true) {
+                        throw new Error(data?.error || `HTTP ${response.status}`);
+                    }
+
+                    localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(data));
+                    localStorage.setItem(USER_STORAGE_KEY, data.username || '');
+                    showAccount(data);
+                    return true;
+                }
+
+                return false;
+            } catch (error) {
+                console.error('PROFILE ERROR:', error);
                 if (!silent && document.getElementById('marketContent').style.display !== 'block') {
                     showUsernameForm('⚠️ Hesap servisine şu an ulaşılamadı. Biraz sonra tekrar deneyebilirsin.');
                 }
                 return false;
             } finally {
-                accountCheckInFlight = false;
+                profileCheckInFlight = false;
             }
         }
 
         function changeUsername() {
+            const token = localStorage.getItem(SESSION_STORAGE_KEY) || '';
+
+            if (token) {
+                fetch(`${MARKET_WORKER}/logout`, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    cache: 'no-store'
+                }).catch(() => {});
+            }
+
             localStorage.removeItem(USER_STORAGE_KEY);
+            localStorage.removeItem(SESSION_STORAGE_KEY);
+            localStorage.removeItem(AUTH_STATE_KEY);
             localStorage.removeItem(PROFILE_CACHE_KEY);
-            localStorage.removeItem(WAITING_ACTIVATION_KEY);
             stopActivationPolling();
             stopProfileRefresh();
             marketInitialized = false;
@@ -848,45 +1017,49 @@
             }
         }
 
-        function startProfileRefresh(username) {
+        function startProfileRefresh() {
             stopProfileRefresh();
-            const normalized = normalizeUsername(username);
-            if (!normalized) return;
 
-            // Market açıkken Worker'daki güncel bakiyeyi düzenli kontrol eder.
-            // Böylece !banka veya puan harcama komutu Worker'ı güncellediğinde
-            // siteyi yenilemeden bakiye birkaç saniye içinde değişir.
+            // Market görünürken 1,5 saniyede bir güvenli oturumla bakiyeyi yenile.
             profileRefreshTimer = setInterval(() => {
                 if (document.visibilityState === 'visible') {
-                    checkAccount(normalized, { silent: true });
+                    checkSession({ silent: true });
                 }
-            }, 1500);
+            }, PROFILE_REFRESH_MS);
         }
 
-        function startActivationPolling(username) {
+        function startActivationPolling() {
             stopActivationPolling();
-            const normalized = normalizeUsername(username);
-            if (!normalized) return;
-
-            localStorage.setItem(WAITING_ACTIVATION_KEY, normalized);
-            const stopAt = Date.now() + (2 * 60 * 1000);
 
             activationPollTimer = setInterval(async () => {
-                if (Date.now() > stopAt) {
+                const authState = getAuthState();
+                if (!authState) {
                     stopActivationPolling();
                     return;
                 }
-                const success = await checkAccount(normalized, { silent: true });
+
+                if (authState.expiresAt && Date.now() > authState.expiresAt) {
+                    localStorage.removeItem(AUTH_STATE_KEY);
+                    stopActivationPolling();
+                    showUsernameForm('⏳ Doğrulama kodunun süresi doldu. Yeni kod oluşturmak için kullanıcı adını tekrar gönder.');
+                    return;
+                }
+
+                const success = await checkAuthStatus({ silent: true });
                 if (success) stopActivationPolling();
-            }, 2000);
+            }, AUTH_REFRESH_MS);
         }
 
         async function copyBankAndRedirect() {
-            const command = '!banka';
-            const username = normalizeUsername(localStorage.getItem(USER_STORAGE_KEY));
+            const authState = getAuthState();
+            if (!authState) {
+                showUsernameForm('Doğrulama kodu bulunamadı. Kullanıcı adını tekrar gönder.');
+                return;
+            }
 
-            // Kullanıcı tıkladığı anda Kick sohbetini YENİ SEKMEDE aç.
-            // Popup engelleyiciler için bunu await kullanmadan önce yapıyoruz.
+            const command = `!banka ${authState.code}`;
+
+            // Tıklama anında yeni sekmeyi aç; popup engelleyicisine takılmasın.
             const kickTab = window.open(KICK_CHAT_URL, '_blank');
             if (kickTab) {
                 try { kickTab.opener = null; } catch (_) {}
@@ -907,38 +1080,32 @@
 
             const toast = document.getElementById('copyToast');
             toast.innerText = kickTab
-                ? '✅ !banka kopyalandı · Kick sohbeti yeni sekmede açıldı'
-                : '✅ !banka kopyalandı · Açılır pencere engellendiyse Kick sohbetini manuel aç';
+                ? `✅ ${command} kopyalandı · Kick sohbeti açıldı`
+                : `✅ ${command} kopyalandı`;
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 4500);
 
-            document.getElementById('accessText').innerHTML = 'Kick sohbetine <b>!banka</b> yaz. Bu sayfa hesabını otomatik kontrol ediyor; kayıt geldiği anda market kendiliğinden açılacak.';
-
-            if (username) {
-                startActivationPolling(username);
-            }
+            document.getElementById('accessText').innerHTML = `<b>${escapeHtml(authState.username)}</b> hesabından Kick sohbetine <b>${escapeHtml(command)}</b> yaz. Doğrulama tamamlanınca market otomatik açılacak.`;
+            startActivationPolling();
         }
 
-        // Kullanıcı Kick sekmesinden markete döndüğünde hem aktivasyonu hem bakiyeyi anında kontrol et.
+        // Kick sekmesinden markete dönüldüğünde beklemeden kontrol et.
         document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible') {
-                const username = normalizeUsername(localStorage.getItem(USER_STORAGE_KEY));
-                const waiting = normalizeUsername(localStorage.getItem(WAITING_ACTIVATION_KEY));
+            if (document.visibilityState !== 'visible') return;
 
-                if (username) {
-                    checkAccount(username, { silent: true });
-                }
-
-                if (username && waiting && username.toLowerCase() === waiting.toLowerCase()) {
-                    startActivationPolling(username);
-                }
+            if (localStorage.getItem(SESSION_STORAGE_KEY)) {
+                checkSession({ silent: true });
+            } else if (getAuthState()) {
+                checkAuthStatus({ silent: true });
+                startActivationPolling();
             }
         });
 
         window.addEventListener('focus', () => {
-            const username = normalizeUsername(localStorage.getItem(USER_STORAGE_KEY));
-            if (username) {
-                checkAccount(username, { silent: true });
+            if (localStorage.getItem(SESSION_STORAGE_KEY)) {
+                checkSession({ silent: true });
+            } else if (getAuthState()) {
+                checkAuthStatus({ silent: true });
             }
         });
 
