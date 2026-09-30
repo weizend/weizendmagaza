@@ -565,7 +565,7 @@
                 <div id="verificationActivation" style="display:none;">
                     <div id="accountNameHint" class="account-name-hint"></div>
                     <button id="verifyCommandButton" class="access-command" onclick="copyVerifyAndRedirect()" title="Doğrulama komutunu kopyala ve Kick sohbete git">📋 !doğrula KOD</button>
-                    <p class="access-help">Yukarıdaki doğrulama komutuna dokun. Komut kopyalanır ve Kick sohbeti yeni sekmede açılır. <b>Komutu yalnızca sitede yazdığın Kick hesabı gönderebilir.</b> Doğrulama tamamlanınca market otomatik açılır.</p>
+                    <p class="access-help">Yukarıdaki doğrulama komutuna dokun. Komut anında kopyalanır ve Kick sohbeti ayrı pencerede / yeni sekmede açılır. <b>Komutu yalnızca sitede yazdığın Kick hesabı gönderebilir.</b> Doğrulama tamamlanınca market otomatik açılır.</p>
                     <div class="access-form">
                         <button class="access-btn secondary" onclick="checkSavedAccount()">🔄 Doğrulamayı Kontrol Et</button>
                         <button class="access-btn secondary" onclick="changeUsername()">Kullanıcı Adını Değiştir</button>
@@ -614,7 +614,7 @@
             <div class="redirect-modal-body">
                 <p id="redirectStatusText" style="color: #fff; margin: 0; font-size: 1.05rem;">Komut kopyalandı, Kick sohbete yönlendiriliyorsunuz:</p>
                 <div class="redirect-command-box" id="modalCommandText">!komut</div>
-                <div class="redirect-timer" id="timerText">5 saniye içinde yönlendirileceksiniz...</div>
+                <div class="redirect-timer" id="timerText">3 saniye içinde yönlendirileceksiniz...</div>
                 <button class="cancel-btn" onclick="yonlendirmeyiIptalEt()">İptal Et</button>
             </div>
         </div>
@@ -638,13 +638,14 @@
         const AUTH_STATE_KEY = 'weizend_market_auth_state_secure_v2';
         const PROFILE_CACHE_KEY = 'weizend_market_profile_secure_v2';
         const PROFILE_REFRESH_MS = 1500;
-        const AUTH_REFRESH_MS = 1500;
+        const AUTH_REFRESH_MS = 1000;
         let activationPollTimer = null;
         let profileRefreshTimer = null;
         let profileCheckInFlight = false;
         let authCheckInFlight = false;
         let marketInitialized = false;
         let marketAuthenticated = false;
+        let sessionGraceUntil = 0;
 
         document.addEventListener("DOMContentLoaded", () => {
             // Eski doğrulama sistemiyle açılmış oturumları bu sürümde geçersiz say.
@@ -857,13 +858,16 @@
         async function checkSavedAccount() {
             const token = localStorage.getItem(SESSION_STORAGE_KEY) || '';
             if (token) {
+                showStatusToast('🔄 Hesap bilgileriniz kontrol ediliyor...', 2200);
                 await checkSession({ retries: 1 });
                 return;
             }
 
             const authState = getAuthState();
             if (authState) {
-                await checkAuthStatus();
+                document.getElementById('accessTitle').innerText = '⏳ Doğrulama Kontrol Ediliyor';
+                document.getElementById('accessText').innerHTML = `BotRix'ten doğrulama yanıtı bekleniyor. <b>!doğrula</b> komutunu gönderdiysen lütfen birkaç saniye bekle; doğrulama tamamlanınca hesap otomatik açılacak.`;
+                await checkAuthStatus({ manual: true, silent: false });
                 return;
             }
 
@@ -877,7 +881,16 @@
         }
 
         async function checkAuthStatus(options = {}) {
-            if (authCheckInFlight) return false;
+            const manual = options.manual === true;
+
+            if (authCheckInFlight) {
+                if (manual) {
+                    document.getElementById('accessTitle').innerText = '⏳ Doğrulama İşlemi Bekleniyor';
+                    document.getElementById('accessText').innerHTML = `BotRix'ten yanıt bekleniyor. Doğrulama işlemini yaptıysan lütfen birkaç saniye bekle; sistem otomatik olarak tekrar kontrol ediyor.`;
+                }
+                return false;
+            }
+
             const authState = getAuthState();
             if (!authState) return false;
 
@@ -906,6 +919,10 @@
                 }
 
                 if (data.status !== 'verified' || !data.sessionToken) {
+                    if (manual) {
+                        document.getElementById('accessTitle').innerText = '⏳ Doğrulama İşlemi Bekleniyor';
+                        document.getElementById('accessText').innerHTML = 'Henüz doğrulama yanıtı gelmedi. Kick sohbetinde <b>!doğrula KOD</b> komutunu gönderdiysen BotRix yanıtı için lütfen birkaç saniye bekle. Sistem arka planda otomatik kontrol etmeye devam ediyor.';
+                    }
                     return false;
                 }
 
@@ -915,8 +932,30 @@
                 localStorage.removeItem(AUTH_STATE_KEY);
                 localStorage.removeItem(PROFILE_CACHE_KEY);
                 stopActivationPolling();
+                // KV oturum kaydının farklı edge noktalarına yayılması kısa süre gecikebilir.
+                // Bu süre boyunca geçici 401 gelirse kullanıcıyı yanlışlıkla çıkış yaptırma.
+                sessionGraceUntil = Date.now() + 30000;
 
-                // KV yayılımı çok kısa gecikebilirse birkaç kez tekrar dene.
+                document.getElementById('accessTitle').innerText = '✅ Doğrulama Başarılı';
+                document.getElementById('accessText').innerHTML = 'Doğrulama işlemi başarılı. Hesap bilgileriniz yükleniyor...';
+                showStatusToast('✅ Doğrulama başarılı · Hesap bilgileriniz yükleniyor...', 3200);
+
+                // Worker doğrulama yanıtıyla profil anlık geldiyse marketi hemen aç.
+                // Böylece ayrı bir profil isteğinin KV yayılımını beklemek zorunda kalmayız.
+                if (data.profile && data.profile.username) {
+                    const instantProfile = {
+                        ...data.profile,
+                        success: true,
+                        authenticated: true
+                    };
+                    localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(instantProfile));
+                    showAccount(instantProfile);
+                    // Oturumu arka planda da teyit et ve güncel bilgiyi sessizce yenile.
+                    checkSession({ silent: true, retries: 4 });
+                    return true;
+                }
+
+                // Eski Worker sürümünden profile alanı gelmezse klasik güvenli kontrolü kullan.
                 const opened = await checkSession({ silent: false, retries: 4 });
                 return opened;
             } catch (error) {
@@ -968,6 +1007,13 @@
                             continue;
                         }
 
+                        // Doğrulama yeni tamamlandıysa session KV kaydı henüz bu edge'e
+                        // ulaşmamış olabilir. 30 saniyelik güvenli sürede tokenı silme;
+                        // otomatik yenileme tekrar denemeye devam etsin.
+                        if (Date.now() < sessionGraceUntil) {
+                            return false;
+                        }
+
                         localStorage.removeItem(SESSION_STORAGE_KEY);
                         localStorage.removeItem(PROFILE_CACHE_KEY);
                         stopProfileRefresh();
@@ -983,6 +1029,7 @@
 
                     localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(data));
                     localStorage.setItem(USER_STORAGE_KEY, data.username || '');
+                    sessionGraceUntil = 0;
                     showAccount(data);
                     return true;
                 }
@@ -1024,6 +1071,7 @@
             stopActivationPolling();
             stopProfileRefresh();
             currentUsername = '';
+            sessionGraceUntil = 0;
 
             showUsernameForm('✅ Güvenli çıkış yapıldı. Tekrar giriş yapmak için Kick kullanıcı adını yaz ve <b>!doğrula KOD</b> komutuyla hesabını doğrula.');
             setTimeout(() => document.getElementById('kickUsernameInput').focus(), 50);
@@ -1050,6 +1098,7 @@
             stopActivationPolling();
             stopProfileRefresh();
             currentUsername = '';
+            sessionGraceUntil = 0;
             showUsernameForm('Farklı bir Kick hesabına geçmek için kullanıcı adını yaz. Yeni hesap <b>!doğrula KOD</b> ile doğrulanacak.');
             setTimeout(() => document.getElementById('kickUsernameInput').focus(), 50);
         }
@@ -1110,60 +1159,43 @@
 
             const command = `!doğrula ${authState.code}`;
 
-            // Tıklama anında kopyalamayı başlat.
-            copyTextReliable(command);
+            // Kodu kullanıcı tıklaması sırasında SENKRON şekilde kopyala.
+            // Bu yöntem popup açıldığında tarayıcı odağı değişse bile kopyalamayı daha güvenilir yapar.
+            copyTextFallback(command);
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(command).catch(() => {});
+            }
 
-            // Tarayıcı popup engeline takılmamak için kullanıcı tıklaması sırasında
-            // Kick için ayrı bir pencere/sekme hazırla. Mevcut market sayfası açık kalır.
+            // Aynı tıklamada Kick sohbetini doğrudan ayrı pencere / yeni sekmede aç.
+            // Market sayfası açık kalır; geri sayım beklenmez.
             let kickWindow = null;
             try {
-                kickWindow = window.open('about:blank', 'weizendKickChat', 'popup=yes,width=520,height=760,resizable=yes,scrollbars=yes');
-                pendingKickWindow = kickWindow;
-                if (kickWindow) {
-                    try {
-                        kickWindow.document.title = 'Kick Sohbeti Açılıyor';
-                        kickWindow.document.body.innerHTML = '<div style="font-family:Arial,sans-serif;background:#0b0b0b;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;box-sizing:border-box"><div><h2>Kick sohbeti açılıyor...</h2><p>Market sayfasını kapatmayın.</p></div></div>';
-                    } catch (_) {}
-                    try { kickWindow.blur(); window.focus(); } catch (_) {}
-                }
+                kickWindow = window.open(
+                    KICK_CHAT_URL,
+                    'weizendKickVerify',
+                    'popup=yes,width=520,height=760,resizable=yes,scrollbars=yes'
+                );
             } catch (_) {}
 
-            document.getElementById('redirectModalTitle').innerText = 'Kick Hesabını Doğrula';
-            document.getElementById('redirectStatusText').innerText = 'Kod kopyalandı, Kick sohbete yönlendiriliyorsunuz.';
-            document.getElementById('modalCommandText').innerText = command;
-            document.getElementById('redirectModal').style.display = 'flex';
+            if (!kickWindow) {
+                try { window.open(KICK_CHAT_URL, '_blank', 'noopener'); } catch (_) {}
+            }
 
-            let kalanSaniye = 3;
-            document.getElementById('timerText').innerText = `${kalanSaniye} saniye içinde Kick sohbeti açılacak...`;
+            showStatusToast(`✅ ${command} kopyalandı · Kick sohbeti açıldı`, 3500);
+            document.getElementById('accessTitle').innerText = '⏳ Doğrulama Bekleniyor';
+            document.getElementById('accessText').innerHTML = `<b>${escapeHtml(authState.username)}</b> hesabından Kick sohbetine <b>${escapeHtml(command)}</b> gönder. Mesajı gönderdiğin anda sistem doğrulamayı otomatik kontrol edecek ve hesap bilgilerini yükleyecek.`;
 
-            if (redirectTimer) clearInterval(redirectTimer);
-
-            redirectTimer = setInterval(() => {
-                kalanSaniye--;
-
-                if (kalanSaniye > 0) {
-                    document.getElementById('timerText').innerText = `${kalanSaniye} saniye içinde Kick sohbeti açılacak...`;
-                } else {
-                    clearInterval(redirectTimer);
-                    redirectTimer = null;
-                    document.getElementById('redirectModal').style.display = 'none';
-
-                    if (kickWindow && !kickWindow.closed) {
-                        try {
-                            kickWindow.location.replace(KICK_CHAT_URL);
-                            kickWindow.focus();
-                        } catch (_) {
-                            window.open(KICK_CHAT_URL, '_blank', 'noopener');
-                        }
-                    } else {
-                        window.open(KICK_CHAT_URL, '_blank', 'noopener');
-                    }
-                    pendingKickWindow = null;
-                }
-            }, 1000);
-
-            document.getElementById('accessText').innerHTML = `<b>${escapeHtml(authState.username)}</b> hesabından Kick sohbetine <b>${escapeHtml(command)}</b> yaz. Doğrulama tamamlanınca market otomatik açılacak.`;
             startActivationPolling();
+            setTimeout(() => checkAuthStatus({ silent: true }), 450);
+        }
+
+        function showStatusToast(message, duration = 3500) {
+            const toast = document.getElementById('copyToast');
+            if (!toast) return;
+            toast.innerText = message;
+            toast.classList.add('show');
+            clearTimeout(showStatusToast._timer);
+            showStatusToast._timer = setTimeout(() => toast.classList.remove('show'), duration);
         }
 
         function copyTextReliable(text) {
@@ -1385,24 +1417,61 @@
         }
 
         function islemYapBaslat(komut) {
-            copyTextReliable(komut);
+            // Ürün komutunu tıklama anında güvenilir şekilde kopyala.
+            copyTextFallback(komut);
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(komut).catch(() => {});
+            }
+
+            // Popup engeline takılmamak için pencereyi kullanıcı tıklaması sırasında hazırla.
+            let kickWindow = null;
+            try {
+                kickWindow = window.open(
+                    'about:blank',
+                    '_blank',
+                    'popup=yes,width=520,height=760,resizable=yes,scrollbars=yes'
+                );
+                pendingKickWindow = kickWindow;
+                if (kickWindow) {
+                    try {
+                        kickWindow.document.title = 'Kick Sohbeti Açılıyor';
+                        kickWindow.document.body.innerHTML = '<div style="font-family:Arial,sans-serif;background:#0b0b0b;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;box-sizing:border-box"><div><h2>Komut kopyalandı ✅</h2><p>Kick sohbeti 3 saniye içinde açılacak...</p></div></div>';
+                    } catch (_) {}
+                }
+            } catch (_) {}
+
             document.getElementById('redirectModalTitle').innerText = 'Sipariş Onayı';
             document.getElementById('redirectStatusText').innerText = 'Komut kopyalandı, Kick sohbete yönlendiriliyorsunuz:';
             document.getElementById('modalCommandText').innerText = komut;
             document.getElementById('redirectModal').style.display = 'flex';
 
-            let kalanSaniye = 5;
+            let kalanSaniye = 3;
             document.getElementById('timerText').innerText = `${kalanSaniye} saniye içinde yönlendirileceksiniz...`;
 
-            if(redirectTimer) clearInterval(redirectTimer);
+            if (redirectTimer) clearInterval(redirectTimer);
 
             redirectTimer = setInterval(() => {
                 kalanSaniye--;
+
                 if (kalanSaniye > 0) {
                     document.getElementById('timerText').innerText = `${kalanSaniye} saniye içinde yönlendirileceksiniz...`;
                 } else {
                     clearInterval(redirectTimer);
-                    window.location.href = "https://kick.com/weizend/chat";
+                    redirectTimer = null;
+                    document.getElementById('redirectModal').style.display = 'none';
+
+                    if (kickWindow && !kickWindow.closed) {
+                        try {
+                            kickWindow.location.replace(KICK_CHAT_URL);
+                            kickWindow.focus();
+                        } catch (_) {
+                            window.open(KICK_CHAT_URL, '_blank', 'noopener');
+                        }
+                    } else {
+                        window.open(KICK_CHAT_URL, '_blank', 'noopener');
+                    }
+
+                    pendingKickWindow = null;
                 }
             }, 1000);
         }
