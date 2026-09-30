@@ -125,6 +125,8 @@
         .action-btn { width: 100%; background: var(--weizend-red); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.2s; margin-top: auto; margin-bottom: 12px; box-shadow: 0 4px 15px rgba(227, 27, 27, 0.3); }
         .action-btn:hover:not(.disabled) { background: #c21414; transform: translateY(-2px); }
         .action-btn.disabled { background: #333; color: #777; cursor: not-allowed; box-shadow: none; transform: none; }
+        .action-btn.auth-required { background: #2a1515; color: #fff; border: 1px solid var(--weizend-red); box-shadow: none; }
+        .action-btn.auth-required:hover { background: var(--weizend-red); transform: translateY(-2px); }
 
         details { background: #1a1a1a; border-radius: 6px; margin-bottom: 8px; overflow: hidden; border: 1px solid var(--border-color); }
         summary { padding: 12px 15px; cursor: pointer; font-weight: 600; color: var(--weizend-white); outline: none; list-style: none; display: flex; justify-content: space-between; align-items: center; }
@@ -572,7 +574,7 @@
             </div>
         </header>
 
-        <div id="marketContent" style="display:none;">
+        <div id="marketContent" style="display:block;">
             <!-- KATEGORİ BUTONLARI -->
             <div class="category-filters" id="filters"></div>
 
@@ -624,6 +626,7 @@
         let aktifGorselListesi = [];
         let aktifResimIndex = 0;
         let redirectTimer = null;
+        let pendingKickWindow = null;
         let zoomLevel = 1;
         let currentUsername = "";
 
@@ -641,12 +644,20 @@
         let profileCheckInFlight = false;
         let authCheckInFlight = false;
         let marketInitialized = false;
+        let marketAuthenticated = false;
 
         document.addEventListener("DOMContentLoaded", () => {
             // Eski doğrulama sistemiyle açılmış oturumları bu sürümde geçersiz say.
             localStorage.removeItem('weizend_market_session');
             localStorage.removeItem('weizend_market_auth_state');
             localStorage.removeItem('weizend_market_profile');
+
+            // Market her zaman görünür. Doğrulanmamış kullanıcı ürünleri inceleyebilir
+            // ancak işlem yapamaz; işlem butonu doğrulama alanına yönlendirir.
+            marketAuthenticated = false;
+            urunleriYukle('Tümü');
+            marketInitialized = true;
+
             initializeMarketAccount();
         });
 
@@ -699,9 +710,14 @@
         }
 
         function showAccessBase() {
+            marketAuthenticated = false;
             document.getElementById('walletCard').style.display = 'none';
-            document.getElementById('marketContent').style.display = 'none';
+            document.getElementById('marketContent').style.display = 'block';
             document.getElementById('accessCard').style.display = 'block';
+
+            if (marketInitialized) {
+                urunleriYukle(aktifKategori || 'Tümü');
+            }
         }
 
         function showUsernameForm(message = 'Kick kullanıcı adını yaz. Sana özel bir doğrulama kodu oluşturacağız.') {
@@ -732,6 +748,7 @@
             const level = readNumber(profile.level);
 
             currentUsername = username;
+            marketAuthenticated = true;
             document.getElementById('accessCard').style.display = 'none';
             document.getElementById('walletCard').style.display = 'flex';
             document.getElementById('marketContent').style.display = 'block';
@@ -745,6 +762,8 @@
             if (!marketInitialized) {
                 urunleriYukle('Tümü');
                 marketInitialized = true;
+            } else {
+                urunleriYukle(aktifKategori || 'Tümü');
             }
 
             startProfileRefresh();
@@ -754,13 +773,8 @@
             const sessionToken = localStorage.getItem(SESSION_STORAGE_KEY) || '';
 
             if (sessionToken) {
-                try {
-                    const cached = JSON.parse(localStorage.getItem(PROFILE_CACHE_KEY) || 'null');
-                    if (cached?.username) showAccount(cached);
-                } catch (_) {}
-
                 const ok = await checkSession({
-                    silent: document.getElementById('marketContent').style.display === 'block',
+                    silent: true,
                     retries: 1
                 });
                 if (ok) return;
@@ -1009,7 +1023,6 @@
 
             stopActivationPolling();
             stopProfileRefresh();
-            marketInitialized = false;
             currentUsername = '';
 
             showUsernameForm('✅ Güvenli çıkış yapıldı. Tekrar giriş yapmak için Kick kullanıcı adını yaz ve <b>!doğrula KOD</b> komutuyla hesabını doğrula.');
@@ -1036,7 +1049,6 @@
             localStorage.removeItem(PROFILE_CACHE_KEY);
             stopActivationPolling();
             stopProfileRefresh();
-            marketInitialized = false;
             currentUsername = '';
             showUsernameForm('Farklı bir Kick hesabına geçmek için kullanıcı adını yaz. Yeni hesap <b>!doğrula KOD</b> ile doğrulanacak.');
             setTimeout(() => document.getElementById('kickUsernameInput').focus(), 50);
@@ -1098,43 +1110,31 @@
 
             const command = `!doğrula ${authState.code}`;
 
-            // Ürünlerdeki "İşlem Yap" mantığı gibi: tıklanır tıklanmaz kopyalamayı başlat.
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(command).catch(() => {
-                    const temp = document.createElement('textarea');
-                    temp.value = command;
-                    temp.style.position = 'fixed';
-                    temp.style.opacity = '0';
-                    temp.style.pointerEvents = 'none';
-                    document.body.appendChild(temp);
-                    temp.focus();
-                    temp.select();
-                    temp.setSelectionRange(0, temp.value.length);
-                    document.execCommand('copy');
-                    temp.remove();
-                });
-            } else {
-                const temp = document.createElement('textarea');
-                temp.value = command;
-                temp.style.position = 'fixed';
-                temp.style.opacity = '0';
-                temp.style.pointerEvents = 'none';
-                document.body.appendChild(temp);
-                temp.focus();
-                temp.select();
-                temp.setSelectionRange(0, temp.value.length);
-                document.execCommand('copy');
-                temp.remove();
-            }
+            // Tıklama anında kopyalamayı başlat.
+            copyTextReliable(command);
 
-            // Aynı ürün yönlendirme penceresini doğrulama için 3 saniyelik kullan.
+            // Tarayıcı popup engeline takılmamak için kullanıcı tıklaması sırasında
+            // Kick için ayrı bir pencere/sekme hazırla. Mevcut market sayfası açık kalır.
+            let kickWindow = null;
+            try {
+                kickWindow = window.open('about:blank', 'weizendKickChat', 'popup=yes,width=520,height=760,resizable=yes,scrollbars=yes');
+                pendingKickWindow = kickWindow;
+                if (kickWindow) {
+                    try {
+                        kickWindow.document.title = 'Kick Sohbeti Açılıyor';
+                        kickWindow.document.body.innerHTML = '<div style="font-family:Arial,sans-serif;background:#0b0b0b;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;box-sizing:border-box"><div><h2>Kick sohbeti açılıyor...</h2><p>Market sayfasını kapatmayın.</p></div></div>';
+                    } catch (_) {}
+                    try { kickWindow.blur(); window.focus(); } catch (_) {}
+                }
+            } catch (_) {}
+
             document.getElementById('redirectModalTitle').innerText = 'Kick Hesabını Doğrula';
             document.getElementById('redirectStatusText').innerText = 'Kod kopyalandı, Kick sohbete yönlendiriliyorsunuz.';
             document.getElementById('modalCommandText').innerText = command;
             document.getElementById('redirectModal').style.display = 'flex';
 
             let kalanSaniye = 3;
-            document.getElementById('timerText').innerText = `${kalanSaniye} saniye içinde yönlendirileceksiniz...`;
+            document.getElementById('timerText').innerText = `${kalanSaniye} saniye içinde Kick sohbeti açılacak...`;
 
             if (redirectTimer) clearInterval(redirectTimer);
 
@@ -1142,16 +1142,52 @@
                 kalanSaniye--;
 
                 if (kalanSaniye > 0) {
-                    document.getElementById('timerText').innerText = `${kalanSaniye} saniye içinde yönlendirileceksiniz...`;
+                    document.getElementById('timerText').innerText = `${kalanSaniye} saniye içinde Kick sohbeti açılacak...`;
                 } else {
                     clearInterval(redirectTimer);
                     redirectTimer = null;
-                    window.location.href = KICK_CHAT_URL;
+                    document.getElementById('redirectModal').style.display = 'none';
+
+                    if (kickWindow && !kickWindow.closed) {
+                        try {
+                            kickWindow.location.replace(KICK_CHAT_URL);
+                            kickWindow.focus();
+                        } catch (_) {
+                            window.open(KICK_CHAT_URL, '_blank', 'noopener');
+                        }
+                    } else {
+                        window.open(KICK_CHAT_URL, '_blank', 'noopener');
+                    }
+                    pendingKickWindow = null;
                 }
             }, 1000);
 
             document.getElementById('accessText').innerHTML = `<b>${escapeHtml(authState.username)}</b> hesabından Kick sohbetine <b>${escapeHtml(command)}</b> yaz. Doğrulama tamamlanınca market otomatik açılacak.`;
             startActivationPolling();
+        }
+
+        function copyTextReliable(text) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).catch(() => copyTextFallback(text));
+            } else {
+                copyTextFallback(text);
+            }
+        }
+
+        function copyTextFallback(text) {
+            const temp = document.createElement('textarea');
+            temp.value = text;
+            temp.setAttribute('readonly', '');
+            temp.style.position = 'fixed';
+            temp.style.left = '-9999px';
+            temp.style.top = '0';
+            temp.style.opacity = '0';
+            document.body.appendChild(temp);
+            temp.focus();
+            temp.select();
+            temp.setSelectionRange(0, temp.value.length);
+            try { document.execCommand('copy'); } catch (_) {}
+            temp.remove();
         }
 
         // Kick sekmesinden markete dönüldüğünde beklemeden kontrol et.
@@ -1280,9 +1316,17 @@
                 }
 
                 const komutClass = tukendiMi ? "command disabled" : "command";
-                const actionBtnClass = tukendiMi ? "action-btn disabled" : "action-btn";
-                const actionBtnText = tukendiMi ? "TÜKENDİ" : "İşlem Yap";
-                const actionBtnClick = tukendiMi ? "" : `onclick="islemYapBaslat('${urun.komut}')"`;
+                const actionBtnClass = tukendiMi
+                    ? "action-btn disabled"
+                    : (marketAuthenticated ? "action-btn" : "action-btn auth-required");
+                const actionBtnText = tukendiMi
+                    ? "TÜKENDİ"
+                    : (marketAuthenticated ? "İşlem Yap" : "🔒 Doğrulama Gerekiyor");
+                const actionBtnClick = tukendiMi
+                    ? ""
+                    : (marketAuthenticated
+                        ? `onclick="islemYapBaslat('${urun.komut}')"`
+                        : `onclick="goToVerification()"`);
 
                 const kartClass = tukendiMi ? "card out-of-stock" : "card";
 
@@ -1320,8 +1364,28 @@
             });
         }
 
+        function goToVerification() {
+            // Kullanıcı doğrulanmamışsa ürün işlemi başlatma; doğrulama alanına götür.
+            if (marketAuthenticated && localStorage.getItem(SESSION_STORAGE_KEY)) return;
+
+            const authState = getAuthState();
+            if (authState) {
+                showVerificationActivation(authState.username, authState.code);
+            } else {
+                showUsernameForm('🔒 Bu ürünü almak için önce Kick hesabını doğrulaman gerekiyor.');
+            }
+
+            const accessCard = document.getElementById('accessCard');
+            accessCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            setTimeout(() => {
+                const input = document.getElementById('kickUsernameInput');
+                if (input && document.getElementById('usernameForm').style.display !== 'none') input.focus();
+            }, 450);
+        }
+
         function islemYapBaslat(komut) {
-            navigator.clipboard.writeText(komut).catch(() => {});
+            copyTextReliable(komut);
             document.getElementById('redirectModalTitle').innerText = 'Sipariş Onayı';
             document.getElementById('redirectStatusText').innerText = 'Komut kopyalandı, Kick sohbete yönlendiriliyorsunuz:';
             document.getElementById('modalCommandText').innerText = komut;
@@ -1348,6 +1412,10 @@
                 clearInterval(redirectTimer);
                 redirectTimer = null;
             }
+            if (pendingKickWindow && !pendingKickWindow.closed) {
+                try { pendingKickWindow.close(); } catch (_) {}
+            }
+            pendingKickWindow = null;
             document.getElementById('redirectModal').style.display = 'none';
         }
 
