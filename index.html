@@ -673,6 +673,7 @@
 
         // --- GÜVENLİ KICK HESABI DOĞRULAMA (!DOĞRULA) + MARKET OTURUM SİSTEMİ ---
         const MARKET_WORKER = 'https://weizend-market-api.vercel.app';
+        const REALTIME_WS_URL = 'wss://weizend-market-api.vercel.app/realtime/ws';
         const KICK_CHAT_URL = 'https://kick.com/weizend/chat';
         const USER_STORAGE_KEY = 'weizend_market_username';
         const SESSION_STORAGE_KEY = 'weizend_market_session_secure_v2';
@@ -681,10 +682,12 @@
         const VERIFY_WAIT_STATE_KEY = 'weizend_market_verify_wait_v1';
         const VERIFY_COMMAND_CLICKED_KEY = 'weizend_market_verify_command_clicked_v1';
         const VERIFY_WAIT_MAX_SECONDS = 60;
-        const PROFILE_REFRESH_MS = 1500;
-        const AUTH_REFRESH_MS = 1000;
-        let activationPollTimer = null;
-        let profileRefreshTimer = null;
+        const REALTIME_RECONNECT_BASE_MS = 2000;
+        const REALTIME_RECONNECT_MAX_MS = 30000;
+        let realtimeSocket = null;
+        let realtimeUsername = '';
+        let realtimeReconnectTimer = null;
+        let realtimeReconnectAttempts = 0;
         let profileCheckInFlight = false;
         let authCheckInFlight = false;
         let marketInitialized = false;
@@ -730,6 +733,167 @@
 
         function delay(ms) {
             return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function realtimeUsernameKey(value) {
+            return normalizeUsername(value).toLowerCase();
+        }
+
+        function disconnectRealtime() {
+            if (realtimeReconnectTimer) {
+                clearTimeout(realtimeReconnectTimer);
+                realtimeReconnectTimer = null;
+            }
+
+            const socket = realtimeSocket;
+            realtimeSocket = null;
+            realtimeUsername = '';
+            realtimeReconnectAttempts = 0;
+
+            if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
+                try { socket.close(1000, 'Market connection closed'); } catch (_) {}
+            }
+        }
+
+        function scheduleRealtimeReconnect() {
+            if (realtimeReconnectTimer || !realtimeUsername) return;
+
+            const exponent = Math.min(realtimeReconnectAttempts, 4);
+            const waitMs = Math.min(
+                REALTIME_RECONNECT_MAX_MS,
+                REALTIME_RECONNECT_BASE_MS * (2 ** exponent)
+            );
+
+            realtimeReconnectAttempts += 1;
+            realtimeReconnectTimer = setTimeout(() => {
+                realtimeReconnectTimer = null;
+                openRealtimeSocket();
+            }, waitMs);
+        }
+
+        function connectRealtime(username) {
+            const cleanUsername = normalizeUsername(username);
+            if (!/^[A-Za-z0-9_]{2,40}$/.test(cleanUsername)) return;
+
+            const sameUser =
+                realtimeUsernameKey(realtimeUsername) === realtimeUsernameKey(cleanUsername);
+
+            if (
+                sameUser &&
+                realtimeSocket &&
+                (realtimeSocket.readyState === WebSocket.OPEN ||
+                 realtimeSocket.readyState === WebSocket.CONNECTING)
+            ) {
+                return;
+            }
+
+            if (realtimeReconnectTimer) {
+                clearTimeout(realtimeReconnectTimer);
+                realtimeReconnectTimer = null;
+            }
+
+            if (realtimeSocket) {
+                const oldSocket = realtimeSocket;
+                realtimeSocket = null;
+                try { oldSocket.close(1000, 'User changed'); } catch (_) {}
+            }
+
+            realtimeUsername = cleanUsername;
+            realtimeReconnectAttempts = 0;
+            openRealtimeSocket();
+        }
+
+        function openRealtimeSocket() {
+            const username = normalizeUsername(realtimeUsername);
+            if (!username) return;
+
+            let socket;
+            try {
+                socket = new WebSocket(`${REALTIME_WS_URL}?user=${encodeURIComponent(username)}`);
+            } catch (error) {
+                console.error('REALTIME CREATE ERROR:', error);
+                scheduleRealtimeReconnect();
+                return;
+            }
+
+            realtimeSocket = socket;
+
+            socket.onopen = () => {
+                if (socket !== realtimeSocket) return;
+                realtimeReconnectAttempts = 0;
+                console.log('REALTIME CONNECTED:', username);
+
+                // Doğrulama bekleme penceresi açıksa bağlantı yeniden kurulduğunda
+                // yalnızca bir kez mevcut doğrulama durumunu teyit et.
+                const authState = getAuthState();
+                if (
+                    authState &&
+                    getVerificationWaitState() &&
+                    hasVerifyCommandBeenClicked(authState) &&
+                    realtimeUsernameKey(authState.username) === realtimeUsernameKey(username)
+                ) {
+                    checkAuthStatus({ silent: true });
+                }
+            };
+
+            socket.onmessage = event => {
+                if (socket !== realtimeSocket) return;
+
+                let message = null;
+                try {
+                    message = JSON.parse(String(event.data || ''));
+                } catch (_) {
+                    return;
+                }
+
+                if (!message || message.type === 'connected') return;
+
+                const messageUsername = normalizeUsername(message.username);
+                if (
+                    messageUsername &&
+                    realtimeUsernameKey(messageUsername) !== realtimeUsernameKey(username)
+                ) {
+                    return;
+                }
+
+                if (message.type === 'profile_changed') {
+                    const token = localStorage.getItem(SESSION_STORAGE_KEY) || '';
+                    if (token) {
+                        checkSession({ silent: true });
+                    }
+                    return;
+                }
+
+                if (message.type === 'auth_verified') {
+                    const authState = getAuthState();
+                    if (!authState) return;
+
+                    // Kullanıcı "Doğrulamayı Kontrol Et" butonuna basmadan
+                    // doğrulama ekranını kendi kendine başlatma.
+                    if (!getVerificationWaitState() || !hasVerifyCommandBeenClicked(authState)) {
+                        return;
+                    }
+
+                    if (
+                        messageUsername &&
+                        realtimeUsernameKey(messageUsername) !== realtimeUsernameKey(authState.username)
+                    ) {
+                        return;
+                    }
+
+                    checkAuthStatus({ silent: true });
+                }
+            };
+
+            socket.onerror = error => {
+                console.warn('REALTIME SOCKET ERROR:', error);
+            };
+
+            socket.onclose = () => {
+                if (socket !== realtimeSocket) return;
+                realtimeSocket = null;
+                scheduleRealtimeReconnect();
+            };
         }
 
         function getAuthState() {
@@ -810,6 +974,9 @@
             const verifyButton = document.getElementById('verifyCommandButton');
             verifyButton.innerText = `📋 ${command}`;
             verifyButton.classList.remove('needs-action');
+
+            // Doğrulama bildirimi bu kullanıcı için WebSocket üzerinden beklenecek.
+            connectRealtime(username);
         }
 
         function showAccount(profile) {
@@ -817,9 +984,9 @@
             const points = readNumber(profile.points);
             const level = readNumber(profile.level);
 
-            // Profil 1,5 saniyede bir yenileniyor. Grid'i her yenilemede baştan kurarsak
-            // açık olan Detaylar / Teslimat kutuları kapanır. Bu yüzden ürünleri yalnızca
-            // ilk açılışta veya doğrulanmamış durumdan doğrulanmış duruma geçerken yeniden çiz.
+            // Profil artık periyodik olarak yenilenmiyor. Yalnızca realtime bildirim
+            // geldiğinde güncelleniyor. Ürünleri ilk açılışta veya doğrulanmamış durumdan
+            // doğrulanmış duruma geçerken yeniden çiz.
             const wasAuthenticated = marketAuthenticated;
 
             currentUsername = username;
@@ -841,7 +1008,7 @@
                 urunleriYukle(aktifKategori || 'Tümü');
             }
 
-            startProfileRefresh();
+            connectRealtime(username);
         }
 
         async function initializeMarketAccount() {
@@ -860,9 +1027,10 @@
                 localStorage.setItem(USER_STORAGE_KEY, authState.username);
                 showVerificationActivation(authState.username, authState.code);
 
-                // Kullanıcı 60 saniyelik kontrolü daha önce başlattıysa sayfa yenilense de devam et.
+                // Kullanıcı 60 saniyelik kontrolü daha önce başlattıysa sayfa yenilense de
+                // görsel sayaç kaldığı yerden devam eder. Ağ isteği yalnızca bir kez yapılır;
+                // sonrası realtime auth_verified bildirimiyle tetiklenir.
                 if (getVerificationWaitState() && hasVerifyCommandBeenClicked(authState)) {
-                    startActivationPolling();
                     await checkAuthStatus({ silent: true });
                 }
                 return;
@@ -893,8 +1061,7 @@
         }
 
         async function startAuthentication(username) {
-            stopActivationPolling();
-            stopProfileRefresh();
+            disconnectRealtime();
             localStorage.removeItem(SESSION_STORAGE_KEY);
             localStorage.removeItem(PROFILE_CACHE_KEY);
             localStorage.removeItem(AUTH_STATE_KEY);
@@ -946,7 +1113,6 @@
             if (authState) {
                 if (!hasVerifyCommandBeenClicked(authState)) {
                     closeVerificationWaitModal(true);
-                    stopActivationPolling();
                     showVerificationActivation(authState.username, authState.code);
 
                     const command = `!doğrula ${authState.code}`;
@@ -964,7 +1130,10 @@
                 }
 
                 openVerificationWaitModal();
-                startActivationPolling();
+                connectRealtime(authState.username);
+
+                // Butona basıldığı anda bir kez kontrol et. Henüz doğrulanmadıysa
+                // bundan sonraki kontrol auth_verified realtime bildirimi geldiğinde yapılır.
                 await checkAuthStatus({ manual: true, silent: true });
                 return;
             }
@@ -1008,7 +1177,6 @@
                 if (response.status === 410 || data?.status === 'expired') {
                     localStorage.removeItem(AUTH_STATE_KEY);
                     localStorage.removeItem(VERIFY_COMMAND_CLICKED_KEY);
-                    stopActivationPolling();
                     closeVerificationWaitModal(true);
                     if (!silent) showUsernameForm('⏳ Doğrulama kodunun süresi doldu. Yeni kod oluşturmak için kullanıcı adını tekrar gönder.');
                     return false;
@@ -1021,7 +1189,7 @@
                 if (data.status !== 'verified' || !data.sessionToken) {
                     if (manual) {
                         document.getElementById('accessTitle').innerText = '⏳ Doğrulama İşlemi Bekleniyor';
-                        document.getElementById('accessText').innerHTML = 'Henüz doğrulama yanıtı gelmedi. Kick sohbetinde <b>!doğrula KOD</b> komutunu gönderdiysen BotRix yanıtı için lütfen birkaç saniye bekle. Sistem arka planda otomatik kontrol etmeye devam ediyor.';
+                        document.getElementById('accessText').innerHTML = 'Henüz doğrulama yanıtı gelmedi. Kick sohbetinde <b>!doğrula KOD</b> komutunu gönderdiysen lütfen bekle. BotRix doğrulamayı gönderdiği anda market realtime bildirimle tek sefer kontrol edecek.';
                     }
                     return false;
                 }
@@ -1031,7 +1199,6 @@
                 localStorage.setItem(USER_STORAGE_KEY, data.username || authState.username);
                 localStorage.removeItem(AUTH_STATE_KEY);
                 localStorage.removeItem(PROFILE_CACHE_KEY);
-                stopActivationPolling();
                 // KV oturum kaydının farklı edge noktalarına yayılması kısa süre gecikebilir.
                 // Bu süre boyunca geçici 401 gelirse kullanıcıyı yanlışlıkla çıkış yaptırma.
                 sessionGraceUntil = Date.now() + 30000;
@@ -1054,13 +1221,11 @@
                     };
                     localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(instantProfile));
                     showAccount(instantProfile);
-                    // Oturumu arka planda da teyit et ve güncel bilgiyi sessizce yenile.
-                    checkSession({ silent: true, retries: 4 });
                     return true;
                 }
 
-                // Eski Worker sürümünden profile alanı gelmezse klasik güvenli kontrolü kullan.
-                const opened = await checkSession({ silent: false, retries: 4 });
+                // Profil alanı gelmezse güvenli oturumla tek seferlik profil kontrolünü kullan.
+                const opened = await checkSession({ silent: false, retries: 1 });
                 return opened;
             } catch (error) {
                 console.error('AUTH STATUS ERROR:', error);
@@ -1112,15 +1277,14 @@
                         }
 
                         // Doğrulama yeni tamamlandıysa session KV kaydı henüz bu edge'e
-                        // ulaşmamış olabilir. 30 saniyelik güvenli sürede tokenı silme;
-                        // otomatik yenileme tekrar denemeye devam etsin.
+                        // ulaşmamış olabilir. 30 saniyelik güvenli sürede tokenı silme.
                         if (Date.now() < sessionGraceUntil) {
                             return false;
                         }
 
                         localStorage.removeItem(SESSION_STORAGE_KEY);
                         localStorage.removeItem(PROFILE_CACHE_KEY);
-                        stopProfileRefresh();
+                        disconnectRealtime();
                         if (!silent || document.getElementById('marketContent').style.display !== 'block') {
                             showUsernameForm('🔒 Oturumun sona erdi. Kick hesabını yeniden doğrulaman gerekiyor.');
                         }
@@ -1174,8 +1338,7 @@
             localStorage.removeItem(VERIFY_WAIT_STATE_KEY);
             localStorage.removeItem(VERIFY_COMMAND_CLICKED_KEY);
 
-            stopActivationPolling();
-            stopProfileRefresh();
+            disconnectRealtime();
             currentUsername = '';
             sessionGraceUntil = 0;
 
@@ -1203,62 +1366,16 @@
             localStorage.removeItem(PROFILE_CACHE_KEY);
             localStorage.removeItem(VERIFY_WAIT_STATE_KEY);
             localStorage.removeItem(VERIFY_COMMAND_CLICKED_KEY);
-            stopActivationPolling();
-            stopProfileRefresh();
+            disconnectRealtime();
             currentUsername = '';
             sessionGraceUntil = 0;
             showUsernameForm('Farklı bir Kick hesabına geçmek için kullanıcı adını yaz. Yeni hesap <b>!doğrula KOD</b> ile doğrulanacak.');
             setTimeout(() => document.getElementById('kickUsernameInput').focus(), 50);
         }
 
-        function stopActivationPolling() {
-            if (activationPollTimer) {
-                clearInterval(activationPollTimer);
-                activationPollTimer = null;
-            }
-        }
-
-        function stopProfileRefresh() {
-            if (profileRefreshTimer) {
-                clearInterval(profileRefreshTimer);
-                profileRefreshTimer = null;
-            }
-        }
-
-        function startProfileRefresh() {
-            // Zaten aktif bir yenileme döngüsü varsa tekrar kurma.
-            if (profileRefreshTimer) return;
-
-            // Market görünürken 1,5 saniyede bir güvenli oturumla sadece hesap bilgilerini yenile.
-            profileRefreshTimer = setInterval(() => {
-                if (document.visibilityState === 'visible') {
-                    checkSession({ silent: true });
-                }
-            }, PROFILE_REFRESH_MS);
-        }
-
-        function startActivationPolling() {
-            stopActivationPolling();
-
-            activationPollTimer = setInterval(async () => {
-                const authState = getAuthState();
-                if (!authState) {
-                    stopActivationPolling();
-                    return;
-                }
-
-                if (authState.expiresAt && Date.now() > authState.expiresAt) {
-                    localStorage.removeItem(AUTH_STATE_KEY);
-                    stopActivationPolling();
-                    closeVerificationWaitModal(true);
-                    showUsernameForm('⏳ Doğrulama kodunun süresi doldu. Yeni kod oluşturmak için kullanıcı adını tekrar gönder.');
-                    return;
-                }
-
-                const success = await checkAuthStatus({ silent: true });
-                if (success) stopActivationPolling();
-            }, AUTH_REFRESH_MS);
-        }
+        // Periyodik profil ve doğrulama polling'i kaldırıldı.
+        // Güncellemeler yalnızca weizend-realtime WebSocket bildirimi geldiğinde
+        // veya kullanıcı açıkça "Doğrulamayı Kontrol Et" butonuna bastığında yapılır.
 
         function getVerificationWaitState() {
             try {
@@ -1288,8 +1405,9 @@
 
             if (verificationWaitTimer) clearInterval(verificationWaitTimer);
             verificationWaitTimer = setInterval(() => {
+                // Bu interval yalnızca ekrandaki saniye/progress animasyonunu günceller.
+                // Sunucuya hiçbir profil veya doğrulama isteği göndermez.
                 updateVerificationWaitUI();
-                if (getAuthState()) checkAuthStatus({ silent: true });
             }, 1000);
         }
 
@@ -1367,7 +1485,7 @@
             if (authState) {
                 showVerificationActivation(authState.username, authState.code);
                 document.getElementById('accessTitle').innerText = '⚠️ Doğrulama Henüz Gelmedi';
-                document.getElementById('accessText').innerHTML = `60 saniye içinde doğrulama yanıtı alınamadı. Kick sohbetine <b>!doğrula ${escapeHtml(authState.code)}</b> komutunu gönderip tekrar deneyebilirsin. Sistem arka planda doğrulamayı kontrol etmeye devam eder.`;
+                document.getElementById('accessText').innerHTML = `60 saniye içinde doğrulama yanıtı alınamadı. Kick sohbetine <b>!doğrula ${escapeHtml(authState.code)}</b> komutunu gönderip <b>Doğrulamayı Kontrol Et</b> butonuna tekrar basabilirsin.`;
                 showStatusToast('⏱️ 60 saniye doldu · Doğrulama kodunu Kick sohbetine gönder', 5000);
             } else {
                 showUsernameForm('⏱️ 60 saniye içinde doğrulama alınamadı. Yeni doğrulama kodu oluşturup Kick sohbetine gönderebilirsin.');
@@ -1494,31 +1612,30 @@
             temp.remove();
         }
 
-        // Kick sekmesinden markete dönüldüğünde yalnızca kullanıcı kontrol süresini
-        // başlatmışsa doğrulamayı arka planda sürdür.
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState !== 'visible') return;
+        // Sekmeye geri dönmek profil sorgusu başlatmaz. Yalnızca WebSocket bağlantısı
+        // kopmuşsa tekrar bağlanır; profil isteği ancak realtime olay gelirse yapılır.
+        function ensureRealtimeForCurrentState() {
+            const authState = getAuthState();
+            const username =
+                normalizeUsername(currentUsername) ||
+                normalizeUsername(authState?.username) ||
+                normalizeUsername(localStorage.getItem(USER_STORAGE_KEY));
 
-            if (localStorage.getItem(SESSION_STORAGE_KEY)) {
-                checkSession({ silent: true });
-            } else {
-                const authState = getAuthState();
-                if (authState && getVerificationWaitState() && hasVerifyCommandBeenClicked(authState)) {
-                    checkAuthStatus({ silent: true });
-                    startActivationPolling();
-                }
+            if (username) connectRealtime(username);
+        }
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                ensureRealtimeForCurrentState();
             }
         });
 
         window.addEventListener('focus', () => {
-            if (localStorage.getItem(SESSION_STORAGE_KEY)) {
-                checkSession({ silent: true });
-            } else {
-                const authState = getAuthState();
-                if (authState && getVerificationWaitState() && hasVerifyCommandBeenClicked(authState)) {
-                    checkAuthStatus({ silent: true });
-                }
-            }
+            ensureRealtimeForCurrentState();
+        });
+
+        window.addEventListener('beforeunload', () => {
+            disconnectRealtime();
         });
 
         document.addEventListener('keydown', (event) => {
