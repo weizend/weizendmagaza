@@ -1333,50 +1333,53 @@
         }
 
         function copyVerifyAndRedirect() {
-    const authState = getAuthState();
+            const authState = getAuthState();
+            if (!authState) {
+                showUsernameForm('Doğrulama kodu bulunamadı. Kullanıcı adını tekrar gönder.');
+                return;
+            }
 
-    if (!authState) {
-        showUsernameForm(
-            'Doğrulama kodu bulunamadı. Kullanıcı adını tekrar gönder.'
-        );
-        return;
-    }
+            const command = `!doğrula ${authState.code}`;
 
-    const command = `!doğrula ${authState.code}`;
+            // Doğrulama komutunu hemen kopyala.
+            copyTextFallback(command);
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(command).catch(() => {});
+            }
 
-    // Komutu kopyala
-    copyTextFallback(command);
+            // Kick'e hemen gitme. Önce market sayfasında 3 saniyelik yönlendirme ekranını göster.
+            document.getElementById('redirectModalTitle').innerText = 'Doğrulama Onayı';
+            document.getElementById('redirectStatusText').innerText = 'Doğrulama kodu kopyalandı, Kick sohbete yönlendiriliyorsunuz:';
+            document.getElementById('modalCommandText').innerText = command;
+            document.getElementById('redirectModal').style.display = 'flex';
 
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(command).catch(() => {});
-    }
+            let kalanSaniye = 3;
+            document.getElementById('timerText').innerText = `${kalanSaniye} saniye içinde yönlendirileceksiniz...`;
 
-    // Kick sohbetini DOĞRUDAN YENİ SEKMEDE AÇ
-    window.open(
-        'https://kick.com/weizend/chat',
-        '_blank',
-        'noopener,noreferrer'
-    );
+            if (redirectTimer) clearInterval(redirectTimer);
 
-    showStatusToast(
-        `✅ ${command} kopyalandı · Kick sohbeti yeni sekmede açıldı`,
-        3500
-    );
+            redirectTimer = setInterval(() => {
+                kalanSaniye--;
 
-    document.getElementById('accessTitle').innerText =
-        '⏳ Doğrulama Bekleniyor';
+                if (kalanSaniye > 0) {
+                    document.getElementById('timerText').innerText = `${kalanSaniye} saniye içinde yönlendirileceksiniz...`;
+                } else {
+                    clearInterval(redirectTimer);
+                    redirectTimer = null;
+                    document.getElementById('redirectModal').style.display = 'none';
 
-    document.getElementById('accessText').innerHTML =
-        `<b>${escapeHtml(authState.username)}</b> hesabından Kick sohbetine ` +
-        `<b>${escapeHtml(command)}</b> gönder. ` +
-        `Mesajı gönderdiğin anda sistem hesabını otomatik kontrol edecek.`;
+                    // Popup / yeni pencere yok. 3 saniye sonunda mevcut sayfadan Kick sohbete git.
+                    window.location.href = KICK_CHAT_URL;
+                }
+            }, 1000);
 
-    startActivationPolling();
+            showStatusToast(`✅ ${command} kopyalandı`, 3500);
+            document.getElementById('accessTitle').innerText = '⏳ Doğrulama Bekleniyor';
+            document.getElementById('accessText').innerHTML = `<b>${escapeHtml(authState.username)}</b> hesabından Kick sohbetine <b>${escapeHtml(command)}</b> gönder. Mesajı gönderdiğin anda sistem hesabını otomatik kontrol edecek.`;
 
-    setTimeout(() => {
-        checkAuthStatus({ silent: true });
-    }, 450);
-}
+            startActivationPolling();
+            setTimeout(() => checkAuthStatus({ silent: true }), 450);
+        }
 
         function showStatusToast(message, duration = 3500) {
             const toast = document.getElementById('copyToast');
@@ -1606,29 +1609,13 @@
         }
 
         function islemYapBaslat(komut) {
-            // Ürün komutunu tıklama anında güvenilir şekilde kopyala.
+            // Ürün komutunu hemen kopyala.
             copyTextFallback(komut);
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(komut).catch(() => {});
             }
 
-            // Popup engeline takılmamak için pencereyi kullanıcı tıklaması sırasında hazırla.
-            let kickWindow = null;
-            try {
-                kickWindow = window.open(
-                    'about:blank',
-                    '_blank',
-                    'popup=yes,width=520,height=760,resizable=yes,scrollbars=yes'
-                );
-                pendingKickWindow = kickWindow;
-                if (kickWindow) {
-                    try {
-                        kickWindow.document.title = 'Kick Sohbeti Açılıyor';
-                        kickWindow.document.body.innerHTML = '<div style="font-family:Arial,sans-serif;background:#0b0b0b;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;box-sizing:border-box"><div><h2>Komut kopyalandı ✅</h2><p>Kick sohbeti 3 saniye içinde açılacak...</p></div></div>';
-                    } catch (_) {}
-                }
-            } catch (_) {}
-
+            // Kick'e hemen gitme. Önce market sayfasında 3 saniyelik yönlendirme ekranını göster.
             document.getElementById('redirectModalTitle').innerText = 'Sipariş Onayı';
             document.getElementById('redirectStatusText').innerText = 'Komut kopyalandı, Kick sohbete yönlendiriliyorsunuz:';
             document.getElementById('modalCommandText').innerText = komut;
@@ -1649,18 +1636,8 @@
                     redirectTimer = null;
                     document.getElementById('redirectModal').style.display = 'none';
 
-                    if (kickWindow && !kickWindow.closed) {
-                        try {
-                            kickWindow.location.replace(KICK_CHAT_URL);
-                            kickWindow.focus();
-                        } catch (_) {
-                            window.open(KICK_CHAT_URL, '_blank', 'noopener');
-                        }
-                    } else {
-                        window.open(KICK_CHAT_URL, '_blank', 'noopener');
-                    }
-
-                    pendingKickWindow = null;
+                    // Popup / boş sekme yok. 3 saniye sonunda mevcut sayfadan Kick sohbete git.
+                    window.location.href = KICK_CHAT_URL;
                 }
             }, 1000);
         }
