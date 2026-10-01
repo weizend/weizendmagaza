@@ -1421,10 +1421,30 @@
                 navigator.clipboard.writeText(command).catch(() => {});
             }
 
-            // Market sekmesini kapatma/değiştirme: Kick sohbetini yeni sekmede aç.
-            openKickChatInNewTab();
+            // Önce 3 saniyelik yönlendirme ekranını göster; süre dolunca Kick'i yeni sekmede aç.
+            document.getElementById('redirectModalTitle').innerText = 'Doğrulama Onayı';
+            document.getElementById('redirectStatusText').innerText = 'Doğrulama kodu kopyalandı, Kick sohbete yönlendiriliyorsunuz:';
+            document.getElementById('modalCommandText').innerText = command;
+            document.getElementById('redirectModal').style.display = 'flex';
 
-            showStatusToast(`✅ ${command} kopyalandı · Kick yeni sekmede açıldı`, 4500);
+            let kalanSaniye = 3;
+            document.getElementById('timerText').innerText = `${kalanSaniye} saniye içinde Kick sohbeti yeni sekmede açılacak...`;
+
+            if (redirectTimer) clearInterval(redirectTimer);
+            redirectTimer = setInterval(() => {
+                kalanSaniye--;
+
+                if (kalanSaniye > 0) {
+                    document.getElementById('timerText').innerText = `${kalanSaniye} saniye içinde Kick sohbeti yeni sekmede açılacak...`;
+                } else {
+                    clearInterval(redirectTimer);
+                    redirectTimer = null;
+                    document.getElementById('redirectModal').style.display = 'none';
+                    openKickChatInNewTab();
+                    showStatusToast(`✅ ${command} kopyalandı · Kick yeni sekmede açıldı`, 4500);
+                }
+            }, 1000);
+
             document.getElementById('accessTitle').innerText = '📨 Kodu Kick Sohbetine Gönder';
             document.getElementById('accessText').innerHTML = `<b>${escapeHtml(authState.username)}</b> hesabından Kick sohbetine <b>${escapeHtml(command)}</b> komutunu gönder. Gönderdikten sonra market sekmesine dönüp <b>Doğrulamayı Kontrol Et</b> butonuna bas; 60 saniyelik kontrol süresi o zaman başlayacak.`;
         }
@@ -1670,9 +1690,29 @@
                 navigator.clipboard.writeText(komut).catch(() => {});
             }
 
-            // Market sayfasını değiştirme; Kick sohbetini yeni sekmede aç.
-            openKickChatInNewTab();
-            showStatusToast(`✅ ${komut} kopyalandı · Kick yeni sekmede açıldı`, 4000);
+            // Önce 3 saniyelik sipariş onay ekranını göster; süre dolunca Kick'i yeni sekmede aç.
+            document.getElementById('redirectModalTitle').innerText = 'Sipariş Onayı';
+            document.getElementById('redirectStatusText').innerText = 'Komut kopyalandı, Kick sohbete yönlendiriliyorsunuz:';
+            document.getElementById('modalCommandText').innerText = komut;
+            document.getElementById('redirectModal').style.display = 'flex';
+
+            let kalanSaniye = 3;
+            document.getElementById('timerText').innerText = `${kalanSaniye} saniye içinde Kick sohbeti yeni sekmede açılacak...`;
+
+            if (redirectTimer) clearInterval(redirectTimer);
+            redirectTimer = setInterval(() => {
+                kalanSaniye--;
+
+                if (kalanSaniye > 0) {
+                    document.getElementById('timerText').innerText = `${kalanSaniye} saniye içinde Kick sohbeti yeni sekmede açılacak...`;
+                } else {
+                    clearInterval(redirectTimer);
+                    redirectTimer = null;
+                    document.getElementById('redirectModal').style.display = 'none';
+                    openKickChatInNewTab();
+                    showStatusToast(`✅ ${komut} kopyalandı · Kick yeni sekmede açıldı`, 4000);
+                }
+            }, 1000);
         }
 
         function yonlendirmeyiIptalEt() {
