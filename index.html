@@ -1333,43 +1333,118 @@
         }
 
         function copyVerifyAndRedirect() {
-            const authState = getAuthState();
-            if (!authState) {
-                showUsernameForm('Doğrulama kodu bulunamadı. Kullanıcı adını tekrar gönder.');
-                return;
-            }
+    const authState = getAuthState();
 
-            const command = `!doğrula ${authState.code}`;
+    if (!authState) {
+        showUsernameForm(
+            'Doğrulama kodu bulunamadı. Kullanıcı adını tekrar gönder.'
+        );
+        return;
+    }
 
-            // Kodu kullanıcı tıklaması sırasında SENKRON şekilde kopyala.
-            // Bu yöntem popup açıldığında tarayıcı odağı değişse bile kopyalamayı daha güvenilir yapar.
-            copyTextFallback(command);
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(command).catch(() => {});
-            }
+    const command = `!doğrula ${authState.code}`;
 
-            // Aynı tıklamada Kick sohbetini doğrudan ayrı pencere / yeni sekmede aç.
-            // Market sayfası açık kalır; geri sayım beklenmez.
-            let kickWindow = null;
+    // Önce doğrulama komutunu kopyala
+    copyTextFallback(command);
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(command).catch(() => {});
+    }
+
+    /*
+        ÖNEMLİ:
+        Kick adresini doğrudan window.open ile açmıyoruz.
+
+        Önce kullanıcının mevcut tarayıcısında boş sekme açıyoruz.
+        Ardından o sekmeyi Kick sohbetine yönlendiriyoruz.
+
+        Bu yöntem mobil cihazlarda Kick uygulamasına
+        atlama ihtimalini azaltır.
+    */
+    let kickWindow = null;
+
+    try {
+        kickWindow = window.open(
+            'about:blank',
+            '_blank'
+        );
+
+        if (kickWindow) {
             try {
-                kickWindow = window.open(
-                    KICK_CHAT_URL,
-                    'weizendKickVerify',
-                    'popup=yes,width=520,height=760,resizable=yes,scrollbars=yes'
-                );
+                kickWindow.document.title = 'Kick Sohbeti Açılıyor';
+
+                kickWindow.document.body.innerHTML = `
+                    <div style="
+                        margin:0;
+                        min-height:100vh;
+                        background:#0b0b0b;
+                        color:#ffffff;
+                        display:flex;
+                        align-items:center;
+                        justify-content:center;
+                        text-align:center;
+                        font-family:Arial,sans-serif;
+                        padding:25px;
+                        box-sizing:border-box;
+                    ">
+                        <div>
+                            <h2 style="margin-bottom:10px;">
+                                ✅ Doğrulama kodu kopyalandı
+                            </h2>
+
+                            <p style="color:#aaa;">
+                                Kick sohbeti tarayıcıda açılıyor...
+                            </p>
+                        </div>
+                    </div>
+                `;
             } catch (_) {}
 
-            if (!kickWindow) {
-                try { window.open(KICK_CHAT_URL, '_blank', 'noopener'); } catch (_) {}
-            }
-
-            showStatusToast(`✅ ${command} kopyalandı · Kick sohbeti açıldı`, 3500);
-            document.getElementById('accessTitle').innerText = '⏳ Doğrulama Bekleniyor';
-            document.getElementById('accessText').innerHTML = `<b>${escapeHtml(authState.username)}</b> hesabından Kick sohbetine <b>${escapeHtml(command)}</b> gönder. Mesajı gönderdiğin anda sistem doğrulamayı otomatik kontrol edecek ve hesap bilgilerini yükleyecek.`;
-
-            startActivationPolling();
-            setTimeout(() => checkAuthStatus({ silent: true }), 450);
+            /*
+                Önce tarayıcı sekmesinin gerçekten oluşmasına
+                izin veriyoruz, ardından Kick'e yönlendiriyoruz.
+            */
+            setTimeout(() => {
+                try {
+                    kickWindow.location.replace(KICK_CHAT_URL);
+                    kickWindow.focus();
+                } catch (_) {
+                    try {
+                        kickWindow.location.href = KICK_CHAT_URL;
+                    } catch (_) {}
+                }
+            }, 100);
         }
+
+    } catch (_) {}
+
+    // Tarayıcı popup'ı tamamen engellediyse kullanıcıya bilgi ver
+    if (!kickWindow) {
+        showStatusToast(
+            `✅ ${command} kopyalandı · Tarayıcının açılır pencere iznini kontrol et`,
+            5000
+        );
+    } else {
+        showStatusToast(
+            `✅ ${command} kopyalandı · Kick sohbeti tarayıcıda açılıyor`,
+            3500
+        );
+    }
+
+    document.getElementById('accessTitle').innerText =
+        '⏳ Doğrulama Bekleniyor';
+
+    document.getElementById('accessText').innerHTML =
+        `<b>${escapeHtml(authState.username)}</b> hesabından Kick sohbetine ` +
+        `<b>${escapeHtml(command)}</b> gönder. ` +
+        `Mesajı gönderdiğin anda sistem hesabını otomatik kontrol edecek.`;
+
+    startActivationPolling();
+
+    setTimeout(() => {
+        checkAuthStatus({ silent: true });
+    }, 450);
+}
 
         function showStatusToast(message, duration = 3500) {
             const toast = document.getElementById('copyToast');
