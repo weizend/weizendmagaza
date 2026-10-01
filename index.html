@@ -811,6 +811,11 @@
             const points = readNumber(profile.points);
             const level = readNumber(profile.level);
 
+            // Profil 1,5 saniyede bir yenileniyor. Grid'i her yenilemede baştan kurarsak
+            // açık olan Detaylar / Teslimat kutuları kapanır. Bu yüzden ürünleri yalnızca
+            // ilk açılışta veya doğrulanmamış durumdan doğrulanmış duruma geçerken yeniden çiz.
+            const wasAuthenticated = marketAuthenticated;
+
             currentUsername = username;
             marketAuthenticated = true;
             closeVerificationWaitModal(true);
@@ -826,7 +831,7 @@
             if (!marketInitialized) {
                 urunleriYukle('Tümü');
                 marketInitialized = true;
-            } else {
+            } else if (!wasAuthenticated) {
                 urunleriYukle(aktifKategori || 'Tümü');
             }
 
@@ -1215,9 +1220,10 @@
         }
 
         function startProfileRefresh() {
-            stopProfileRefresh();
+            // Zaten aktif bir yenileme döngüsü varsa tekrar kurma.
+            if (profileRefreshTimer) return;
 
-            // Market görünürken 1,5 saniyede bir güvenli oturumla bakiyeyi yenile.
+            // Market görünürken 1,5 saniyede bir güvenli oturumla sadece hesap bilgilerini yenile.
             profileRefreshTimer = setInterval(() => {
                 if (document.visibilityState === 'visible') {
                     checkSession({ silent: true });
@@ -1537,6 +1543,13 @@
         }
 
         function urunleriYukle(filtreKategori) {
+            // Herhangi bir nedenle grid yeniden çizilirse açık bilgi kutularını hatırla.
+            const acikDetaylar = new Set(
+                Array.from(grid.querySelectorAll('details[open][data-detail-key]'))
+                    .map(el => el.dataset.detailKey)
+                    .filter(Boolean)
+            );
+
             aktifKategori = filtreKategori;
             kategorileriOlustur();
             grid.innerHTML = ''; 
@@ -1607,11 +1620,11 @@
                 let teslimatKutusuHTML = '';
                 if (urun.kategori === 'Fiziksel Ürün') {
                     const yazi = `Ürünü Kick sohbetimizden <b><span style="color:var(--weizend-red);">${urun.komut}</span></b> yazıp aldıktan sonra İnstagram <b><a href="https://instagram.com/weizendtv" target="_blank" rel="noopener noreferrer" style="color:var(--weizend-red);">@weizendtv</a></b> adresine mesaj atarak teslimat işlemlerini halledebilirsiniz.<br><br><b>🚚 Ne Zaman Kargolanır?</b><br>En geç 5 iş gününde kargoda. Tüm ürünlerde kargo ücreti bize aittir.`;
-                    teslimatKutusuHTML = `<details><summary>Teslimat ve Kargo Bilgileri</summary><div class="details-content">${yazi}</div></details>`;
+                    teslimatKutusuHTML = `<details data-detail-key="urun-${urun.orijinalId}-teslimat"><summary>Teslimat ve Kargo Bilgileri</summary><div class="details-content">${yazi}</div></details>`;
                 } 
                 else if (urun.kategori === 'Valorant' || urun.kategori === 'Steam') {
                     const yazi = `Ürünü Kick sohbetimizden <b><span style="color:var(--weizend-red);">${urun.komut}</span></b> yazıp aldıktan sonra Discord üzerinden yetkililere mesaj atarak veya İnstagram <b><a href="https://instagram.com/weizendtv" target="_blank" rel="noopener noreferrer" style="color:var(--weizend-red);">@weizendtv</a></b> adresine ulaşarak kodunuzu anında teslim alabilirsiniz.`;
-                    teslimatKutusuHTML = `<details><summary>Teslimat Bilgileri</summary><div class="details-content">${yazi}</div></details>`;
+                    teslimatKutusuHTML = `<details data-detail-key="urun-${urun.orijinalId}-teslimat"><summary>Teslimat Bilgileri</summary><div class="details-content">${yazi}</div></details>`;
                 }
 
                 const komutClass = tukendiMi ? "command disabled" : "command";
@@ -1651,7 +1664,7 @@
 
                         <button class="${actionBtnClass}" ${actionBtnClick}>${actionBtnText}</button>
 
-                        <details>
+                        <details data-detail-key="urun-${urun.orijinalId}-detaylar">
                             <summary>Detaylar</summary>
                             <div class="details-content">${urun.ozellikler}</div>
                         </details>
@@ -1661,6 +1674,13 @@
                 `;
                 grid.innerHTML += kart;
             });
+
+            // Yeniden çizim olduysa daha önce açık olan Detaylar / Teslimat kutularını geri aç.
+            if (acikDetaylar.size > 0) {
+                grid.querySelectorAll('details[data-detail-key]').forEach(el => {
+                    if (acikDetaylar.has(el.dataset.detailKey)) el.open = true;
+                });
+            }
         }
 
         function goToVerification() {
