@@ -2286,7 +2286,11 @@
                 document.getElementById('purchaseCloseButton').disabled = false;
                 document.getElementById('purchaseSpinner').style.display = 'none';
                 document.getElementById('purchaseStatusText').innerHTML =
-                    `✅ <b>Satın alma başarılı!</b><br>${escapeHtml(order.productName)} × ${Number(order.quantity) || 1}<br>Harcanan: <b>${formatPoints(order.totalPoints)}</b><br>Kalan bakiye: <b>${formatPoints(order.pointsAfter)}</b>`;
+                    const urun = getMarketProduct(order.productId || currentPurchaseProductId);
+const urunAdi = urun?.ad || order.productId || 'Ürün';
+
+document.getElementById('purchaseStatusText').innerHTML =
+    `✅ <b>Satın alma başarılı!</b><br>${escapeHtml(urunAdi)} × ${Number(order.quantity) || 1}<br>Harcanan: <b>${formatPoints(order.totalPoints)}</b><br>Kalan bakiye: <b>${formatPoints(order.pointsAfter)}</b>`;
 
                 const codeBox = document.getElementById('purchaseDeliveryCode');
                 codeBox.innerText = order.deliveryCode || '';
