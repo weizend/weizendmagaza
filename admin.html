@@ -1,0 +1,2550 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>Weizend Market Admin</title>
+
+<style>
+:root{
+  --bg:#050505;
+  --card:#111;
+  --card2:#0a0a0a;
+  --border:#292929;
+  --red:#e31b1b;
+  --red2:#a90f0f;
+  --text:#fff;
+  --muted:#9b9b9b;
+  --ok:#38c76a;
+  --warn:#f0b429;
+  --danger:#ff4c4c;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:Segoe UI,Tahoma,Arial,sans-serif;
+  padding:18px;
+}
+
+.wrap{
+  width:min(1180px,100%);
+  margin:0 auto;
+}
+
+h1{
+  text-align:center;
+  margin:10px 0 24px;
+  letter-spacing:.5px;
+}
+
+h2,h3{margin-top:0}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:20px;
+  margin-bottom:18px;
+}
+
+.grid2{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+.grid3{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+}
+
+input,select,textarea,button{
+  width:100%;
+  border-radius:10px;
+  font-size:.96rem;
+}
+
+input,select,textarea{
+  background:#070707;
+  color:#fff;
+  border:1px solid #333;
+  padding:12px 13px;
+  outline:none;
+}
+
+input:focus,select:focus,textarea:focus{
+  border-color:var(--red);
+}
+
+textarea{
+  min-height:100px;
+  resize:vertical;
+}
+
+label.title{
+  display:block;
+  color:#ccc;
+  font-size:.88rem;
+  margin-bottom:6px;
+}
+
+.field{margin-bottom:12px}
+
+button{
+  padding:12px 14px;
+  border:0;
+  background:var(--red);
+  color:#fff;
+  font-weight:800;
+  cursor:pointer;
+}
+
+button:hover{filter:brightness(1.08)}
+button:disabled{
+  background:#333;
+  color:#777;
+  cursor:not-allowed;
+}
+
+button.secondary{
+  background:#222;
+  border:1px solid #3a3a3a;
+}
+
+button.success{
+  background:var(--ok);
+  color:#07130b;
+}
+
+button.warn{
+  background:var(--warn);
+  color:#211600;
+}
+
+button.danger{
+  background:#781c1c;
+}
+
+.btnRow{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.btnRow button{
+  flex:1;
+  min-width:150px;
+}
+
+.checkline{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  margin:9px 0;
+}
+
+.checkline input{
+  width:auto;
+  margin:0;
+}
+
+.muted{
+  color:var(--muted);
+  font-size:.88rem;
+  line-height:1.5;
+}
+
+.status{
+  display:none;
+  margin-top:12px;
+  padding:12px;
+  border-radius:10px;
+  border:1px solid #333;
+  background:#090909;
+  white-space:pre-line;
+}
+
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  margin-bottom:18px;
+}
+
+.topbar h2{margin:0}
+
+.tabs{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-bottom:18px;
+}
+
+.tabs button{
+  width:auto;
+  background:#1c1c1c;
+  border:1px solid #333;
+  padding:9px 13px;
+}
+
+.tabs button.active{
+  background:var(--red);
+}
+
+.section{display:none}
+.section.active{display:block}
+
+.tableWrap{
+  width:100%;
+  overflow:auto;
+  border:1px solid #272727;
+  border-radius:12px;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:820px;
+}
+
+th,td{
+  padding:11px 10px;
+  text-align:left;
+  border-bottom:1px solid #242424;
+  vertical-align:middle;
+}
+
+th{
+  background:#090909;
+  color:#bbb;
+  font-size:.85rem;
+  position:sticky;
+  top:0;
+}
+
+td{
+  font-size:.9rem;
+}
+
+.smallBtn{
+  width:auto;
+  padding:7px 10px;
+  font-size:.8rem;
+}
+
+.badge{
+  display:inline-block;
+  padding:4px 8px;
+  border-radius:999px;
+  font-size:.76rem;
+  font-weight:800;
+  background:#292929;
+}
+
+.badge.ok{
+  background:#11391f;
+  color:#7af0a0;
+}
+
+.badge.warn{
+  background:#493600;
+  color:#ffd86a;
+}
+
+.badge.bad{
+  background:#471616;
+  color:#ff8c8c;
+}
+
+pre{
+  white-space:pre-wrap;
+  word-break:break-word;
+  background:#070707;
+  border:1px solid #292929;
+  border-radius:10px;
+  padding:12px;
+  max-height:420px;
+  overflow:auto;
+}
+
+.row{
+  display:flex;
+  justify-content:space-between;
+  gap:16px;
+  padding:9px 0;
+  border-bottom:1px solid #222;
+}
+
+.row span:first-child{color:var(--muted)}
+.row strong{text-align:right}
+
+.code{
+  font-family:Consolas,monospace;
+  color:#ff5555;
+  letter-spacing:1px;
+}
+
+.hidden{display:none!important}
+
+@media(max-width:760px){
+  body{padding:10px}
+  .grid2,.grid3{grid-template-columns:1fr}
+  .topbar{align-items:flex-start;flex-direction:column}
+  .row{flex-direction:column;gap:4px}
+  .row strong{text-align:left}
+}
+</style>
+</head>
+
+<body>
+
+<div class="wrap">
+
+  <h1>WEİZEND MARKET · ADMIN</h1>
+
+  <!-- LOGIN -->
+  <div class="card" id="loginCard">
+    <h2>🔐 Admin Girişi</h2>
+
+    <p class="muted">
+      Cloudflare'da <b>ADMIN_PASSWORD</b> Secret olarak belirlediğin şifreyi gir.
+      Şifre bu HTML dosyasına kaydedilmez.
+    </p>
+
+    <div class="field">
+      <input
+        id="adminPassword"
+        type="password"
+        autocomplete="current-password"
+        placeholder="Admin şifresi">
+    </div>
+
+    <button onclick="loginAdmin()">Giriş Yap</button>
+
+    <div id="loginStatus" class="status"></div>
+  </div>
+
+  <!-- ADMIN -->
+  <div id="adminArea" style="display:none;">
+
+    <div class="topbar">
+      <div>
+        <h2>⚙️ Yönetim Paneli</h2>
+        <div class="muted">Weizend Market V3</div>
+      </div>
+
+      <button
+        class="secondary"
+        style="width:auto"
+        onclick="logoutAdmin()">
+        Çıkış Yap
+      </button>
+    </div>
+
+    <div class="tabs">
+      <button id="tab-products" class="active" onclick="openTab('products')">
+        📦 Ürünler
+      </button>
+
+      <button id="tab-payments" onclick="openTab('payments')">
+        💳 Ödemeler
+      </button>
+
+      <button id="tab-orders" onclick="openTab('orders')">
+        🎟️ Teslimat
+      </button>
+
+      <button id="tab-tournaments" onclick="openTab('tournaments')">
+        🏆 Turnuva
+      </button>
+
+      <button id="tab-missxss" onclick="openTab('missxss')">
+        🤖 MissXss
+      </button>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- PRODUCTS -->
+    <!-- ===================================================== -->
+
+    <div id="section-products" class="section active">
+
+      <div class="card">
+
+        <h2 id="productFormTitle">➕ Yeni Ürün Ekle</h2>
+
+        <div class="grid2">
+
+          <div class="field">
+            <label class="title">Ürün ID</label>
+            <input
+              id="pId"
+              placeholder="Örn: alvalorant2400vp">
+          </div>
+
+          <div class="field">
+            <label class="title">Ürün Adı</label>
+            <input
+              id="pName"
+              placeholder="Örn: 2400 VP Valorant Points">
+          </div>
+
+        </div>
+
+        <div class="grid2">
+
+          <div class="field">
+            <label class="title">Kategori</label>
+
+            <input
+              id="pCategory"
+              list="categoryList"
+              placeholder="Kategori seç veya yeni kategori yaz">
+
+            <datalist id="categoryList">
+              <option value="Fiziksel Ürün">
+              <option value="Valorant">
+              <option value="Steam">
+              <option value="Dijital Ürün">
+            </datalist>
+          </div>
+
+          <div class="field">
+            <label class="title">Ödeme Türü</label>
+
+            <select id="pPaymentType" onchange="updatePriceFields()">
+              <option value="points">Puan</option>
+              <option value="tl">TL / BynoGame</option>
+            </select>
+          </div>
+
+        </div>
+
+        <div class="grid2">
+
+          <div class="field" id="pointsPriceBox">
+            <label class="title">Puan Fiyatı</label>
+            <input
+              id="pPricePoints"
+              type="number"
+              min="1"
+              step="1"
+              placeholder="Örn: 50000">
+          </div>
+
+          <div class="field hidden" id="tlPriceBox">
+            <label class="title">TL Fiyatı</label>
+            <input
+              id="pPriceTl"
+              type="number"
+              min="0.01"
+              step="0.01"
+              placeholder="Örn: 200">
+          </div>
+
+          <div class="field">
+            <label class="title">Stok</label>
+            <input
+              id="pStock"
+              type="number"
+              min="0"
+              step="1"
+              value="1">
+          </div>
+
+        </div>
+
+        <div class="field">
+          <label class="title">Teslimat Türü</label>
+
+          <select id="pDeliveryType">
+            <option value="physical">Fiziksel Ürün</option>
+            <option value="digital_code">Dijital Kod</option>
+            <option value="manual">Manuel Teslimat</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label class="title">Açıklama</label>
+          <textarea
+            id="pDescription"
+            placeholder="Ürün açıklaması"></textarea>
+        </div>
+
+        <div class="field">
+          <label class="title">Görsel URL'leri</label>
+
+          <textarea
+            id="pImages"
+            placeholder="Her satıra 1 adet HTTPS görsel adresi"></textarea>
+        </div>
+
+        <label class="checkline">
+          <input id="pUnlimited" type="checkbox" onchange="updateStockField()">
+          <span>Sınırsız stok</span>
+        </label>
+
+        <label class="checkline">
+          <input id="pWebPurchase" type="checkbox" checked>
+          <span>Siteden satın alınabilir</span>
+        </label>
+
+        <label class="checkline">
+          <input id="pActive" type="checkbox" checked>
+          <span>Ürün aktif</span>
+        </label>
+
+        <div class="btnRow">
+          <button id="saveProductButton" onclick="saveProduct()">
+            Ürünü Kaydet
+          </button>
+
+          <button
+            class="secondary"
+            onclick="resetProductForm()">
+            Formu Temizle
+          </button>
+        </div>
+
+        <div id="productFormStatus" class="status"></div>
+
+      </div>
+
+      <div class="card">
+
+        <div class="topbar">
+          <div>
+            <h2>📦 Mevcut Ürünler</h2>
+            <div id="productCount" class="muted">-</div>
+          </div>
+
+          <button
+            class="secondary"
+            style="width:auto"
+            onclick="loadProducts()">
+            Yenile
+          </button>
+        </div>
+
+        <div class="tableWrap">
+          <table>
+
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Ürün</th>
+                <th>Kategori</th>
+                <th>Ödeme</th>
+                <th>Fiyat</th>
+                <th>Stok</th>
+                <th>Durum</th>
+                <th>İşlem</th>
+              </tr>
+            </thead>
+
+            <tbody id="productsBody"></tbody>
+
+          </table>
+        </div>
+
+        <div id="productsStatus" class="status"></div>
+
+      </div>
+
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- PAYMENTS -->
+    <!-- ===================================================== -->
+
+    <div id="section-payments" class="section">
+
+      <div class="card">
+
+        <h2>💳 BynoGame / TL Ödemeleri</h2>
+
+        <div class="grid2">
+
+          <select id="paymentStatusFilter">
+            <option value="">Tüm Durumlar</option>
+            <option value="pending">pending</option>
+            <option value="partial_payment">partial_payment</option>
+            <option value="paid">paid</option>
+            <option value="manual_review">manual_review</option>
+            <option value="expired">expired</option>
+            <option value="cancelled">cancelled</option>
+          </select>
+
+          <button onclick="loadPayments()">
+            Ödemeleri Getir
+          </button>
+
+        </div>
+
+        <div id="paymentsStatus" class="status"></div>
+
+      </div>
+
+      <div class="card">
+
+        <div class="tableWrap">
+
+          <table>
+
+            <thead>
+              <tr>
+                <th>Referans</th>
+                <th>Kullanıcı</th>
+                <th>Tür</th>
+                <th>Beklenen</th>
+                <th>Gelen</th>
+                <th>Durum</th>
+                <th>İşlem</th>
+              </tr>
+            </thead>
+
+            <tbody id="paymentsBody"></tbody>
+
+          </table>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- ORDERS -->
+    <!-- ===================================================== -->
+
+    <div id="section-orders" class="section">
+
+      <div class="card">
+
+        <h2>🎟️ Teslimat Kodu Sorgula</h2>
+
+        <input
+          id="deliveryCode"
+          autocomplete="off"
+          placeholder="Örn: WZ-ABCD-1234">
+
+        <button onclick="lookupOrder()">
+          Kodu Sorgula
+        </button>
+
+        <div id="lookupStatus" class="status"></div>
+
+      </div>
+
+      <div class="card hidden" id="orderCard">
+
+        <h2>📦 Sipariş Bilgileri</h2>
+
+        <div class="row">
+          <span>Sipariş No</span>
+          <strong id="oId">-</strong>
+        </div>
+
+        <div class="row">
+          <span>Teslimat Kodu</span>
+          <strong id="oCode" class="code">-</strong>
+        </div>
+
+        <div class="row">
+          <span>Kullanıcı</span>
+          <strong id="oUser">-</strong>
+        </div>
+
+        <div class="row">
+          <span>Kick ID</span>
+          <strong id="oUid">-</strong>
+        </div>
+
+        <div class="row">
+          <span>Ürün ID</span>
+          <strong id="oProduct">-</strong>
+        </div>
+
+        <div class="row">
+          <span>Adet</span>
+          <strong id="oQty">-</strong>
+        </div>
+
+        <div class="row">
+          <span>Ödeme Türü</span>
+          <strong id="oPaymentType">-</strong>
+        </div>
+
+        <div class="row">
+          <span>Toplam</span>
+          <strong id="oTotal">-</strong>
+        </div>
+
+        <div class="row">
+          <span>Satın Alma</span>
+          <strong id="oPaidAt">-</strong>
+        </div>
+
+        <div class="row">
+          <span>Teslim Tarihi</span>
+          <strong id="oDeliveredAt">-</strong>
+        </div>
+
+        <div class="row">
+          <span>Durum</span>
+          <strong id="oStatus">-</strong>
+        </div>
+
+        <button
+          id="completeButton"
+          class="success"
+          style="margin-top:16px"
+          onclick="completeOrder()">
+
+          ✅ TESLİM EDİLDİ
+
+        </button>
+
+      </div>
+
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- TOURNAMENT -->
+    <!-- ===================================================== -->
+
+    <div id="section-tournaments" class="section">
+
+      <div class="card">
+
+        <h2>🏆 Turnuva Ayarları</h2>
+
+        <select
+          id="tournamentSelect"
+          onchange="loadTournamentConfig()">
+
+          <option value="valorant-1v1">
+            1 VS 1 Valorant
+          </option>
+
+          <option value="valorant-2v2">
+            2 VS 2 Valorant
+          </option>
+
+        </select>
+
+        <label class="checkline">
+          <input id="tRegistrationOpen" type="checkbox">
+          <span>Kayıtlar açık</span>
+        </label>
+
+        <div class="grid3">
+
+          <div>
+            <label class="title">
+              Kişi başı ücret (TL)
+            </label>
+
+            <input
+              id="tFee"
+              type="number"
+              min="0"
+              step="1">
+          </div>
+
+          <div>
+            <label class="title">
+              Kontenjan
+            </label>
+
+            <input
+              id="tCapacity"
+              type="number"
+              min="1"
+              step="1">
+          </div>
+
+          <div>
+            <label class="title">
+              Turnuva Tarihi
+            </label>
+
+            <input
+              id="tEventDate"
+              type="datetime-local">
+          </div>
+
+        </div>
+
+        <div class="btnRow">
+
+          <button onclick="saveTournamentConfig()">
+            Ayarları Kaydet
+          </button>
+
+          <button
+            class="secondary"
+            onclick="loadTournamentEntries()">
+            Kayıtları Göster
+          </button>
+
+          <button
+            class="warn"
+            onclick="drawTournament()">
+            🎲 Kura Çek
+          </button>
+
+        </div>
+
+        <div id="tournamentStatus" class="status"></div>
+
+        <pre
+          id="tournamentOutput"
+          style="display:none"></pre>
+
+      </div>
+
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- MISSXSS -->
+    <!-- ===================================================== -->
+
+    <div id="section-missxss" class="section">
+
+      <div class="card">
+
+        <h2>🤖 MissXss / BotRix Testi</h2>
+
+        <p class="muted">
+          Kick sohbetine sadece <b>!puanbak</b> test komutu gönderir.
+        </p>
+
+        <input
+          id="testUsername"
+          value="Weizend"
+          placeholder="Kick kullanıcı adı">
+
+        <button
+          class="secondary"
+          onclick="testMissXss()">
+
+          Test Mesajı Gönder
+
+        </button>
+
+        <div id="testStatus" class="status"></div>
+
+      </div>
+
+      <div class="card">
+
+        <h2>💸 BynoGame Son Aktivite</h2>
+
+        <button
+          class="secondary"
+          onclick="loadRecentActivity()">
+
+          Son Aktiviteyi Kontrol Et
+
+        </button>
+
+        <div id="activityStatus" class="status"></div>
+
+        <pre
+          id="activityOutput"
+          style="display:none"></pre>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+
+const MARKET_WORKER =
+  'https://weizend-botrix.weizendtv.workers.dev';
+
+const ADMIN_TOKEN_KEY =
+  'weizend_market_admin_token_v3';
+
+let currentOrder = null;
+let productsCache = [];
+let editingProductId = null;
+
+
+/* =========================================================
+   BASIC HELPERS
+========================================================= */
+
+function token(){
+  return sessionStorage.getItem(ADMIN_TOKEN_KEY) || '';
+}
+
+function esc(value){
+  return String(value ?? '')
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'",'&#039;');
+}
+
+function dateText(value){
+  if(!value) return '-';
+
+  const d = new Date(value);
+
+  return Number.isNaN(d.getTime())
+    ? String(value)
+    : d.toLocaleString('tr-TR');
+}
+
+function points(value){
+  return `${Number(value || 0).toLocaleString('tr-TR')} Puan`;
+}
+
+function tlFromCents(value){
+  return `${(Number(value || 0) / 100).toLocaleString(
+    'tr-TR',
+    {
+      minimumFractionDigits:2,
+      maximumFractionDigits:2
+    }
+  )} TL`;
+}
+
+function showStatus(id,message,ok=false){
+  const el = document.getElementById(id);
+
+  if(!el) return;
+
+  el.style.display = 'block';
+
+  el.style.borderColor =
+    ok ? '#236b3d' : '#6b2323';
+
+  el.innerHTML = message;
+}
+
+function hideStatus(id){
+  const el = document.getElementById(id);
+
+  if(el) el.style.display = 'none';
+}
+
+
+/* =========================================================
+   TABS
+========================================================= */
+
+function openTab(name){
+
+  document
+    .querySelectorAll('.section')
+    .forEach(el => el.classList.remove('active'));
+
+  document
+    .querySelectorAll('.tabs button')
+    .forEach(el => el.classList.remove('active'));
+
+  document
+    .getElementById(`section-${name}`)
+    ?.classList.add('active');
+
+  document
+    .getElementById(`tab-${name}`)
+    ?.classList.add('active');
+
+  if(name === 'products'){
+    loadProducts();
+  }
+
+  if(name === 'payments'){
+    loadPayments();
+  }
+
+  if(name === 'tournaments'){
+    loadTournamentConfig();
+  }
+}
+
+
+/* =========================================================
+   LOGIN
+========================================================= */
+
+async function loginAdmin(){
+
+  const password =
+    document
+      .getElementById('adminPassword')
+      .value;
+
+  if(!password){
+    return showStatus(
+      'loginStatus',
+      '⚠️ Admin şifresini yaz.',
+      false
+    );
+  }
+
+  try{
+
+    const r = await fetch(
+      `${MARKET_WORKER}/admin/login`,
+      {
+        method:'POST',
+
+        headers:{
+          'Accept':'application/json',
+          'Content-Type':'application/json'
+        },
+
+        cache:'no-store',
+
+        body:JSON.stringify({
+          password
+        })
+      }
+    );
+
+    const d = await r.json();
+
+    if(
+      !r.ok ||
+      !d?.success ||
+      !d?.token
+    ){
+      throw new Error(
+        d?.error ||
+        `HTTP ${r.status}`
+      );
+    }
+
+    sessionStorage.setItem(
+      ADMIN_TOKEN_KEY,
+      d.token
+    );
+
+    document
+      .getElementById('adminPassword')
+      .value = '';
+
+    openAdmin();
+
+  }catch(error){
+
+    showStatus(
+      'loginStatus',
+      '❌ ' + esc(error.message || error),
+      false
+    );
+
+  }
+}
+
+async function logoutAdmin(){
+
+  try{
+
+    if(token()){
+
+      await fetch(
+        `${MARKET_WORKER}/admin/logout`,
+        {
+          method:'POST',
+
+          headers:{
+            'Authorization':
+              `Bearer ${token()}`
+          },
+
+          cache:'no-store'
+        }
+      );
+
+    }
+
+  }catch(_){}
+
+  sessionStorage.removeItem(
+    ADMIN_TOKEN_KEY
+  );
+
+  location.reload();
+}
+
+function openAdmin(){
+
+  document
+    .getElementById('loginCard')
+    .style.display = 'none';
+
+  document
+    .getElementById('adminArea')
+    .style.display = 'block';
+
+  loadProducts();
+}
+
+
+/* =========================================================
+   API
+========================================================= */
+
+async function api(path,options={}){
+
+  const headers = {
+    ...(options.headers || {}),
+    'Accept':'application/json',
+    'Authorization':
+      `Bearer ${token()}`
+  };
+
+  const r = await fetch(
+    `${MARKET_WORKER}${path}`,
+    {
+      ...options,
+      headers,
+      cache:'no-store'
+    }
+  );
+
+  let d = null;
+
+  try{
+    d = await r.json();
+  }catch(_){}
+
+  if(r.status === 401){
+
+    sessionStorage.removeItem(
+      ADMIN_TOKEN_KEY
+    );
+
+    document
+      .getElementById('loginCard')
+      .style.display = 'block';
+
+    document
+      .getElementById('adminArea')
+      .style.display = 'none';
+
+    throw new Error(
+      'Admin oturumunun süresi doldu.'
+    );
+
+  }
+
+  return {r,d};
+}
+
+
+/* =========================================================
+   PRODUCTS
+========================================================= */
+
+async function loadProducts(){
+
+  try{
+
+    const {r,d} =
+      await api('/admin/products');
+
+    if(
+      !r.ok ||
+      !d?.success
+    ){
+      throw new Error(
+        d?.error ||
+        `HTTP ${r.status}`
+      );
+    }
+
+    productsCache =
+      Array.isArray(d.products)
+        ? d.products
+        : [];
+
+    renderProducts();
+
+    updateCategoryList();
+
+  }catch(error){
+
+    showStatus(
+      'productsStatus',
+      '❌ ' + esc(error.message || error),
+      false
+    );
+
+  }
+}
+
+function renderProducts(){
+
+  const body =
+    document.getElementById('productsBody');
+
+  body.innerHTML = '';
+
+  document
+    .getElementById('productCount')
+    .innerText =
+      `${productsCache.length} ürün`;
+
+  for(const p of productsCache){
+
+    const tr =
+      document.createElement('tr');
+
+    const price =
+      p.paymentType === 'points'
+        ? points(p.pricePoints)
+        : tlFromCents(p.priceTlCents);
+
+    const stock =
+      p.unlimited
+        ? 'Sınırsız'
+        : String(p.stock ?? 0);
+
+    const active =
+      p.active
+        ? '<span class="badge ok">AKTİF</span>'
+        : '<span class="badge bad">PASİF</span>';
+
+    tr.innerHTML = `
+      <td>${esc(p.id)}</td>
+
+      <td>${esc(p.name)}</td>
+
+      <td>${esc(p.category)}</td>
+
+      <td>${esc(
+        p.paymentType === 'points'
+          ? 'Puan'
+          : 'TL'
+      )}</td>
+
+      <td>${esc(price)}</td>
+
+      <td>${esc(stock)}</td>
+
+      <td>${active}</td>
+
+      <td>
+        <button
+          class="smallBtn secondary"
+          onclick="editProduct('${encodeURIComponent(p.id)}')">
+          Düzenle
+        </button>
+
+        <button
+          class="smallBtn ${p.active ? 'danger' : 'success'}"
+          style="margin-top:6px"
+          onclick="toggleProduct(
+            '${encodeURIComponent(p.id)}',
+            ${p.active ? 'false' : 'true'}
+          )">
+          ${p.active ? 'Pasife Al' : 'Aktif Et'}
+        </button>
+      </td>
+    `;
+
+    body.appendChild(tr);
+  }
+}
+
+function updateCategoryList(){
+
+  const datalist =
+    document.getElementById('categoryList');
+
+  const defaults = [
+    'Fiziksel Ürün',
+    'Valorant',
+    'Steam',
+    'Dijital Ürün'
+  ];
+
+  const categories =
+    new Set(defaults);
+
+  for(const p of productsCache){
+
+    if(p.category){
+      categories.add(p.category);
+    }
+
+  }
+
+  datalist.innerHTML =
+    [...categories]
+      .sort()
+      .map(c =>
+        `<option value="${esc(c)}">`
+      )
+      .join('');
+}
+
+function updatePriceFields(){
+
+  const type =
+    document.getElementById(
+      'pPaymentType'
+    ).value;
+
+  document
+    .getElementById('pointsPriceBox')
+    .classList.toggle(
+      'hidden',
+      type !== 'points'
+    );
+
+  document
+    .getElementById('tlPriceBox')
+    .classList.toggle(
+      'hidden',
+      type !== 'tl'
+    );
+}
+
+function updateStockField(){
+
+  const unlimited =
+    document.getElementById(
+      'pUnlimited'
+    ).checked;
+
+  const stock =
+    document.getElementById(
+      'pStock'
+    );
+
+  stock.disabled = unlimited;
+}
+
+function resetProductForm(){
+
+  editingProductId = null;
+
+  document
+    .getElementById('productFormTitle')
+    .innerText =
+      '➕ Yeni Ürün Ekle';
+
+  document
+    .getElementById('saveProductButton')
+    .innerText =
+      'Ürünü Kaydet';
+
+  document.getElementById('pId').disabled = false;
+  document.getElementById('pId').value = '';
+  document.getElementById('pName').value = '';
+  document.getElementById('pCategory').value = '';
+  document.getElementById('pPaymentType').value = 'points';
+  document.getElementById('pPricePoints').value = '';
+  document.getElementById('pPriceTl').value = '';
+  document.getElementById('pStock').value = '1';
+  document.getElementById('pUnlimited').checked = false;
+  document.getElementById('pWebPurchase').checked = true;
+  document.getElementById('pActive').checked = true;
+  document.getElementById('pDeliveryType').value = 'physical';
+  document.getElementById('pDescription').value = '';
+  document.getElementById('pImages').value = '';
+
+  updatePriceFields();
+  updateStockField();
+
+  hideStatus('productFormStatus');
+}
+
+function editProduct(encodedId){
+
+  const id =
+    decodeURIComponent(encodedId);
+
+  const p =
+    productsCache.find(
+      x => x.id === id
+    );
+
+  if(!p) return;
+
+  editingProductId = p.id;
+
+  document
+    .getElementById('productFormTitle')
+    .innerText =
+      `✏️ Ürün Düzenle · ${p.name}`;
+
+  document
+    .getElementById('saveProductButton')
+    .innerText =
+      'Değişiklikleri Kaydet';
+
+  document.getElementById('pId').value = p.id;
+  document.getElementById('pId').disabled = true;
+
+  document.getElementById('pName').value = p.name || '';
+  document.getElementById('pCategory').value = p.category || '';
+  document.getElementById('pPaymentType').value = p.paymentType || 'points';
+
+  document.getElementById('pPricePoints').value =
+    p.pricePoints ?? '';
+
+  document.getElementById('pPriceTl').value =
+    p.priceTlCents == null
+      ? ''
+      : Number(p.priceTlCents) / 100;
+
+  document.getElementById('pUnlimited').checked =
+    !!p.unlimited;
+
+  document.getElementById('pStock').value =
+    p.unlimited
+      ? ''
+      : p.stock ?? 0;
+
+  document.getElementById('pWebPurchase').checked =
+    !!p.webPurchase;
+
+  document.getElementById('pActive').checked =
+    !!p.active;
+
+  document.getElementById('pDeliveryType').value =
+    p.deliveryType || 'manual';
+
+  document.getElementById('pDescription').value =
+    p.metadata?.description || '';
+
+  document.getElementById('pImages').value =
+    Array.isArray(p.metadata?.images)
+      ? p.metadata.images.join('\n')
+      : '';
+
+  updatePriceFields();
+  updateStockField();
+
+  window.scrollTo({
+    top:0,
+    behavior:'smooth'
+  });
+}
+
+async function saveProduct(){
+
+  const paymentType =
+    document
+      .getElementById('pPaymentType')
+      .value;
+
+  const unlimited =
+    document
+      .getElementById('pUnlimited')
+      .checked;
+
+  const product = {
+
+    id:
+      document
+        .getElementById('pId')
+        .value
+        .trim()
+        .toLowerCase(),
+
+    name:
+      document
+        .getElementById('pName')
+        .value
+        .trim(),
+
+    category:
+      document
+        .getElementById('pCategory')
+        .value
+        .trim(),
+
+    paymentType,
+
+    stock:
+      unlimited
+        ? null
+        : Number(
+            document
+              .getElementById('pStock')
+              .value
+          ),
+
+    unlimited,
+
+    webPurchase:
+      document
+        .getElementById('pWebPurchase')
+        .checked,
+
+    active:
+      document
+        .getElementById('pActive')
+        .checked,
+
+    deliveryType:
+      document
+        .getElementById('pDeliveryType')
+        .value,
+
+    description:
+      document
+        .getElementById('pDescription')
+        .value
+        .trim(),
+
+    images:
+      document
+        .getElementById('pImages')
+        .value
+        .split('\n')
+        .map(x => x.trim())
+        .filter(Boolean)
+  };
+
+  if(paymentType === 'points'){
+
+    product.pricePoints =
+      Number(
+        document
+          .getElementById('pPricePoints')
+          .value
+      );
+
+  }else{
+
+    product.priceTl =
+      Number(
+        document
+          .getElementById('pPriceTl')
+          .value
+      );
+
+  }
+
+  try{
+
+    const path =
+      editingProductId
+        ? '/admin/product/update'
+        : '/admin/products';
+
+    const {r,d} =
+      await api(
+        path,
+        {
+          method:'POST',
+
+          headers:{
+            'Content-Type':
+              'application/json'
+          },
+
+          body:
+            JSON.stringify(product)
+        }
+      );
+
+    if(
+      !r.ok ||
+      !d?.success
+    ){
+      throw new Error(
+        d?.error ||
+        `HTTP ${r.status}`
+      );
+    }
+
+    showStatus(
+      'productFormStatus',
+      editingProductId
+        ? '✅ Ürün başarıyla güncellendi.'
+        : '✅ Ürün başarıyla eklendi.',
+      true
+    );
+
+    resetProductForm();
+    await loadProducts();
+
+  }catch(error){
+
+    showStatus(
+      'productFormStatus',
+      '❌ ' + esc(error.message || error),
+      false
+    );
+
+  }
+}
+
+async function toggleProduct(
+  encodedId,
+  active
+){
+
+  const id =
+    decodeURIComponent(encodedId);
+
+  if(
+    !confirm(
+      active
+        ? 'Bu ürün aktif edilsin mi?'
+        : 'Bu ürün pasife alınsın mı?'
+    )
+  ){
+    return;
+  }
+
+  try{
+
+    const {r,d} =
+      await api(
+        '/admin/product/toggle',
+        {
+          method:'POST',
+
+          headers:{
+            'Content-Type':
+              'application/json'
+          },
+
+          body:
+            JSON.stringify({
+              id,
+              active
+            })
+        }
+      );
+
+    if(
+      !r.ok ||
+      !d?.success
+    ){
+      throw new Error(
+        d?.error ||
+        `HTTP ${r.status}`
+      );
+    }
+
+    await loadProducts();
+
+  }catch(error){
+
+    showStatus(
+      'productsStatus',
+      '❌ ' + esc(error.message || error),
+      false
+    );
+
+  }
+}
+
+
+/* =========================================================
+   PAYMENTS
+========================================================= */
+
+async function loadPayments(){
+
+  const status =
+    document
+      .getElementById(
+        'paymentStatusFilter'
+      ).value;
+
+  const query =
+    status
+      ? `?status=${encodeURIComponent(status)}`
+      : '';
+
+  try{
+
+    const {r,d} =
+      await api(
+        `/admin/payments${query}`
+      );
+
+    if(
+      !r.ok ||
+      !d?.success
+    ){
+      throw new Error(
+        d?.error ||
+        `HTTP ${r.status}`
+      );
+    }
+
+    renderPayments(
+      Array.isArray(d.payments)
+        ? d.payments
+        : []
+    );
+
+    showStatus(
+      'paymentsStatus',
+      `✅ ${(d.payments || []).length} ödeme bulundu.`,
+      true
+    );
+
+  }catch(error){
+
+    showStatus(
+      'paymentsStatus',
+      '❌ ' + esc(error.message || error),
+      false
+    );
+
+  }
+}
+
+function renderPayments(items){
+
+  const body =
+    document.getElementById(
+      'paymentsBody'
+    );
+
+  body.innerHTML = '';
+
+  for(const p of items){
+
+    const tr =
+      document.createElement('tr');
+
+    const badgeClass =
+      p.status === 'paid'
+        ? 'ok'
+        : p.status === 'manual_review'
+        ? 'bad'
+        : 'warn';
+
+    let actions = '-';
+
+    if(p.status === 'manual_review'){
+
+      actions = `
+        <button
+          class="smallBtn success"
+          onclick="resolvePayment(
+            '${encodeURIComponent(p.id)}',
+            'approve_exact'
+          )">
+          Onayla
+        </button>
+
+        <button
+          class="smallBtn danger"
+          style="margin-top:5px"
+          onclick="resolvePayment(
+            '${encodeURIComponent(p.id)}',
+            'cancel'
+          )">
+          İptal
+        </button>
+      `;
+
+    }
+
+    tr.innerHTML = `
+      <td class="code">${esc(p.reference)}</td>
+
+      <td>${esc(p.id)}</td>
+
+      <td>${esc(p.purposeType)}</td>
+
+      <td>${esc(
+        tlFromCents(
+          p.expectedAmountCents
+        )
+      )}</td>
+
+      <td>${esc(
+        tlFromCents(
+          p.receivedAmountCents
+        )
+      )}</td>
+
+      <td>
+        <span class="badge ${badgeClass}">
+          ${esc(p.status)}
+        </span>
+      </td>
+
+      <td>${actions}</td>
+    `;
+
+    body.appendChild(tr);
+  }
+}
+
+async function resolvePayment(
+  encodedId,
+  action
+){
+
+  const paymentId =
+    decodeURIComponent(encodedId);
+
+  if(
+    !confirm(
+      action === 'approve_exact'
+        ? 'Bu ödeme admin tarafından onaylansın mı?'
+        : 'Bu ödeme iptal edilsin mi?'
+    )
+  ){
+    return;
+  }
+
+  try{
+
+    const {r,d} =
+      await api(
+        '/admin/payment/resolve',
+        {
+          method:'POST',
+
+          headers:{
+            'Content-Type':
+              'application/json'
+          },
+
+          body:
+            JSON.stringify({
+              paymentId,
+              action
+            })
+        }
+      );
+
+    if(
+      !r.ok ||
+      !d?.success
+    ){
+      throw new Error(
+        d?.error ||
+        `HTTP ${r.status}`
+      );
+    }
+
+    await loadPayments();
+
+  }catch(error){
+
+    showStatus(
+      'paymentsStatus',
+      '❌ ' + esc(error.message || error),
+      false
+    );
+
+  }
+}
+
+
+/* =========================================================
+   ORDER LOOKUP
+========================================================= */
+
+async function lookupOrder(){
+
+  const code =
+    document
+      .getElementById(
+        'deliveryCode'
+      )
+      .value
+      .trim();
+
+  if(!code){
+
+    return showStatus(
+      'lookupStatus',
+      '⚠️ Teslimat kodu yaz.',
+      false
+    );
+
+  }
+
+  try{
+
+    const {r,d} =
+      await api(
+        `/admin/order?code=${
+          encodeURIComponent(code)
+        }&_=${Date.now()}`
+      );
+
+    if(
+      !r.ok ||
+      !d?.success ||
+      !d?.order
+    ){
+      throw new Error(
+        d?.error ||
+        `HTTP ${r.status}`
+      );
+    }
+
+    currentOrder = d.order;
+
+    renderOrder(currentOrder);
+
+    showStatus(
+      'lookupStatus',
+      '✅ Sipariş bulundu.',
+      true
+    );
+
+  }catch(error){
+
+    currentOrder = null;
+
+    document
+      .getElementById('orderCard')
+      .classList.add('hidden');
+
+    showStatus(
+      'lookupStatus',
+      '❌ ' + esc(error.message || error),
+      false
+    );
+
+  }
+}
+
+function renderOrder(o){
+
+  document
+    .getElementById('orderCard')
+    .classList.remove('hidden');
+
+  document.getElementById('oId').innerText =
+    o.id || '-';
+
+  document.getElementById('oCode').innerText =
+    o.deliveryCode || '-';
+
+  document.getElementById('oUser').innerText =
+    o.username || '-';
+
+  document.getElementById('oUid').innerText =
+    o.uid || '-';
+
+  document.getElementById('oProduct').innerText =
+    o.productId || '-';
+
+  document.getElementById('oQty').innerText =
+    o.quantity ?? '-';
+
+  document.getElementById('oPaymentType').innerText =
+    o.paymentType === 'points'
+      ? 'Puan'
+      : 'TL';
+
+  document.getElementById('oTotal').innerText =
+    o.paymentType === 'points'
+      ? points(o.totalPoints)
+      : tlFromCents(o.totalTlCents);
+
+  document.getElementById('oPaidAt').innerText =
+    dateText(o.paidAt);
+
+  document.getElementById('oDeliveredAt').innerText =
+    dateText(o.deliveredAt);
+
+  document.getElementById('oStatus').innerHTML =
+    `<span class="badge ${
+      o.status === 'delivered'
+        ? 'ok'
+        : 'warn'
+    }">
+      ${esc(o.status)}
+    </span>`;
+
+  const button =
+    document.getElementById(
+      'completeButton'
+    );
+
+  button.disabled =
+    o.status === 'delivered';
+
+  button.innerText =
+    o.status === 'delivered'
+      ? '✅ DAHA ÖNCE TESLİM EDİLDİ'
+      : '✅ TESLİM EDİLDİ';
+}
+
+async function completeOrder(){
+
+  if(!currentOrder?.id) return;
+
+  if(
+    !confirm(
+      'Bu sipariş teslim edildi olarak işaretlensin mi?'
+    )
+  ){
+    return;
+  }
+
+  try{
+
+    const {r,d} =
+      await api(
+        '/admin/order/complete',
+        {
+          method:'POST',
+
+          headers:{
+            'Content-Type':
+              'application/json'
+          },
+
+          body:
+            JSON.stringify({
+              orderId:
+                currentOrder.id
+            })
+        }
+      );
+
+    if(
+      !r.ok ||
+      !d?.success ||
+      !d?.order
+    ){
+      throw new Error(
+        d?.error ||
+        `HTTP ${r.status}`
+      );
+    }
+
+    currentOrder = d.order;
+
+    renderOrder(currentOrder);
+
+    showStatus(
+      'lookupStatus',
+      '✅ Sipariş teslim edildi olarak işaretlendi.',
+      true
+    );
+
+  }catch(error){
+
+    showStatus(
+      'lookupStatus',
+      '❌ ' + esc(error.message || error),
+      false
+    );
+
+  }
+}
+
+
+/* =========================================================
+   TOURNAMENT
+========================================================= */
+
+async function loadTournamentConfig(){
+
+  const id =
+    document
+      .getElementById(
+        'tournamentSelect'
+      ).value;
+
+  try{
+
+    const {r,d} =
+      await api(
+        `/admin/tournament/config?id=${
+          encodeURIComponent(id)
+        }&_=${Date.now()}`
+      );
+
+    if(
+      !r.ok ||
+      !d?.success ||
+      !d?.tournament
+    ){
+      throw new Error(
+        d?.error ||
+        `HTTP ${r.status}`
+      );
+    }
+
+    const t = d.tournament;
+
+    document
+      .getElementById(
+        'tRegistrationOpen'
+      ).checked =
+      !!t.registrationOpen;
+
+    document
+      .getElementById(
+        'tFee'
+      ).value =
+      t.feePerPlayerTl ?? 0;
+
+    document
+      .getElementById(
+        'tCapacity'
+      ).value =
+      t.capacity ?? 1;
+
+    document
+      .getElementById(
+        'tEventDate'
+      ).value =
+      toLocalInputValue(
+        t.eventDate
+      );
+
+    showStatus(
+      'tournamentStatus',
+      `✅ ${esc(t.name)} ayarları yüklendi.`,
+      true
+    );
+
+  }catch(error){
+
+    showStatus(
+      'tournamentStatus',
+      '❌ ' + esc(error.message || error),
+      false
+    );
+
+  }
+}
+
+async function saveTournamentConfig(){
+
+  const tournamentId =
+    document
+      .getElementById(
+        'tournamentSelect'
+      ).value;
+
+  const registrationOpen =
+    document
+      .getElementById(
+        'tRegistrationOpen'
+      ).checked;
+
+  const feePerPlayerTl =
+    Number(
+      document
+        .getElementById('tFee')
+        .value || 0
+    );
+
+  const capacity =
+    Number(
+      document
+        .getElementById('tCapacity')
+        .value || 0
+    );
+
+  const eventDateRaw =
+    document
+      .getElementById('tEventDate')
+      .value;
+
+  const eventDate =
+    eventDateRaw
+      ? new Date(eventDateRaw).toISOString()
+      : null;
+
+  try{
+
+    const {r,d} =
+      await api(
+        '/admin/tournament/config',
+        {
+          method:'POST',
+
+          headers:{
+            'Content-Type':
+              'application/json'
+          },
+
+          body:
+            JSON.stringify({
+              tournamentId,
+              registrationOpen,
+              feePerPlayerTl,
+              capacity,
+              eventDate
+            })
+        }
+      );
+
+    if(
+      !r.ok ||
+      !d?.success
+    ){
+      throw new Error(
+        d?.error ||
+        `HTTP ${r.status}`
+      );
+    }
+
+    showStatus(
+      'tournamentStatus',
+      '✅ Turnuva ayarları kaydedildi.',
+      true
+    );
+
+  }catch(error){
+
+    showStatus(
+      'tournamentStatus',
+      '❌ ' + esc(error.message || error),
+      false
+    );
+
+  }
+}
+
+async function loadTournamentEntries(){
+
+  const id =
+    document
+      .getElementById(
+        'tournamentSelect'
+      ).value;
+
+  try{
+
+    const {r,d} =
+      await api(
+        `/admin/tournament/entries?id=${
+          encodeURIComponent(id)
+        }&_=${Date.now()}`
+      );
+
+    if(
+      !r.ok ||
+      !d?.success
+    ){
+      throw new Error(
+        d?.error ||
+        `HTTP ${r.status}`
+      );
+    }
+
+    const values =
+      d.registrations ||
+      d.teams ||
+      [];
+
+    const output =
+      document.getElementById(
+        'tournamentOutput'
+      );
+
+    output.style.display =
+      'block';
+
+    output.textContent =
+      JSON.stringify(
+        values,
+        null,
+        2
+      );
+
+    showStatus(
+      'tournamentStatus',
+      `✅ ${values.length} kayıt/takım bulundu.`,
+      true
+    );
+
+  }catch(error){
+
+    showStatus(
+      'tournamentStatus',
+      '❌ ' + esc(error.message || error),
+      false
+    );
+
+  }
+}
+
+async function drawTournament(){
+
+  const tournamentId =
+    document
+      .getElementById(
+        'tournamentSelect'
+      ).value;
+
+  if(
+    !confirm(
+      'Kura çekildiğinde kayıtlar kapatılır ve mevcut fikstür yeniden oluşturulur. Devam edilsin mi?'
+    )
+  ){
+    return;
+  }
+
+  try{
+
+    const {r,d} =
+      await api(
+        '/admin/tournament/draw',
+        {
+          method:'POST',
+
+          headers:{
+            'Content-Type':
+              'application/json'
+          },
+
+          body:
+            JSON.stringify({
+              tournamentId
+            })
+        }
+      );
+
+    if(
+      !r.ok ||
+      !d?.success
+    ){
+      throw new Error(
+        d?.error ||
+        `HTTP ${r.status}`
+      );
+    }
+
+    showStatus(
+      'tournamentStatus',
+      `✅ Kura çekildi. ${d.participantCount} katılımcı, ${d.rounds} tur.`,
+      true
+    );
+
+  }catch(error){
+
+    showStatus(
+      'tournamentStatus',
+      '❌ ' + esc(error.message || error),
+      false
+    );
+
+  }
+}
+
+function toLocalInputValue(value){
+
+  if(!value) return '';
+
+  const d =
+    new Date(value);
+
+  if(
+    Number.isNaN(
+      d.getTime()
+    )
+  ){
+    return '';
+  }
+
+  const offset =
+    d.getTimezoneOffset();
+
+  const local =
+    new Date(
+      d.getTime() -
+      offset * 60000
+    );
+
+  return local
+    .toISOString()
+    .slice(0,16);
+}
+
+
+/* =========================================================
+   MISSXSS
+========================================================= */
+
+async function testMissXss(){
+
+  const username =
+    document
+      .getElementById(
+        'testUsername'
+      )
+      .value
+      .trim();
+
+  try{
+
+    const {r,d} =
+      await api(
+        '/admin/missxss-test',
+        {
+          method:'POST',
+
+          headers:{
+            'Content-Type':
+              'application/json'
+          },
+
+          body:
+            JSON.stringify({
+              username
+            })
+        }
+      );
+
+    if(
+      !r.ok ||
+      !d?.success
+    ){
+      throw new Error(
+        d?.message ||
+        d?.error ||
+        `HTTP ${r.status}`
+      );
+    }
+
+    showStatus(
+      'testStatus',
+      '✅ ' + esc(d.message),
+      true
+    );
+
+  }catch(error){
+
+    showStatus(
+      'testStatus',
+      '❌ ' + esc(error.message || error),
+      false
+    );
+
+  }
+}
+
+async function loadRecentActivity(){
+
+  try{
+
+    const {r,d} =
+      await api(
+        '/admin/missxss-activity',
+        {
+          method:'POST'
+        }
+      );
+
+    if(
+      !r.ok ||
+      !d?.success
+    ){
+      throw new Error(
+        d?.error ||
+        `HTTP ${r.status}`
+      );
+    }
+
+    const output =
+      document.getElementById(
+        'activityOutput'
+      );
+
+    output.style.display =
+      'block';
+
+    output.textContent =
+      JSON.stringify(
+        {
+          donors:d.donors || [],
+          latest_donors:
+            d.missxss?.latest_donors ||
+            []
+        },
+        null,
+        2
+      );
+
+    showStatus(
+      'activityStatus',
+      `✅ MissXss bağlantısı çalışıyor. Donör kaydı: ${(d.donors || []).length}`,
+      true
+    );
+
+  }catch(error){
+
+    showStatus(
+      'activityStatus',
+      '❌ ' + esc(error.message || error),
+      false
+    );
+
+  }
+}
+
+
+/* =========================================================
+   KEYBOARD
+========================================================= */
+
+document
+  .getElementById('adminPassword')
+  .addEventListener(
+    'keydown',
+    event => {
+
+      if(event.key === 'Enter'){
+        loginAdmin();
+      }
+
+    }
+  );
+
+document
+  .getElementById('deliveryCode')
+  .addEventListener(
+    'keydown',
+    event => {
+
+      if(event.key === 'Enter'){
+        lookupOrder();
+      }
+
+    }
+  );
+
+
+/* =========================================================
+   START
+========================================================= */
+
+updatePriceFields();
+updateStockField();
+
+if(token()){
+  openAdmin();
+}
+
+</script>
+
+</body>
+</html>
