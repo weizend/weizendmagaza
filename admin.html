@@ -380,23 +380,21 @@ pre{
 
         <h2 id="productFormTitle">➕ Yeni Ürün Ekle</h2>
 
-        <div class="grid2">
+        <div class="field">
+  <label class="title">Ürün Adı</label>
 
-          <div class="field">
-            <label class="title">Ürün ID</label>
-            <input
-              id="pId"
-              placeholder="Örn: alvalorant2400vp">
-          </div>
+  <input
+    id="pName"
+    placeholder="Örn: 2400 VP Valorant Points"
+    oninput="previewProductCode()">
 
-          <div class="field">
-            <label class="title">Ürün Adı</label>
-            <input
-              id="pName"
-              placeholder="Örn: 2400 VP Valorant Points">
-          </div>
+  <input id="pId" type="hidden">
 
-        </div>
+  <div class="muted" style="margin-top:7px;">
+    Sistem ürün kodu:
+    <strong id="productCodePreview">otomatik oluşturulacak</strong>
+  </div>
+</div>
 
         <div class="grid2">
 
@@ -573,14 +571,14 @@ pre{
         <div class="grid2">
 
           <select id="paymentStatusFilter">
-            <option value="">Tüm Durumlar</option>
-            <option value="pending">pending</option>
-            <option value="partial_payment">partial_payment</option>
-            <option value="paid">paid</option>
-            <option value="manual_review">manual_review</option>
-            <option value="expired">expired</option>
-            <option value="cancelled">cancelled</option>
-          </select>
+  <option value="">Tüm Durumlar</option>
+  <option value="pending">Bekliyor</option>
+  <option value="partial_payment">Eksik Ödeme</option>
+  <option value="paid">Ödendi</option>
+  <option value="manual_review">İnceleme Gerekli</option>
+  <option value="expired">Süresi Doldu</option>
+  <option value="cancelled">İptal Edildi</option>
+</select>
 
           <button onclick="loadPayments()">
             Ödemeleri Getir
@@ -881,6 +879,99 @@ const ADMIN_TOKEN_KEY =
 let currentOrder = null;
 let productsCache = [];
 let editingProductId = null;
+
+  function turkishToAscii(value){
+  return String(value || '')
+    .replaceAll('ç','c')
+    .replaceAll('Ç','C')
+    .replaceAll('ğ','g')
+    .replaceAll('Ğ','G')
+    .replaceAll('ı','i')
+    .replaceAll('İ','I')
+    .replaceAll('ö','o')
+    .replaceAll('Ö','O')
+    .replaceAll('ş','s')
+    .replaceAll('Ş','S')
+    .replaceAll('ü','u')
+    .replaceAll('Ü','U');
+}
+
+function createProductId(name){
+  let base = turkishToAscii(name)
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g,'-')
+    .replace(/^-+|-+$/g,'')
+    .slice(0,60);
+
+  if(!base){
+    base = 'urun';
+  }
+
+  let result = base;
+  let counter = 2;
+
+  while(
+    productsCache.some(
+      p =>
+        p.id === result &&
+        p.id !== editingProductId
+    )
+  ){
+    result = `${base}-${counter}`;
+    counter++;
+  }
+
+  return result;
+}
+
+function previewProductCode(){
+  const name =
+    document.getElementById('pName').value;
+
+  const id =
+    editingProductId ||
+    createProductId(name);
+
+  document.getElementById('pId').value = id;
+
+  document.getElementById(
+    'productCodePreview'
+  ).innerText =
+    id || 'otomatik oluşturulacak';
+}
+
+function paymentStatusText(status){
+  const map = {
+    pending:'Bekliyor',
+    partial_payment:'Eksik Ödeme',
+    paid:'Ödendi',
+    manual_review:'İnceleme Gerekli',
+    expired:'Süresi Doldu',
+    cancelled:'İptal Edildi'
+  };
+
+  return map[status] || status || '-';
+}
+
+function deliveryTypeText(type){
+  const map = {
+    physical:'Fiziksel Ürün',
+    digital_code:'Dijital Kod',
+    manual:'Manuel Teslimat'
+  };
+
+  return map[type] || type || '-';
+}
+
+function paymentTypeText(type){
+  const map = {
+    points:'Puan',
+    tl:'TL / BynoGame'
+  };
+
+  return map[type] || type || '-';
+}
 
 
 /* =========================================================
@@ -1349,8 +1440,12 @@ function resetProductForm(){
     .innerText =
       'Ürünü Kaydet';
 
-  document.getElementById('pId').disabled = false;
   document.getElementById('pId').value = '';
+
+document.getElementById(
+  'productCodePreview'
+).innerText =
+  'otomatik oluşturulacak';
   document.getElementById('pName').value = '';
   document.getElementById('pCategory').value = '';
   document.getElementById('pPaymentType').value = 'points';
@@ -1395,7 +1490,10 @@ function editProduct(encodedId){
       'Değişiklikleri Kaydet';
 
   document.getElementById('pId').value = p.id;
-  document.getElementById('pId').disabled = true;
+
+document.getElementById(
+  'productCodePreview'
+).innerText = p.id;
 
   document.getElementById('pName').value = p.name || '';
   document.getElementById('pCategory').value = p.category || '';
@@ -1458,11 +1556,12 @@ async function saveProduct(){
   const product = {
 
     id:
-      document
-        .getElementById('pId')
-        .value
-        .trim()
-        .toLowerCase(),
+  editingProductId ||
+  createProductId(
+    document
+      .getElementById('pName')
+      .value
+  ),
 
     name:
       document
@@ -1767,7 +1866,14 @@ function renderPayments(items){
 
       <td>${esc(p.id)}</td>
 
-      <td>${esc(p.purposeType)}</td>
+      <td>${esc(
+  {
+    order:'Ürün Siparişi',
+    tournament_solo:'Solo Turnuva',
+    team_create:'Takım Oluşturma',
+    team_join:'Takıma Katılma'
+  }[p.purposeType] || p.purposeType
+)}</td>
 
       <td>${esc(
         tlFromCents(
@@ -1783,7 +1889,7 @@ function renderPayments(items){
 
       <td>
         <span class="badge ${badgeClass}">
-          ${esc(p.status)}
+          ${esc(paymentStatusText(p.status))}
         </span>
       </td>
 
@@ -1974,7 +2080,20 @@ function renderOrder(o){
         ? 'ok'
         : 'warn'
     }">
-      ${esc(o.status)}
+      ${esc(
+  {
+    pending:'Bekliyor',
+    payment_pending:'Ödeme Bekliyor',
+    partial_payment:'Eksik Ödeme',
+    paid:'Ödendi',
+    delivery_pending:'Teslimat Bekliyor',
+    delivered:'Teslim Edildi',
+    manual_review:'İnceleme Gerekli',
+    failed:'Başarısız',
+    cancelled:'İptal Edildi',
+    expired:'Süresi Doldu'
+  }[o.status] || o.status
+)}
     </span>`;
 
   const button =
