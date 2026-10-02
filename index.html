@@ -200,6 +200,24 @@
         .verify-wait-note { margin-top: 12px; color: var(--text-muted); line-height: 1.55; font-size: .9rem; }
         .verify-progress { height: 8px; border-radius: 999px; background: #222; overflow: hidden; margin-top: 18px; }
         .verify-progress-bar { height: 100%; width: 0%; background: var(--weizend-red); transition: width .35s ease; }
+
+        /* SITE ÜZERİNDEN SATIN ALMA */
+        .purchase-modal-content { max-width: 520px; }
+        .purchase-body { padding: 24px; text-align: center; }
+        .purchase-product-name { font-size: 1.25rem; font-weight: 900; margin-bottom: 8px; }
+        .purchase-price { color: var(--weizend-red); font-size: 1.15rem; font-weight: 900; margin-bottom: 18px; }
+        .purchase-summary { background:#090909; border:1px solid #292929; border-radius:12px; padding:14px; margin:14px 0; text-align:left; line-height:1.8; }
+        .purchase-row { display:flex; justify-content:space-between; gap:16px; }
+        .purchase-row strong { color:#fff; text-align:right; }
+        .purchase-quantity-wrap { display:flex; justify-content:center; align-items:center; gap:12px; margin:18px 0; }
+        .purchase-qty-btn { width:40px; height:40px; border-radius:10px; border:1px solid #444; background:#151515; color:#fff; font-size:1.3rem; cursor:pointer; }
+        .purchase-qty { min-width:56px; text-align:center; font-size:1.2rem; font-weight:900; }
+        .purchase-confirm-btn { width:100%; border:0; border-radius:10px; padding:13px 16px; font-weight:900; font-size:1rem; cursor:pointer; background:var(--weizend-red); color:#fff; margin-top:10px; }
+        .purchase-confirm-btn:disabled { background:#333; color:#777; cursor:not-allowed; }
+        .purchase-status-box { display:none; margin-top:18px; padding:16px; border-radius:12px; border:1px solid #333; background:#090909; line-height:1.6; }
+        .purchase-code { display:none; margin-top:18px; border:2px dashed var(--weizend-red); color:var(--weizend-red); background:#050505; border-radius:12px; padding:16px; font-family:monospace; font-size:1.45rem; font-weight:900; letter-spacing:1px; cursor:pointer; word-break:break-all; }
+        .purchase-note { color:var(--text-muted); font-size:.86rem; line-height:1.55; margin-top:12px; }
+        .purchase-spinner { width:42px; height:42px; margin:0 auto 12px; border:4px solid #292929; border-top-color:var(--weizend-red); border-radius:50%; animation:verifySpin .9s linear infinite; }
     </style>
 </head>
 <body>
@@ -544,7 +562,11 @@
             }
         ];
         
-        URUNLER.forEach((urun, index) => urun.orijinalId = index);
+        URUNLER.forEach((urun, index) => {
+            urun.orijinalId = index;
+            urun.productId = String(urun.komut || '').replace(/^!/, '').toLowerCase();
+            urun.webPurchase = ['Fiziksel Ürün', 'Valorant', 'Steam'].includes(urun.kategori) && /Puan/i.test(urun.puan || '');
+        });
     </script>
 
     <div class="container">
@@ -649,6 +671,51 @@
         </div>
     </div>
 
+
+    <!-- MODAL 3: SITE ÜZERİNDEN SATIN ALMA -->
+    <div id="purchaseModal" class="modal-overlay">
+        <div class="modal-content purchase-modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3>🛒 Satın Alma Onayı</h3>
+                <button class="close-icon" id="purchaseCloseButton" onclick="closePurchaseModal()">✖</button>
+            </div>
+            <div class="purchase-body">
+                <div id="purchaseProductName" class="purchase-product-name">Ürün</div>
+                <div id="purchaseUnitPrice" class="purchase-price">0 Puan</div>
+
+                <div id="purchaseFormArea">
+                    <div class="purchase-quantity-wrap">
+                        <button class="purchase-qty-btn" onclick="changePurchaseQuantity(-1)">−</button>
+                        <div id="purchaseQuantity" class="purchase-qty">1</div>
+                        <button class="purchase-qty-btn" onclick="changePurchaseQuantity(1)">+</button>
+                    </div>
+
+                    <div class="purchase-summary">
+                        <div class="purchase-row"><span>Mevcut bakiye</span><strong id="purchaseBalance">0 Puan</strong></div>
+                        <div class="purchase-row"><span>Adet</span><strong id="purchaseSummaryQuantity">1</strong></div>
+                        <div class="purchase-row"><span>Toplam</span><strong id="purchaseTotal">0 Puan</strong></div>
+                    </div>
+
+                    <div class="purchase-note">
+                        İşlemi onayladığında puan düşümü sistem tarafından otomatik yapılır. Kick sohbetine komut yazmana gerek yoktur.
+                    </div>
+
+                    <button id="purchaseConfirmButton" class="purchase-confirm-btn" onclick="confirmSitePurchase()">İŞLEMİ ONAYLA</button>
+                </div>
+
+                <div id="purchaseStatusBox" class="purchase-status-box">
+                    <div id="purchaseSpinner" class="purchase-spinner"></div>
+                    <div id="purchaseStatusText">İşleminiz hazırlanıyor...</div>
+                </div>
+
+                <div id="purchaseDeliveryCode" class="purchase-code" onclick="copyPurchaseCode()" title="Kodu kopyalamak için dokun"></div>
+                <div id="purchaseDeliveryNote" class="purchase-note" style="display:none;">
+                    Bu kodu yayıncıya iletin. Kod doğrulandıktan sonra ürününüz teslim edilecektir.
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL 3: KAPATILAMAYAN DOĞRULAMA KONTROL PENCERESİ -->
     <div id="verificationWaitModal" class="verify-wait-overlay" aria-live="polite" aria-modal="true" role="dialog">
         <div class="verify-wait-card">
@@ -670,9 +737,15 @@
         let pendingKickWindow = null;
         let zoomLevel = 1;
         let currentUsername = "";
+        let currentMarketPoints = 0;
+        let currentPurchaseProductId = "";
+        let currentPurchaseQuantity = 1;
+        let currentPurchaseOrderId = "";
+        let purchasePollTimer = null;
+        let purchaseInFlight = false;
 
         // --- GÜVENLİ KICK HESABI DOĞRULAMA (!DOĞRULA) + MARKET OTURUM SİSTEMİ ---
-        const MARKET_WORKER = 'https://weizend-market-api.vercel.app';
+        const MARKET_WORKER = 'https://weizend-botrix.weizendtv.workers.dev';
         const REALTIME_WS_URL = 'wss://weizend-market-api.vercel.app/realtime/ws';
         const KICK_CHAT_URL = 'https://kick.com/weizend/chat';
         const USER_STORAGE_KEY = 'weizend_market_username';
@@ -684,10 +757,19 @@
         const VERIFY_WAIT_MAX_SECONDS = 60;
         const REALTIME_RECONNECT_BASE_MS = 2000;
         const REALTIME_RECONNECT_MAX_MS = 30000;
+        // Profil isteği sürekli çalışmaz. Yalnızca realtime olay geldiğinde,
+        // KV yayılım gecikmesini yakalamak için kısa ve sınırlı tekrarlar yapılır.
+        const REALTIME_PROFILE_REFRESH_DELAYS_MS = [0, 700, 1800, 3500];
+        const REALTIME_AUTH_REFRESH_DELAYS_MS = [0, 500, 1200, 2500];
         let realtimeSocket = null;
         let realtimeUsername = '';
         let realtimeReconnectTimer = null;
         let realtimeReconnectAttempts = 0;
+        let realtimeProfileRefreshRunning = false;
+        let realtimeProfileRefreshQueued = false;
+        let realtimeAuthRefreshRunning = false;
+        let realtimeAuthRefreshQueued = false;
+        let lastRealtimeWakeReconnectAt = 0;
         let profileCheckInFlight = false;
         let authCheckInFlight = false;
         let marketInitialized = false;
@@ -707,6 +789,9 @@
             marketAuthenticated = false;
             urunleriYukle('Tümü');
             marketInitialized = true;
+
+            // Sunucudaki gerçek stokları tek sefer al. Sürekli polling yapılmaz.
+            syncCatalogStock().catch(error => console.warn('CATALOG SYNC ERROR:', error));
 
             restoreVerificationWaitModal();
             initializeMarketAccount();
@@ -771,6 +856,94 @@
             }, waitMs);
         }
 
+        function getCachedProfileUpdatedAt() {
+            try {
+                const cached = JSON.parse(localStorage.getItem(PROFILE_CACHE_KEY) || 'null');
+                return String(cached?.updatedAt || '');
+            } catch (_) {
+                return '';
+            }
+        }
+
+        async function refreshProfileAfterRealtime() {
+            if (realtimeProfileRefreshRunning) {
+                realtimeProfileRefreshQueued = true;
+                return;
+            }
+
+            const token = localStorage.getItem(SESSION_STORAGE_KEY) || '';
+            if (!token) return;
+
+            realtimeProfileRefreshRunning = true;
+            const beforeUpdatedAt = getCachedProfileUpdatedAt();
+
+            try {
+                for (let i = 0; i < REALTIME_PROFILE_REFRESH_DELAYS_MS.length; i++) {
+                    const waitMs = REALTIME_PROFILE_REFRESH_DELAYS_MS[i];
+                    if (waitMs > 0) await delay(waitMs);
+
+                    await checkSession({ silent: true });
+
+                    const afterUpdatedAt = getCachedProfileUpdatedAt();
+                    // Worker her komutta updatedAt değerini yeniliyor. Farklı edge'deki
+                    // KV henüz güncellenmemişse birkaç saniye içinde yalnızca bu olay için tekrar dene.
+                    if (!beforeUpdatedAt || (afterUpdatedAt && afterUpdatedAt !== beforeUpdatedAt)) {
+                        break;
+                    }
+                }
+            } finally {
+                realtimeProfileRefreshRunning = false;
+                if (realtimeProfileRefreshQueued) {
+                    realtimeProfileRefreshQueued = false;
+                    queueMicrotask(() => refreshProfileAfterRealtime());
+                }
+            }
+        }
+
+        async function refreshAuthAfterRealtime() {
+            if (realtimeAuthRefreshRunning) {
+                realtimeAuthRefreshQueued = true;
+                return;
+            }
+
+            realtimeAuthRefreshRunning = true;
+            try {
+                for (let i = 0; i < REALTIME_AUTH_REFRESH_DELAYS_MS.length; i++) {
+                    const waitMs = REALTIME_AUTH_REFRESH_DELAYS_MS[i];
+                    if (waitMs > 0) await delay(waitMs);
+                    const success = await checkAuthStatus({ silent: true });
+                    if (success || !getAuthState()) break;
+                }
+            } finally {
+                realtimeAuthRefreshRunning = false;
+                if (realtimeAuthRefreshQueued) {
+                    realtimeAuthRefreshQueued = false;
+                    queueMicrotask(() => refreshAuthAfterRealtime());
+                }
+            }
+        }
+
+        function forceRealtimeReconnect(username) {
+            const cleanUsername = normalizeUsername(username);
+            if (!/^[A-Za-z0-9_]{2,40}$/.test(cleanUsername)) return;
+
+            if (realtimeReconnectTimer) {
+                clearTimeout(realtimeReconnectTimer);
+                realtimeReconnectTimer = null;
+            }
+
+            const oldSocket = realtimeSocket;
+            realtimeSocket = null;
+            realtimeUsername = cleanUsername;
+            realtimeReconnectAttempts = 0;
+
+            if (oldSocket && (oldSocket.readyState === WebSocket.OPEN || oldSocket.readyState === WebSocket.CONNECTING)) {
+                try { oldSocket.close(1000, 'Market resumed'); } catch (_) {}
+            }
+
+            openRealtimeSocket();
+        }
+
         function connectRealtime(username) {
             const cleanUsername = normalizeUsername(username);
             if (!/^[A-Za-z0-9_]{2,40}$/.test(cleanUsername)) return;
@@ -832,7 +1005,7 @@
                     hasVerifyCommandBeenClicked(authState) &&
                     realtimeUsernameKey(authState.username) === realtimeUsernameKey(username)
                 ) {
-                    checkAuthStatus({ silent: true });
+                    refreshAuthAfterRealtime();
                 }
             };
 
@@ -856,11 +1029,17 @@
                     return;
                 }
 
-                if (message.type === 'profile_changed') {
-                    const token = localStorage.getItem(SESSION_STORAGE_KEY) || '';
-                    if (token) {
-                        checkSession({ silent: true });
+                if (message.type === 'purchase_changed') {
+                    if (currentPurchaseOrderId && (!message.orderId || message.orderId === currentPurchaseOrderId)) {
+                        checkPurchaseStatusOnce().catch(() => {});
                     }
+                    return;
+                }
+
+                if (message.type === 'profile_changed') {
+                    // Sürekli polling yok: yalnızca bu realtime olayı için profili yenile.
+                    // KV farklı edge'de gecikirse kısa ve sınırlı tekrarlar otomatik yapılır.
+                    refreshProfileAfterRealtime();
                     return;
                 }
 
@@ -881,7 +1060,7 @@
                         return;
                     }
 
-                    checkAuthStatus({ silent: true });
+                    refreshAuthAfterRealtime();
                 }
             };
 
@@ -990,6 +1169,7 @@
             const wasAuthenticated = marketAuthenticated;
 
             currentUsername = username;
+            currentMarketPoints = points ?? 0;
             marketAuthenticated = true;
             closeVerificationWaitModal(true);
             document.getElementById('accessCard').style.display = 'none';
@@ -1612,26 +1792,37 @@
             temp.remove();
         }
 
-        // Sekmeye geri dönmek profil sorgusu başlatmaz. Yalnızca WebSocket bağlantısı
-        // kopmuşsa tekrar bağlanır; profil isteği ancak realtime olay gelirse yapılır.
-        function ensureRealtimeForCurrentState() {
+        // Sekmeye geri dönmek profil sorgusu başlatmaz. Mobil/masaüstü tarayıcılar
+        // arka planda WebSocket'i sessizce bayat bırakabildiği için yalnızca bağlantıyı
+        // yeniden kurarız. Profil isteği yine ancak realtime olay gelirse yapılır.
+        function ensureRealtimeForCurrentState(forceReconnect = false) {
             const authState = getAuthState();
             const username =
                 normalizeUsername(currentUsername) ||
                 normalizeUsername(authState?.username) ||
                 normalizeUsername(localStorage.getItem(USER_STORAGE_KEY));
 
-            if (username) connectRealtime(username);
+            if (!username) return;
+
+            if (forceReconnect) {
+                const now = Date.now();
+                if (now - lastRealtimeWakeReconnectAt < 900) return;
+                lastRealtimeWakeReconnectAt = now;
+                forceRealtimeReconnect(username);
+                return;
+            }
+
+            connectRealtime(username);
         }
 
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {
-                ensureRealtimeForCurrentState();
+                ensureRealtimeForCurrentState(true);
             }
         });
 
         window.addEventListener('focus', () => {
-            ensureRealtimeForCurrentState();
+            ensureRealtimeForCurrentState(true);
         });
 
         window.addEventListener('beforeunload', () => {
@@ -1643,6 +1834,41 @@
                 saveAndCheckUsername();
             }
         });
+
+
+        async function syncCatalogStock() {
+            const response = await fetch(`${MARKET_WORKER}/catalog?_=${Date.now()}`, {
+                method: 'GET',
+                headers: { 'Accept': 'application/json' },
+                cache: 'no-store'
+            });
+
+            const data = await response.json();
+            if (!response.ok || !data?.success || !Array.isArray(data.products)) {
+                throw new Error(data?.error || `HTTP ${response.status}`);
+            }
+
+            const byId = new Map(data.products.map(item => [String(item.id || '').toLowerCase(), item]));
+
+            URUNLER.forEach(urun => {
+                const serverProduct = byId.get(String(urun.productId || '').toLowerCase());
+                if (!serverProduct) return;
+
+                urun.webPurchase = serverProduct.webPurchase === true;
+
+                if (serverProduct.stock === 'Sınırsız') {
+                    urun.stok = 'Sınırsız';
+                } else if (Number.isFinite(Number(serverProduct.stock))) {
+                    urun.stok = Math.max(0, Number(serverProduct.stock));
+                }
+            });
+
+            if (marketInitialized) {
+                urunleriYukle(aktifKategori || 'Tümü');
+            }
+
+            return true;
+        }
 
         // --- MARKET GRID VE KATEGORİ İŞLEMLERİ ---
         function kategorileriOlustur() {
@@ -1711,6 +1937,7 @@
             gosterilecekUrunler.forEach(urun => {
                 const ilkGorsel = urun.gorseller[0];
                 const tukendiMi = stokDurumu(urun.stok) <= 0;
+                const webPurchase = urun.webPurchase === true;
 
                 let thumbnailsHTML = '';
                 if (urun.gorseller.length > 1) {
@@ -1742,11 +1969,15 @@
 
                 let teslimatKutusuHTML = '';
                 if (urun.kategori === 'Fiziksel Ürün') {
-                    const yazi = `Ürünü Kick sohbetimizden <b><span style="color:var(--weizend-red);">${urun.komut}</span></b> yazıp aldıktan sonra İnstagram <b><a href="https://instagram.com/weizendtv" target="_blank" rel="noopener noreferrer" style="color:var(--weizend-red);">@weizendtv</a></b> adresine mesaj atarak teslimat işlemlerini halledebilirsiniz.<br><br><b>🚚 Ne Zaman Kargolanır?</b><br>En geç 5 iş gününde kargoda. Tüm ürünlerde kargo ücreti bize aittir.`;
+                    const yazi = webPurchase
+                        ? `Ürünü siteden satın aldıktan sonra size özel bir <b style="color:var(--weizend-red);">teslimat kodu</b> gösterilir. Bu kodu İnstagram <b><a href="https://instagram.com/weizendtv" target="_blank" rel="noopener noreferrer" style="color:var(--weizend-red);">@weizendtv</a></b> adresinden yayıncıya ileterek teslimat işlemlerini tamamlayabilirsiniz.<br><br><b>🚚 Ne Zaman Kargolanır?</b><br>En geç 5 iş gününde kargoda. Tüm ürünlerde kargo ücreti bize aittir.`
+                        : `Ürünü Kick sohbetimizden <b><span style="color:var(--weizend-red);">${urun.komut}</span></b> yazıp aldıktan sonra İnstagram <b><a href="https://instagram.com/weizendtv" target="_blank" rel="noopener noreferrer" style="color:var(--weizend-red);">@weizendtv</a></b> adresine mesaj atarak teslimat işlemlerini halledebilirsiniz.<br><br><b>🚚 Ne Zaman Kargolanır?</b><br>En geç 5 iş gününde kargoda. Tüm ürünlerde kargo ücreti bize aittir.`;
                     teslimatKutusuHTML = `<details data-detail-key="urun-${urun.orijinalId}-teslimat"><summary>Teslimat ve Kargo Bilgileri</summary><div class="details-content">${yazi}</div></details>`;
                 } 
                 else if (urun.kategori === 'Valorant' || urun.kategori === 'Steam') {
-                    const yazi = `Ürünü Kick sohbetimizden <b><span style="color:var(--weizend-red);">${urun.komut}</span></b> yazıp aldıktan sonra Discord üzerinden yetkililere mesaj atarak veya İnstagram <b><a href="https://instagram.com/weizendtv" target="_blank" rel="noopener noreferrer" style="color:var(--weizend-red);">@weizendtv</a></b> adresine ulaşarak kodunuzu anında teslim alabilirsiniz.`;
+                    const yazi = webPurchase
+                        ? `Ürünü siteden satın aldıktan sonra size özel bir <b style="color:var(--weizend-red);">teslimat kodu</b> gösterilir. Bu kodu Discord üzerinden yetkililere veya İnstagram <b><a href="https://instagram.com/weizendtv" target="_blank" rel="noopener noreferrer" style="color:var(--weizend-red);">@weizendtv</a></b> adresine ileterek kodunuzu teslim alabilirsiniz.`
+                        : `Ürünü Kick sohbetimizden <b><span style="color:var(--weizend-red);">${urun.komut}</span></b> yazıp aldıktan sonra Discord üzerinden yetkililere mesaj atarak veya İnstagram <b><a href="https://instagram.com/weizendtv" target="_blank" rel="noopener noreferrer" style="color:var(--weizend-red);">@weizendtv</a></b> adresine ulaşarak kodunuzu anında teslim alabilirsiniz.`;
                     teslimatKutusuHTML = `<details data-detail-key="urun-${urun.orijinalId}-teslimat"><summary>Teslimat Bilgileri</summary><div class="details-content">${yazi}</div></details>`;
                 }
 
@@ -1756,11 +1987,15 @@
                     : (marketAuthenticated ? "action-btn" : "action-btn auth-required");
                 const actionBtnText = tukendiMi
                     ? "TÜKENDİ"
-                    : (marketAuthenticated ? "İşlem Yap" : "🔒 Doğrulama Gerekiyor");
+                    : (marketAuthenticated
+                        ? (webPurchase ? "SATIN AL" : "İşlem Yap")
+                        : "🔒 Doğrulama Gerekiyor");
                 const actionBtnClick = tukendiMi
                     ? ""
                     : (marketAuthenticated
-                        ? `onclick="islemYapBaslat('${urun.komut}')"`
+                        ? (webPurchase
+                            ? `onclick="startSitePurchase('${urun.productId}')"`
+                            : `onclick="islemYapBaslat('${urun.komut}')"`)
                         : `onclick="goToVerification()"`);
 
                 const kartClass = tukendiMi ? "card out-of-stock" : "card";
@@ -1782,7 +2017,7 @@
 
                         <div class="price-command">
                             <span class="price">${urun.puan}</span>
-                            <span class="${komutClass}">${tukendiMi ? 'TÜKENDİ' : urun.komut}</span>
+                            <span class="${komutClass}">${tukendiMi ? 'TÜKENDİ' : (webPurchase ? 'SİTE ÜZERİNDEN' : urun.komut)}</span>
                         </div>
 
                         <button class="${actionBtnClass}" ${actionBtnClick}>${actionBtnText}</button>
@@ -1824,6 +2059,268 @@
                 const input = document.getElementById('kickUsernameInput');
                 if (input && document.getElementById('usernameForm').style.display !== 'none') input.focus();
             }, 450);
+        }
+
+
+        function getMarketProduct(productId) {
+            const wanted = String(productId || '').toLowerCase();
+            return URUNLER.find(urun => String(urun.productId || '').toLowerCase() === wanted) || null;
+        }
+
+        function pointNumber(value) {
+            const number = Number(String(value || '').replace(/[^0-9]/g, ''));
+            return Number.isFinite(number) ? number : 0;
+        }
+
+        function formatPoints(value) {
+            const number = Number(value) || 0;
+            return number.toLocaleString('tr-TR') + ' Puan';
+        }
+
+        function startSitePurchase(productId) {
+            if (!marketAuthenticated || !localStorage.getItem(SESSION_STORAGE_KEY)) {
+                goToVerification();
+                return;
+            }
+
+            const urun = getMarketProduct(productId);
+            if (!urun || urun.webPurchase !== true) {
+                showStatusToast('⚠️ Bu ürün site üzerinden satın almaya açık değil.', 4000);
+                return;
+            }
+
+            if (stokDurumu(urun.stok) <= 0) {
+                showStatusToast('⚠️ Bu ürünün stoğu tükenmiş.', 3500);
+                return;
+            }
+
+            if (purchasePollTimer) {
+                clearTimeout(purchasePollTimer);
+                purchasePollTimer = null;
+            }
+
+            currentPurchaseProductId = urun.productId;
+            currentPurchaseQuantity = 1;
+            currentPurchaseOrderId = '';
+            purchaseInFlight = false;
+
+            document.getElementById('purchaseProductName').innerText = urun.ad;
+            document.getElementById('purchaseUnitPrice').innerText = formatPoints(pointNumber(urun.puan)) + ' / adet';
+            document.getElementById('purchaseFormArea').style.display = 'block';
+            document.getElementById('purchaseStatusBox').style.display = 'none';
+            document.getElementById('purchaseDeliveryCode').style.display = 'none';
+            document.getElementById('purchaseDeliveryCode').innerText = '';
+            document.getElementById('purchaseDeliveryNote').style.display = 'none';
+            document.getElementById('purchaseSpinner').style.display = 'block';
+            document.getElementById('purchaseStatusText').innerText = 'İşleminiz hazırlanıyor...';
+            document.getElementById('purchaseCloseButton').disabled = false;
+
+            updatePurchaseSummary();
+            document.getElementById('purchaseModal').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function changePurchaseQuantity(delta) {
+            if (purchaseInFlight) return;
+
+            const urun = getMarketProduct(currentPurchaseProductId);
+            if (!urun) return;
+
+            const maxQuantity = urun.stok === 'Sınırsız'
+                ? 20
+                : Math.max(1, Math.min(20, stokDurumu(urun.stok)));
+
+            currentPurchaseQuantity = Math.min(
+                maxQuantity,
+                Math.max(1, currentPurchaseQuantity + Number(delta || 0))
+            );
+
+            updatePurchaseSummary();
+        }
+
+        function updatePurchaseSummary() {
+            const urun = getMarketProduct(currentPurchaseProductId);
+            if (!urun) return;
+
+            const unitPrice = pointNumber(urun.puan);
+            const total = unitPrice * currentPurchaseQuantity;
+
+            document.getElementById('purchaseQuantity').innerText = currentPurchaseQuantity;
+            document.getElementById('purchaseSummaryQuantity').innerText = currentPurchaseQuantity;
+            document.getElementById('purchaseBalance').innerText = formatPoints(currentMarketPoints);
+            document.getElementById('purchaseTotal').innerText = formatPoints(total);
+
+            const button = document.getElementById('purchaseConfirmButton');
+            button.disabled = purchaseInFlight;
+            button.innerText = currentMarketPoints >= total
+                ? 'İŞLEMİ ONAYLA'
+                : 'BAKİYEYİ KONTROL ET VE ONAYLA';
+        }
+
+        async function confirmSitePurchase() {
+            if (purchaseInFlight) return;
+
+            const urun = getMarketProduct(currentPurchaseProductId);
+            const token = localStorage.getItem(SESSION_STORAGE_KEY) || '';
+
+            if (!urun || !token) {
+                closePurchaseModal(true);
+                goToVerification();
+                return;
+            }
+
+            purchaseInFlight = true;
+            document.getElementById('purchaseConfirmButton').disabled = true;
+            document.getElementById('purchaseCloseButton').disabled = true;
+            document.getElementById('purchaseFormArea').style.display = 'none';
+            document.getElementById('purchaseStatusBox').style.display = 'block';
+            document.getElementById('purchaseSpinner').style.display = 'block';
+            document.getElementById('purchaseStatusText').innerHTML =
+                '⏳ Siparişiniz hazırlanıyor.<br>BotRix puan düşümünü doğruluyor...';
+
+            try {
+                const response = await fetch(`${MARKET_WORKER}/purchase/start`, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    cache: 'no-store',
+                    body: JSON.stringify({
+                        productId: urun.productId,
+                        quantity: currentPurchaseQuantity
+                    })
+                });
+
+                let data = null;
+                try { data = await response.json(); } catch (_) {}
+
+                if (!response.ok || !data?.success || !data?.orderId) {
+                    throw new Error(data?.error || `HTTP ${response.status}`);
+                }
+
+                currentPurchaseOrderId = data.orderId;
+                document.getElementById('purchaseStatusText').innerHTML =
+                    `⏳ <b>${escapeHtml(urun.ad)}</b> için puan düşümü bekleniyor...<br><span style="color:var(--text-muted);font-size:.85rem;">Sipariş: ${escapeHtml(data.orderId)}</span>`;
+
+                await pollPurchaseUntilComplete();
+
+            } catch (error) {
+                console.error('PURCHASE START ERROR:', error);
+                purchaseInFlight = false;
+                document.getElementById('purchaseCloseButton').disabled = false;
+                document.getElementById('purchaseSpinner').style.display = 'none';
+                document.getElementById('purchaseStatusText').innerHTML =
+                    `❌ <b>Satın alma tamamlanamadı.</b><br>${escapeHtml(error?.message || 'Bilinmeyen hata')}`;
+            }
+        }
+
+        async function pollPurchaseUntilComplete() {
+            for (let attempt = 0; attempt < 45; attempt++) {
+                if (!currentPurchaseOrderId) return;
+
+                if (attempt > 0) {
+                    await delay(900);
+                }
+
+                const finished = await checkPurchaseStatusOnce();
+                if (finished) return;
+            }
+
+            purchaseInFlight = false;
+            document.getElementById('purchaseCloseButton').disabled = false;
+            document.getElementById('purchaseSpinner').style.display = 'none';
+            document.getElementById('purchaseStatusText').innerHTML =
+                '⚠️ İşlem beklenenden uzun sürdü.<br><b>Puanın düşmüşse tekrar satın alma yapma.</b> Sipariş kaydı sistemde duruyor; birkaç saniye sonra tekrar kontrol edilebilir.';
+        }
+
+        async function checkPurchaseStatusOnce() {
+            const orderId = currentPurchaseOrderId;
+            const token = localStorage.getItem(SESSION_STORAGE_KEY) || '';
+
+            if (!orderId || !token) return false;
+
+            const response = await fetch(
+                `${MARKET_WORKER}/purchase/status?id=${encodeURIComponent(orderId)}&_=${Date.now()}`,
+                {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    cache: 'no-store'
+                }
+            );
+
+            let data = null;
+            try { data = await response.json(); } catch (_) {}
+
+            if (!response.ok || !data?.success || !data?.order) {
+                return false;
+            }
+
+            const order = data.order;
+
+            if (order.status === 'pending') {
+                return false;
+            }
+
+            if (order.status === 'failed') {
+                purchaseInFlight = false;
+                document.getElementById('purchaseCloseButton').disabled = false;
+                document.getElementById('purchaseSpinner').style.display = 'none';
+                document.getElementById('purchaseStatusText').innerHTML =
+                    `❌ <b>İşlem tamamlanamadı.</b><br>${escapeHtml(order.error || 'Puan düşümü onaylanamadı.')}`;
+                return true;
+            }
+
+            if (order.status === 'paid' || order.status === 'delivered') {
+                purchaseInFlight = false;
+                currentMarketPoints = Number(order.pointsAfter ?? currentMarketPoints) || 0;
+
+                document.getElementById('purchaseCloseButton').disabled = false;
+                document.getElementById('purchaseSpinner').style.display = 'none';
+                document.getElementById('purchaseStatusText').innerHTML =
+                    `✅ <b>Satın alma başarılı!</b><br>${escapeHtml(order.productName)} × ${Number(order.quantity) || 1}<br>Harcanan: <b>${formatPoints(order.totalPoints)}</b><br>Kalan bakiye: <b>${formatPoints(order.pointsAfter)}</b>`;
+
+                const codeBox = document.getElementById('purchaseDeliveryCode');
+                codeBox.innerText = order.deliveryCode || '';
+                codeBox.style.display = order.deliveryCode ? 'block' : 'none';
+                document.getElementById('purchaseDeliveryNote').style.display =
+                    order.deliveryCode ? 'block' : 'none';
+
+                document.getElementById('walletPoints').innerText = formatPoints(currentMarketPoints);
+
+                checkSession({ silent: true }).catch(() => {});
+                syncCatalogStock().catch(() => {});
+                return true;
+            }
+
+            return false;
+        }
+
+        function copyPurchaseCode() {
+            const code = String(document.getElementById('purchaseDeliveryCode').innerText || '').trim();
+            if (!code) return;
+
+            copyTextReliable(code);
+            showStatusToast('✅ Teslimat kodu kopyalandı', 2600);
+        }
+
+        function closePurchaseModal(force = false) {
+            if (purchaseInFlight && !force) {
+                showStatusToast('⏳ Satın alma işlemi devam ediyor. Lütfen tamamlanmasını bekle.', 3500);
+                return;
+            }
+
+            if (purchasePollTimer) {
+                clearTimeout(purchasePollTimer);
+                purchasePollTimer = null;
+            }
+
+            document.getElementById('purchaseModal').style.display = 'none';
+            document.body.style.overflow = '';
         }
 
         function islemYapBaslat(komut) {
