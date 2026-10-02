@@ -2275,7 +2275,11 @@
                 return true;
             }
 
-            if (order.status === 'paid' || order.status === 'delivered') {
+            if (
+    order.status === 'paid' ||
+    order.status === 'delivery_pending' ||
+    order.status === 'delivered'
+) {
                 purchaseInFlight = false;
                 currentMarketPoints = Number(order.pointsAfter ?? currentMarketPoints) || 0;
 
