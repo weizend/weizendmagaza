@@ -15,8 +15,10 @@
             --text-muted: #a0a0a0;
         }
 
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--weizend-white); margin: 0; padding: 20px; }
-        .container { max-width: 1200px; margin: 0 auto; }
+        *, *::before, *::after { box-sizing: border-box; }
+        html { overflow-x: hidden; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--weizend-white); margin: 0; padding: 20px; overflow-x:hidden; }
+        .container { max-width: 1200px; margin: 0 auto; width:100%; }
         
         /* Header & Kategori */
         header { text-align: center; padding: 20px 0; border-bottom: 2px solid var(--border-color); margin-bottom: 30px; }
@@ -39,7 +41,7 @@
         .login-btn-large { background: transparent; border: 2px solid var(--weizend-red); color: var(--weizend-white); padding: 12px 30px; border-radius: 30px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: 0.3s; box-shadow: 0 0 15px rgba(227, 27, 27, 0.2); display: flex; align-items: center; gap: 10px; }
         .login-btn-large:hover { background: var(--weizend-red); box-shadow: 0 0 25px rgba(227, 27, 27, 0.5); transform: translateY(-2px); }
         
-        .wallet-card { background: linear-gradient(145deg, #111 0%, #0a0a0a 100%); border: 1px solid var(--weizend-red); border-radius: 15px; padding: 15px 25px; display: none; align-items: center; gap: 20px; box-shadow: 0 5px 25px rgba(227, 27, 27, 0.15); min-width: 300px; justify-content: space-between; transition: 0.3s; }
+        .wallet-card { background: linear-gradient(145deg, #111 0%, #0a0a0a 100%); border: 1px solid var(--weizend-red); border-radius: 15px; padding: 16px 20px; display: none; align-items: center; gap: 20px; box-shadow: 0 5px 25px rgba(227, 27, 27, 0.15); width:min(760px,100%); min-width:0; justify-content: space-between; transition: 0.3s; }
         .wallet-card:hover { border-color: #ff3333; box-shadow: 0 5px 30px rgba(227, 27, 27, 0.3); }
         .wallet-left { display: flex; align-items: center; gap: 15px; }
         .wallet-avatar { width: 55px; height: 55px; border-radius: 50%; border: 2px solid var(--weizend-red); padding: 2px; object-fit: cover; background: #000; }
@@ -83,7 +85,7 @@
         .logout-btn { background: rgba(227,27,27,0.08); border: 1px solid rgba(227,27,27,0.55); color: #fff; border-radius: 10px; padding: 10px 13px; font-weight: 800; cursor: pointer; transition: .2s; white-space: nowrap; }
         .logout-btn:hover { background: var(--weizend-red); border-color: var(--weizend-red); transform: translateY(-1px); }
 
-        .wallet-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+        .wallet-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; flex-shrink:0; }
         .notification-btn { position:relative; background:rgba(255,255,255,0.05); border:1px solid var(--border-color); color:#fff; border-radius:10px; padding:10px 13px; font-weight:800; cursor:pointer; transition:.2s; white-space:nowrap; }
         .notification-btn:hover { background:#1c1c1c; border-color:var(--weizend-red); transform:translateY(-1px); }
         .notification-badge { display:none; position:absolute; top:-8px; right:-8px; min-width:22px; height:22px; padding:0 6px; border-radius:999px; background:var(--weizend-red); color:#fff; font-size:.72rem; line-height:22px; text-align:center; font-weight:900; border:2px solid #050505; }
@@ -103,13 +105,41 @@
         .notifications-empty { padding:28px 12px; text-align:center; color:var(--text-muted); }
 
         @media (max-width: 768px) {
-            .wallet-card { width: 100%; min-width: 0; padding: 14px 16px; gap: 14px; }
-            .wallet-left { flex: 1; min-width: 0; }
-            .wallet-info { min-width: 0; }
-            .w-username { font-size: 1.1rem; }
-            .w-balance { font-size: 1rem; flex-wrap: wrap; row-gap: 6px; }
-            .wallet-stat { min-width: 100%; }
-            .logout-btn { padding: 9px 10px; font-size: .82rem; }
+            body { padding: 10px; }
+            header { padding: 12px 0 18px; margin-bottom: 22px; }
+            .logo-img { width: 96px; margin-bottom: 12px; }
+            header h1 { font-size: clamp(1.65rem, 8vw, 2.05rem); letter-spacing: 1px; }
+            header > p { font-size: .94rem; line-height: 1.45; margin-left: 8px; margin-right: 8px; }
+            .header-buttons { gap: 9px; }
+            .ig-contact { font-size: .82rem; padding: 8px 12px; }
+
+            .user-wallet-wrapper { width:100%; margin-top:14px; }
+            .wallet-card { width:100%; min-width:0; padding:16px; gap:16px; flex-direction:column; align-items:stretch; border-radius:16px; }
+            .wallet-left { width:100%; min-width:0; display:grid; grid-template-columns:64px minmax(0,1fr); align-items:start; gap:14px; }
+            .wallet-avatar { width:64px; height:64px; grid-column:1; grid-row:1; }
+            .wallet-info { grid-column:2; min-width:0; width:100%; }
+            .w-username { font-size:1.12rem; line-height:1.25; overflow-wrap:anywhere; }
+            .w-balance { font-size:.92rem; flex-wrap:nowrap; gap:5px; line-height:1.35; }
+            .w-balance-amount { font-size:1.08rem; white-space:nowrap; }
+            .wallet-stats { margin-top:9px; width:100%; }
+            .wallet-stat { min-width:0; width:100%; padding:8px 10px; }
+            .wallet-source-note { margin-top:8px; font-size:.72rem; line-height:1.35; }
+            .wallet-actions { width:100%; display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
+            .inbox-btn, .logout-btn { width:100%; min-width:0; min-height:44px; padding:10px 8px; font-size:.82rem; justify-content:center; }
+
+            .market-search-wrap { margin-top:4px; }
+            .market-search-box { border-radius:12px; }
+            .category-filters { gap:7px; margin-bottom:20px; }
+            .filter-btn { padding:8px 12px; font-size:.82rem; }
+            .grid { grid-template-columns:1fr; gap:16px; }
+            .card { padding:15px; }
+            .img-container { height:min(72vw,300px); }
+        }
+
+        @media (max-width: 380px) {
+            .wallet-actions { grid-template-columns:1fr; }
+            .wallet-left { grid-template-columns:56px minmax(0,1fr); gap:11px; }
+            .wallet-avatar { width:56px; height:56px; }
         }
 
         .category-filters { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; }
@@ -239,7 +269,7 @@
         .purchase-spinner { width:42px; height:42px; margin:0 auto 12px; border:4px solid #292929; border-top-color:var(--weizend-red); border-radius:50%; animation:verifySpin .9s linear infinite; }
 
         /* PROFESYONEL MESAJ KUTUSU */
-        .inbox-btn { position:relative; background:rgba(255,255,255,0.05); border:1px solid var(--border-color); color:#fff; border-radius:10px; padding:10px 13px; font-weight:800; cursor:pointer; transition:.2s; white-space:nowrap; }
+        .inbox-btn { position:relative; background:rgba(255,255,255,0.05); border:1px solid var(--border-color); color:#fff; border-radius:10px; padding:10px 13px; font-weight:800; cursor:pointer; transition:.2s; white-space:nowrap; display:inline-flex; align-items:center; justify-content:center; gap:6px; }
         .inbox-btn:hover { background:#1c1c1c; border-color:var(--weizend-red); transform:translateY(-1px); }
         .inbox-badge { display:none; position:absolute; top:-8px; right:-8px; min-width:22px; height:22px; padding:0 6px; border-radius:999px; background:var(--weizend-red); color:#fff; font-size:.72rem; line-height:22px; text-align:center; font-weight:900; border:2px solid #050505; }
 
@@ -306,14 +336,27 @@
         .market-empty-search { grid-column:1/-1; padding:34px 16px; border:1px dashed #333; border-radius:14px; text-align:center; color:var(--text-muted); background:#090909; }
 
         @media (max-width: 640px) {
-            .inbox-modal-content { height:92vh; }
-            .inbox-thread { grid-template-columns:auto 1fr; }
+            #inboxModal { padding:0; align-items:stretch; }
+            .inbox-modal-content { width:100%; max-width:none; height:100dvh; max-height:none; border-radius:0; border-left:0; border-right:0; }
+            .inbox-body { padding:12px; }
+            .inbox-toolbar { align-items:stretch; }
+            .inbox-toolbar-actions { display:grid; grid-template-columns:1fr 1fr; width:100%; }
+            .inbox-toolbar > .inbox-mini-btn { width:100%; }
+            .inbox-toolbar-actions .inbox-mini-btn:last-child { grid-column:1/-1; }
+            .inbox-thread { grid-template-columns:auto minmax(0,1fr); gap:10px; padding:12px; }
             .inbox-open-btn { grid-column:2; justify-self:start; }
             .inbox-thread-top { flex-direction:column; gap:4px; }
             .inbox-thread-date { white-space:normal; }
-            .inbox-message { max-width:94%; }
-            .inbox-reply-row { flex-direction:column; }
-            .inbox-send-btn { width:100%; }
+            .inbox-thread-preview { white-space:normal; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+            .inbox-thread-header { padding:12px; position:sticky; top:0; z-index:2; }
+            .inbox-thread-header-row { gap:8px; }
+            .inbox-back-btn { padding:8px 10px; }
+            .inbox-messages { padding:12px; gap:10px; }
+            .inbox-message { max-width:92%; padding:11px 12px; }
+            .inbox-reply-box { padding:10px 12px calc(10px + env(safe-area-inset-bottom)); position:sticky; bottom:0; }
+            .inbox-reply-row { flex-direction:column; gap:8px; }
+            .inbox-reply-input { width:100%; min-height:76px; resize:none; }
+            .inbox-send-btn { width:100%; min-height:44px; }
         }
 
     </style>
@@ -928,7 +971,7 @@
 
         // --- GÜVENLİ KICK HESABI DOĞRULAMA (!DOĞRULA) + MARKET OTURUM SİSTEMİ ---
         const MARKET_WORKER = 'https://weizend-botrix.weizendtv.workers.dev';
-        const REALTIME_WS_URL = 'wss://weizend-market-api.vercel.app/realtime/ws';
+        const REALTIME_WS_URL = 'wss://weizend-realtime.weizendtv.workers.dev/ws';
         const KICK_CHAT_URL = 'https://kick.com/weizend/chat';
         const USER_STORAGE_KEY = 'weizend_market_username';
         const SESSION_STORAGE_KEY = 'weizend_market_session_secure_v2';
@@ -1770,8 +1813,35 @@
                 const modal = document.getElementById('inboxModal');
                 const listView = document.getElementById('inboxListView');
 
-                if (modal?.style.display === 'flex' && listView?.style.display !== 'none') {
+                if (modal?.style.display !== 'flex') return;
+
+                if (listView?.style.display !== 'none') {
                     renderInbox();
+                    return;
+                }
+
+                // Kullanıcı konuşmanın içindeyse yeni admin mesajını sayfa yenilemeden getir.
+                // Yazdığı taslak mesajı silmeden konuşmayı günceller.
+                if (currentInboxThread?.id) {
+                    const threadId = currentInboxThread.id;
+                    const draft = document.getElementById('inboxReplyInput')?.value || '';
+                    const data = await inboxRequest(`/inbox/thread?id=${encodeURIComponent(threadId)}&_=${Date.now()}`);
+                    currentInboxThread = data.thread || currentInboxThread;
+
+                    const replyAllowed =
+                        Number(currentInboxThread?.allow_reply) === 1 &&
+                        currentInboxThread?.status === 'open';
+
+                    document.getElementById('inboxThreadStatus').textContent =
+                        `${currentInboxThread?.thread_type === 'admin' ? '(Yönetici) Weizend' : 'Weizend Sistem'} · ` +
+                        `${replyAllowed ? 'Yanıt açık' : 'Yanıt kapalı'}`;
+
+                    document.getElementById('inboxReplyAllowed').style.display = replyAllowed ? 'block' : 'none';
+                    document.getElementById('inboxReplyClosed').style.display = replyAllowed ? 'none' : 'block';
+                    renderInboxMessages(Array.isArray(data.messages) ? data.messages : []);
+
+                    const input = document.getElementById('inboxReplyInput');
+                    if (input && replyAllowed) input.value = draft;
                 }
             } catch (error) {
                 console.warn('INBOX REALTIME REFRESH ERROR:', error);
@@ -3137,6 +3207,14 @@
         function filtrele(kategori) {
             urunleriYukle(kategori);
         }
+
+        // Masaüstünde Ctrl+Enter ile hızlı mesaj gönderme. Mobilde normal Enter satır atlar.
+        document.getElementById('inboxReplyInput')?.addEventListener('keydown', event => {
+            if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+                event.preventDefault();
+                sendInboxReply();
+            }
+        });
 
     </script>
 </body>
