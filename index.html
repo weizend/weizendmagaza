@@ -237,6 +237,85 @@
         .purchase-code { display:none; margin-top:18px; border:2px dashed var(--weizend-red); color:var(--weizend-red); background:#050505; border-radius:12px; padding:16px; font-family:monospace; font-size:1.45rem; font-weight:900; letter-spacing:1px; cursor:pointer; word-break:break-all; }
         .purchase-note { color:var(--text-muted); font-size:.86rem; line-height:1.55; margin-top:12px; }
         .purchase-spinner { width:42px; height:42px; margin:0 auto 12px; border:4px solid #292929; border-top-color:var(--weizend-red); border-radius:50%; animation:verifySpin .9s linear infinite; }
+
+        /* PROFESYONEL MESAJ KUTUSU */
+        .inbox-btn { position:relative; background:rgba(255,255,255,0.05); border:1px solid var(--border-color); color:#fff; border-radius:10px; padding:10px 13px; font-weight:800; cursor:pointer; transition:.2s; white-space:nowrap; }
+        .inbox-btn:hover { background:#1c1c1c; border-color:var(--weizend-red); transform:translateY(-1px); }
+        .inbox-badge { display:none; position:absolute; top:-8px; right:-8px; min-width:22px; height:22px; padding:0 6px; border-radius:999px; background:var(--weizend-red); color:#fff; font-size:.72rem; line-height:22px; text-align:center; font-weight:900; border:2px solid #050505; }
+
+        .inbox-modal-content { max-width:780px; height:min(760px,88vh); }
+        .inbox-shell { display:flex; flex-direction:column; min-height:0; height:100%; }
+        .inbox-body { padding:18px; overflow:auto; flex:1; min-height:0; }
+        .inbox-toolbar { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+        .inbox-toolbar-actions { display:flex; gap:8px; flex-wrap:wrap; }
+        .inbox-mini-btn { width:auto; border:1px solid #3a3a3a; background:#171717; color:#fff; border-radius:9px; padding:8px 11px; font-size:.8rem; font-weight:800; cursor:pointer; transition:.2s; }
+        .inbox-mini-btn:hover { border-color:var(--weizend-red); background:#211010; }
+        .inbox-mini-btn:disabled { opacity:.45; cursor:not-allowed; }
+        .inbox-mini-btn.danger { border-color:#6d2525; background:#2a0f0f; color:#ffaaaa; }
+        .inbox-mini-btn.danger:hover:not(:disabled) { background:#6d1c1c; color:#fff; }
+
+        .inbox-list { display:flex; flex-direction:column; gap:10px; }
+        .inbox-thread { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:12px; background:#0a0a0a; border:1px solid #2b2b2b; border-radius:14px; padding:14px; transition:.2s; }
+        .inbox-thread:hover { border-color:#4a4a4a; transform:translateY(-1px); }
+        .inbox-thread.unread { border-color:var(--weizend-red); box-shadow:0 0 0 1px rgba(227,27,27,.09) inset; }
+        .inbox-thread-select { width:18px; height:18px; accent-color:var(--weizend-red); cursor:pointer; }
+        .inbox-thread-main { min-width:0; cursor:pointer; }
+        .inbox-thread-top { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; }
+        .inbox-thread-title { font-weight:900; color:#fff; line-height:1.35; overflow:hidden; text-overflow:ellipsis; }
+        .inbox-thread-date { color:var(--text-muted); font-size:.75rem; white-space:nowrap; }
+        .inbox-thread-preview { color:#bdbdbd; margin-top:6px; font-size:.88rem; line-height:1.45; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .inbox-thread-meta { display:flex; gap:7px; flex-wrap:wrap; margin-top:8px; }
+        .inbox-pill { border:1px solid #333; background:#151515; color:#bdbdbd; border-radius:999px; padding:3px 8px; font-size:.7rem; font-weight:800; }
+        .inbox-pill.unread { background:rgba(227,27,27,.14); border-color:var(--weizend-red); color:#ff8c8c; }
+        .inbox-open-btn { width:auto; min-width:76px; border:1px solid #3a3a3a; background:#191919; color:#fff; border-radius:9px; padding:8px 10px; font-size:.8rem; font-weight:800; cursor:pointer; }
+        .inbox-open-btn:hover { border-color:var(--weizend-red); }
+        .inbox-empty { padding:38px 14px; text-align:center; color:var(--text-muted); border:1px dashed #303030; border-radius:14px; background:#090909; }
+
+        .inbox-thread-view { display:none; height:100%; min-height:0; flex-direction:column; }
+        .inbox-thread-header { padding:14px 18px; border-bottom:1px solid #292929; background:#0b0b0b; }
+        .inbox-thread-header-row { display:flex; align-items:center; gap:10px; }
+        .inbox-back-btn { width:auto; border:1px solid #333; background:#171717; color:#fff; border-radius:9px; padding:8px 11px; font-weight:800; cursor:pointer; }
+        .inbox-thread-subject { font-size:1.05rem; font-weight:900; margin:0; }
+        .inbox-thread-status { color:var(--text-muted); font-size:.8rem; margin-top:5px; }
+        .inbox-messages { flex:1; overflow:auto; padding:18px; display:flex; flex-direction:column; gap:12px; background:#070707; min-height:0; }
+        .inbox-message { max-width:86%; border-radius:14px; padding:12px 14px; border:1px solid #292929; background:#121212; align-self:flex-start; }
+        .inbox-message.admin, .inbox-message.system { border-color:#502020; background:#160b0b; }
+        .inbox-message.user { align-self:flex-end; background:#171717; }
+        .inbox-message-sender { font-size:.76rem; font-weight:900; color:#ff7777; margin-bottom:5px; }
+        .inbox-message.user .inbox-message-sender { color:#ddd; text-align:right; }
+        .inbox-message-text { color:#eee; line-height:1.55; white-space:pre-wrap; word-break:break-word; }
+        .inbox-message-date { margin-top:7px; color:#747474; font-size:.7rem; text-align:right; }
+        .inbox-reply-box { border-top:1px solid #292929; padding:14px 18px; background:#0c0c0c; }
+        .inbox-reply-row { display:flex; gap:10px; align-items:flex-end; }
+        .inbox-reply-input { flex:1; min-height:44px; max-height:130px; resize:vertical; background:#050505; color:#fff; border:1px solid #333; border-radius:10px; padding:11px 12px; font:inherit; outline:none; }
+        .inbox-reply-input:focus { border-color:var(--weizend-red); }
+        .inbox-send-btn { width:auto; background:var(--weizend-red); color:#fff; border:0; border-radius:10px; padding:12px 16px; font-weight:900; cursor:pointer; }
+        .inbox-send-btn:disabled { background:#333; color:#777; cursor:not-allowed; }
+        .inbox-reply-closed { color:#999; text-align:center; font-size:.86rem; padding:4px 0; }
+
+        /* ÜRÜN ARAMA */
+        .market-search-wrap { max-width:760px; margin:0 auto 18px; }
+        .market-search-box { display:flex; align-items:center; gap:10px; background:#0b0b0b; border:1px solid #2d2d2d; border-radius:14px; padding:8px 10px 8px 14px; box-shadow:0 6px 25px rgba(0,0,0,.22); }
+        .market-search-box:focus-within { border-color:var(--weizend-red); box-shadow:0 0 0 3px rgba(227,27,27,.09); }
+        .market-search-icon { font-size:1.05rem; opacity:.85; }
+        .market-search-input { flex:1; min-width:0; background:transparent; border:0; outline:0; color:#fff; font-size:1rem; padding:7px 0; }
+        .market-search-input::placeholder { color:#777; }
+        .market-search-clear { width:auto; border:1px solid #333; background:#171717; color:#bbb; border-radius:9px; padding:7px 10px; cursor:pointer; font-weight:800; }
+        .market-search-clear:hover { color:#fff; border-color:var(--weizend-red); }
+        .market-search-info { margin-top:7px; color:#777; font-size:.78rem; text-align:center; min-height:18px; }
+        .market-empty-search { grid-column:1/-1; padding:34px 16px; border:1px dashed #333; border-radius:14px; text-align:center; color:var(--text-muted); background:#090909; }
+
+        @media (max-width: 640px) {
+            .inbox-modal-content { height:92vh; }
+            .inbox-thread { grid-template-columns:auto 1fr; }
+            .inbox-open-btn { grid-column:2; justify-self:start; }
+            .inbox-thread-top { flex-direction:column; gap:4px; }
+            .inbox-thread-date { white-space:normal; }
+            .inbox-message { max-width:94%; }
+            .inbox-reply-row { flex-direction:column; }
+            .inbox-send-btn { width:100%; }
+        }
+
     </style>
 </head>
 <body>
@@ -550,7 +629,7 @@
             
             // ---ÇEKİLİŞ---
             {
-                durum: "on", stok: "Sınırsız", kategori: "Şanslar",
+                durum: "on", stok: "Sınırsız", kategori: "Şans Oyunları",
                 ad: "Kart Oyunu",
                 puan: "10.000 Puan", komut: "!alkartoyunu",
                 tukenmeZamani: "2024-05-15",
@@ -567,7 +646,7 @@
                 </ul>`
             },
             {
-                durum: "on", stok: "Sınırsız", kategori: "Şanslar",
+                durum: "on", stok: "Sınırsız", kategori: "Şans Oyunları",
                 ad: "Bar Çekiliş Bileti",
                 puan: "10.000 Puan", komut: "!albilet",
                 tukenmeZamani: "2024-05-15",
@@ -620,9 +699,9 @@
                         </div>
                     </div>
                     <div class="wallet-actions">
-                        <button class="notification-btn" onclick="openNotifications()" title="Bildirimlerini görüntüle">
-                            🔔 Bildirimler
-                            <span id="notificationBadge" class="notification-badge">0</span>
+                        <button class="inbox-btn" onclick="openInbox()" title="Mesaj kutunu aç">
+                            ✉️ Mesaj Kutusu
+                            <span id="inboxBadge" class="inbox-badge">0</span>
                         </button>
                         <button class="logout-btn" onclick="logoutAccount()" title="Güvenli oturumu kapat">🚪 Çıkış Yap</button>
                     </div>
@@ -651,6 +730,22 @@
         </header>
 
         <div id="marketContent" style="display:block;">
+            <!-- ÜRÜN ARAMA -->
+            <div class="market-search-wrap">
+                <div class="market-search-box">
+                    <span class="market-search-icon">🔎</span>
+                    <input
+                        id="productSearchInput"
+                        class="market-search-input"
+                        type="search"
+                        autocomplete="off"
+                        placeholder="Ürün adı, kategori veya komut ara..."
+                        oninput="setProductSearch(this.value)">
+                    <button class="market-search-clear" onclick="clearProductSearch()" title="Aramayı temizle">✖</button>
+                </div>
+                <div id="productSearchInfo" class="market-search-info"></div>
+            </div>
+
             <!-- KATEGORİ BUTONLARI -->
             <div class="category-filters" id="filters"></div>
 
@@ -741,21 +836,63 @@
         </div>
     </div>
 
-    <!-- MODAL: BİLDİRİMLER -->
-    <div id="notificationsModal" class="modal-overlay" onclick="closeNotificationsFromOutside(event)">
-        <div class="modal-content notifications-modal-content" onclick="event.stopPropagation()">
-            <div class="modal-header">
-                <h3>🔔 Bildirimler</h3>
-                <button class="close-icon" onclick="closeNotifications()">✖</button>
-            </div>
-            <div class="notifications-body">
-                <div class="notifications-toolbar">
-                    <div id="notificationsSummary" class="purchase-note" style="margin:0;">Bildirimler yükleniyor...</div>
-                    <button class="access-btn secondary" style="width:auto;margin:0;" onclick="loadNotifications()">🔄 Yenile</button>
+    <!-- MODAL: MESAJ KUTUSU -->
+    <div id="inboxModal" class="modal-overlay" onclick="closeInboxFromOutside(event)">
+        <div class="modal-content inbox-modal-content" onclick="event.stopPropagation()">
+            <div class="inbox-shell">
+
+                <div id="inboxListView" style="display:flex;flex-direction:column;height:100%;min-height:0;">
+                    <div class="modal-header">
+                        <div>
+                            <h3 style="margin:0;">✉️ Mesaj Kutusu</h3>
+                            <div id="inboxSummary" class="purchase-note" style="margin-top:4px;">Mesajlar yükleniyor...</div>
+                        </div>
+                        <button class="close-icon" onclick="closeInbox()">✖</button>
+                    </div>
+
+                    <div class="inbox-body">
+                        <div class="inbox-toolbar">
+                            <div class="inbox-toolbar-actions">
+                                <button class="inbox-mini-btn" onclick="markAllInboxRead()">✓ Tümünü Okundu Yap</button>
+                                <button id="deleteSelectedInboxBtn" class="inbox-mini-btn danger" onclick="deleteSelectedInbox()" disabled>🗑 Seçilenleri Sil</button>
+                                <button class="inbox-mini-btn danger" onclick="clearInbox()">🧹 Tümünü Temizle</button>
+                            </div>
+                            <button class="inbox-mini-btn" onclick="loadInbox()">🔄 Yenile</button>
+                        </div>
+
+                        <div id="inboxList" class="inbox-list">
+                            <div class="inbox-empty">Mesajlar yükleniyor...</div>
+                        </div>
+                    </div>
                 </div>
-                <div id="notificationsList" class="notifications-list">
-                    <div class="notifications-empty">Bildirimler yükleniyor...</div>
+
+                <div id="inboxThreadView" class="inbox-thread-view">
+                    <div class="inbox-thread-header">
+                        <div class="inbox-thread-header-row">
+                            <button class="inbox-back-btn" onclick="backToInbox()">← Geri</button>
+                            <div style="min-width:0;">
+                                <h3 id="inboxThreadSubject" class="inbox-thread-subject">Mesaj</h3>
+                                <div id="inboxThreadStatus" class="inbox-thread-status"></div>
+                            </div>
+                            <button class="close-icon" style="margin-left:auto;" onclick="closeInbox()">✖</button>
+                        </div>
+                    </div>
+
+                    <div id="inboxMessages" class="inbox-messages"></div>
+
+                    <div id="inboxReplyBox" class="inbox-reply-box">
+                        <div id="inboxReplyAllowed">
+                            <div class="inbox-reply-row">
+                                <textarea id="inboxReplyInput" class="inbox-reply-input" maxlength="3000" placeholder="Yanıtınızı yazın..."></textarea>
+                                <button id="inboxSendButton" class="inbox-send-btn" onclick="sendInboxReply()">Gönder</button>
+                            </div>
+                        </div>
+                        <div id="inboxReplyClosed" class="inbox-reply-closed" style="display:none;">
+                            🔒 Bu mesaj için yanıt verme kapalı.
+                        </div>
+                    </div>
                 </div>
+
             </div>
         </div>
     </div>
@@ -787,6 +924,7 @@
         let currentPurchaseOrderId = "";
         let purchasePollTimer = null;
         let purchaseInFlight = false;
+        let productSearchQuery = '';
 
         // --- GÜVENLİ KICK HESABI DOĞRULAMA (!DOĞRULA) + MARKET OTURUM SİSTEMİ ---
         const MARKET_WORKER = 'https://weizend-botrix.weizendtv.workers.dev';
@@ -1081,9 +1219,11 @@
                 }
 
                 if (message.type === 'profile_changed') {
-                    // Sürekli polling yok: yalnızca bu realtime olayı için profili yenile.
-                    // KV farklı edge'de gecikirse kısa ve sınırlı tekrarlar otomatik yapılır.
+                    // Puan/level değişimini anında yenile.
                     refreshProfileAfterRealtime();
+
+                    // Aynı realtime sinyali Mesaj Kutusu'nu da yeniler.
+                    refreshInboxAfterRealtime();
                     return;
                 }
 
@@ -1226,8 +1366,8 @@
             document.getElementById('walletLevel').innerText = level !== null ? level.toLocaleString('tr-TR') : '-';
 
 
-            // Bildirim sayacını girişte bir kez güncelle.
-            refreshNotificationBadge().catch(() => {});
+            // Mesaj Kutusu sayacını girişte bir kez güncelle.
+            refreshInboxBadge().catch(() => {});
 
             if (!marketInitialized) {
                 urunleriYukle('Tümü');
@@ -1542,30 +1682,46 @@
             }
         }
 
-        let currentNotifications = [];
+        let currentInboxThreads = [];
+        let currentInboxThread = null;
+        const selectedInboxThreadIds = new Set();
+        let inboxRefreshInFlight = false;
 
-        function notificationDateText(value) {
+        function inboxDateText(value) {
             if (!value) return '-';
             const d = new Date(value);
             return Number.isNaN(d.getTime()) ? String(value) : d.toLocaleString('tr-TR');
         }
 
-        function updateNotificationBadge() {
-            const badge = document.getElementById('notificationBadge');
+        function inboxUnreadCount() {
+            return currentInboxThreads.reduce(
+                (total, item) => total + Math.max(0, Number(item.unread_count ?? item.unreadCount ?? 0) || 0),
+                0
+            );
+        }
+
+        function updateInboxBadge() {
+            const badge = document.getElementById('inboxBadge');
             if (!badge) return;
-            const unread = currentNotifications.filter(item => !item.readAt).length;
+
+            const unread = inboxUnreadCount();
             badge.textContent = unread > 99 ? '99+' : String(unread);
             badge.style.display = unread > 0 ? 'inline-block' : 'none';
         }
 
-        async function fetchNotifications() {
+        async function inboxRequest(path, options = {}) {
             const token = localStorage.getItem(SESSION_STORAGE_KEY) || '';
-            if (!token) return [];
 
-            const response = await fetch(`${MARKET_WORKER}/notifications?_=${Date.now()}`, {
-                method: 'GET',
+            if (!token) {
+                throw new Error('Mesaj Kutusunu görmek için hesabını doğrulamalısın.');
+            }
+
+            const response = await fetch(`${MARKET_WORKER}${path}`, {
+                ...options,
                 headers: {
                     'Accept': 'application/json',
+                    ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+                    ...(options.headers || {}),
                     'Authorization': `Bearer ${token}`
                 },
                 cache: 'no-store'
@@ -1575,127 +1731,366 @@
             try { data = await response.json(); } catch (_) {}
 
             if (response.status === 401) {
-                throw new Error('Oturumun sona ermiş. Bildirimleri görmek için yeniden doğrulama yapmalısın.');
+                throw new Error('Oturumun sona ermiş. Hesabını yeniden doğrulamalısın.');
             }
 
-            if (!response.ok || !data?.success || !Array.isArray(data.notifications)) {
+            if (!response.ok || !data?.success) {
                 throw new Error(data?.error || `HTTP ${response.status}`);
             }
 
-            return data.notifications;
+            return data;
         }
 
-        async function refreshNotificationBadge() {
-            if (!marketAuthenticated) return;
+        async function fetchInboxThreads() {
+            const data = await inboxRequest(`/inbox?_=${Date.now()}`);
+            return Array.isArray(data.threads) ? data.threads : [];
+        }
+
+        async function refreshInboxBadge() {
+            if (!marketAuthenticated || inboxRefreshInFlight) return;
+
+            inboxRefreshInFlight = true;
             try {
-                currentNotifications = await fetchNotifications();
-                updateNotificationBadge();
+                currentInboxThreads = await fetchInboxThreads();
+                updateInboxBadge();
             } catch (error) {
-                console.warn('NOTIFICATION BADGE ERROR:', error);
+                console.warn('INBOX BADGE ERROR:', error);
+            } finally {
+                inboxRefreshInFlight = false;
             }
         }
 
-        async function openNotifications() {
+        async function refreshInboxAfterRealtime() {
+            if (!marketAuthenticated) return;
+
+            try {
+                currentInboxThreads = await fetchInboxThreads();
+                updateInboxBadge();
+
+                const modal = document.getElementById('inboxModal');
+                const listView = document.getElementById('inboxListView');
+
+                if (modal?.style.display === 'flex' && listView?.style.display !== 'none') {
+                    renderInbox();
+                }
+            } catch (error) {
+                console.warn('INBOX REALTIME REFRESH ERROR:', error);
+            }
+        }
+
+        async function openInbox() {
             if (!marketAuthenticated || !localStorage.getItem(SESSION_STORAGE_KEY)) {
                 goToVerification();
                 return;
             }
 
-            document.getElementById('notificationsModal').style.display = 'flex';
+            document.getElementById('inboxModal').style.display = 'flex';
             document.body.style.overflow = 'hidden';
-            await loadNotifications();
+            backToInbox(false);
+            await loadInbox();
         }
 
-        function closeNotifications() {
-            document.getElementById('notificationsModal').style.display = 'none';
+        function closeInbox() {
+            document.getElementById('inboxModal').style.display = 'none';
             document.body.style.overflow = '';
+            currentInboxThread = null;
+            const input = document.getElementById('inboxReplyInput');
+            if (input) input.value = '';
         }
 
-        function closeNotificationsFromOutside(event) {
-            if (event.target?.id === 'notificationsModal') closeNotifications();
+        function closeInboxFromOutside(event) {
+            if (event.target?.id === 'inboxModal') closeInbox();
         }
 
-        async function loadNotifications() {
-            const list = document.getElementById('notificationsList');
-            const summary = document.getElementById('notificationsSummary');
+        async function loadInbox() {
+            const list = document.getElementById('inboxList');
+            const summary = document.getElementById('inboxSummary');
+
             if (!list || !summary) return;
 
-            list.innerHTML = '<div class="notifications-empty">⏳ Bildirimler yükleniyor...</div>';
-            summary.textContent = 'Bildirimler yükleniyor...';
+            list.innerHTML = '<div class="inbox-empty">⏳ Mesajlar yükleniyor...</div>';
+            summary.textContent = 'Mesajlar yükleniyor...';
 
             try {
-                currentNotifications = await fetchNotifications();
-                updateNotificationBadge();
-                renderNotifications();
+                currentInboxThreads = await fetchInboxThreads();
+
+                const currentIds = new Set(currentInboxThreads.map(x => String(x.id)));
+                for (const id of [...selectedInboxThreadIds]) {
+                    if (!currentIds.has(String(id))) selectedInboxThreadIds.delete(id);
+                }
+
+                updateInboxBadge();
+                renderInbox();
             } catch (error) {
-                summary.textContent = 'Bildirimler yüklenemedi';
-                list.innerHTML = `<div class="notifications-empty">❌ ${escapeHtml(error.message || error)}</div>`;
+                summary.textContent = 'Mesajlar yüklenemedi';
+                list.innerHTML = `<div class="inbox-empty">❌ ${escapeHtml(error.message || error)}</div>`;
             }
         }
 
-        function renderNotifications() {
-            const list = document.getElementById('notificationsList');
-            const summary = document.getElementById('notificationsSummary');
+        function renderInbox() {
+            const list = document.getElementById('inboxList');
+            const summary = document.getElementById('inboxSummary');
+
             if (!list || !summary) return;
 
-            const unread = currentNotifications.filter(item => !item.readAt).length;
-            summary.textContent = `${currentNotifications.length} bildirim · ${unread} okunmamış`;
+            const unread = inboxUnreadCount();
+            summary.textContent = `${currentInboxThreads.length} konuşma · ${unread} okunmamış mesaj`;
             list.innerHTML = '';
 
-            if (currentNotifications.length === 0) {
-                list.innerHTML = '<div class="notifications-empty">📭 Henüz bildirimin yok.</div>';
+            if (currentInboxThreads.length === 0) {
+                list.innerHTML = '<div class="inbox-empty">📭 Mesaj kutun şu anda boş.</div>';
+                updateInboxSelectionState();
                 return;
             }
 
-            currentNotifications.forEach(item => {
+            currentInboxThreads.forEach(item => {
+                const id = String(item.id || '');
+                const unreadCount = Math.max(0, Number(item.unread_count ?? item.unreadCount ?? 0) || 0);
+                const selected = selectedInboxThreadIds.has(id);
                 const card = document.createElement('div');
-                card.className = `notification-item ${item.readAt ? '' : 'unread'}`.trim();
+
+                card.className = `inbox-thread ${unreadCount > 0 ? 'unread' : ''}`.trim();
+
+                const typeText = item.thread_type === 'admin'
+                    ? '(Yönetici) Weizend'
+                    : 'Weizend Sistem';
+
+                const replyText = Number(item.allow_reply) === 1 && item.status === 'open'
+                    ? '💬 Yanıt açık'
+                    : '🔒 Yanıt kapalı';
+
                 card.innerHTML = `
-                    <div class="notification-item-head">
-                        <div class="notification-title">${escapeHtml(item.title || 'Bildirim')}</div>
-                        <div class="notification-date">${escapeHtml(notificationDateText(item.createdAt))}</div>
-                    </div>
-                    <div class="notification-body">${escapeHtml(item.body || '')}</div>
-                    ${item.readAt ? '' : `
-                        <div class="notification-item-actions">
-                            <button class="notification-read-btn" onclick="markNotificationRead('${encodeURIComponent(item.id)}')">✓ Okundu olarak işaretle</button>
+                    <input
+                        class="inbox-thread-select"
+                        type="checkbox"
+                        ${selected ? 'checked' : ''}
+                        aria-label="Mesajı seç"
+                        onchange="toggleInboxSelection('${encodeURIComponent(id)}', this.checked)">
+
+                    <div class="inbox-thread-main" onclick="openInboxThread('${encodeURIComponent(id)}')">
+                        <div class="inbox-thread-top">
+                            <div class="inbox-thread-title">${escapeHtml(item.subject || 'Weizend Mesajı')}</div>
+                            <div class="inbox-thread-date">${escapeHtml(inboxDateText(item.updated_at || item.updatedAt || item.created_at || item.createdAt))}</div>
                         </div>
-                    `}
+
+                        <div class="inbox-thread-preview">${escapeHtml(item.last_message || item.lastMessage || 'Mesajı açmak için tıklayın.')}</div>
+
+                        <div class="inbox-thread-meta">
+                            <span class="inbox-pill">${escapeHtml(typeText)}</span>
+                            <span class="inbox-pill">${escapeHtml(replyText)}</span>
+                            ${unreadCount > 0 ? `<span class="inbox-pill unread">${unreadCount} yeni</span>` : ''}
+                        </div>
+                    </div>
+
+                    <button class="inbox-open-btn" onclick="openInboxThread('${encodeURIComponent(id)}')">Aç</button>
                 `;
+
                 list.appendChild(card);
             });
+
+            updateInboxSelectionState();
         }
 
-        async function markNotificationRead(encodedId) {
+        function toggleInboxSelection(encodedId, checked) {
             const id = decodeURIComponent(encodedId || '');
-            const token = localStorage.getItem(SESSION_STORAGE_KEY) || '';
-            if (!id || !token) return;
+            if (!id) return;
+
+            if (checked) selectedInboxThreadIds.add(id);
+            else selectedInboxThreadIds.delete(id);
+
+            updateInboxSelectionState();
+        }
+
+        function updateInboxSelectionState() {
+            const button = document.getElementById('deleteSelectedInboxBtn');
+            if (!button) return;
+
+            button.disabled = selectedInboxThreadIds.size === 0;
+            button.textContent = selectedInboxThreadIds.size > 0
+                ? `🗑 Seçilenleri Sil (${selectedInboxThreadIds.size})`
+                : '🗑 Seçilenleri Sil';
+        }
+
+        async function openInboxThread(encodedId) {
+            const id = decodeURIComponent(encodedId || '');
+            if (!id) return;
+
+            const messagesBox = document.getElementById('inboxMessages');
+            messagesBox.innerHTML = '<div class="inbox-empty">⏳ Mesaj açılıyor...</div>';
 
             try {
-                const response = await fetch(`${MARKET_WORKER}/notifications/read`, {
-                    method: 'POST',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    cache: 'no-store',
-                    body: JSON.stringify({ id })
-                });
+                const data = await inboxRequest(`/inbox/thread?id=${encodeURIComponent(id)}&_=${Date.now()}`);
 
-                let data = null;
-                try { data = await response.json(); } catch (_) {}
+                currentInboxThread = data.thread || null;
 
-                if (!response.ok || !data?.success) {
-                    throw new Error(data?.error || `HTTP ${response.status}`);
+                const item = currentInboxThreads.find(x => String(x.id) === String(id));
+                if (item) {
+                    item.unread_count = 0;
+                    item.unreadCount = 0;
                 }
 
-                const item = currentNotifications.find(n => String(n.id) === String(id));
-                if (item) item.readAt = new Date().toISOString();
-                updateNotificationBadge();
-                renderNotifications();
+                updateInboxBadge();
+
+                document.getElementById('inboxListView').style.display = 'none';
+                document.getElementById('inboxThreadView').style.display = 'flex';
+
+                document.getElementById('inboxThreadSubject').textContent =
+                    currentInboxThread?.subject || 'Weizend Mesajı';
+
+                const replyAllowed =
+                    Number(currentInboxThread?.allow_reply) === 1 &&
+                    currentInboxThread?.status === 'open';
+
+                document.getElementById('inboxThreadStatus').textContent =
+                    `${currentInboxThread?.thread_type === 'admin' ? '(Yönetici) Weizend' : 'Weizend Sistem'} · ` +
+                    `${replyAllowed ? 'Yanıt açık' : 'Yanıt kapalı'}`;
+
+                document.getElementById('inboxReplyAllowed').style.display = replyAllowed ? 'block' : 'none';
+                document.getElementById('inboxReplyClosed').style.display = replyAllowed ? 'none' : 'block';
+                document.getElementById('inboxReplyInput').value = '';
+
+                renderInboxMessages(Array.isArray(data.messages) ? data.messages : []);
+                renderInbox();
             } catch (error) {
-                showStatusToast(`❌ Bildirim güncellenemedi: ${error.message || error}`, 4000);
+                messagesBox.innerHTML = `<div class="inbox-empty">❌ ${escapeHtml(error.message || error)}</div>`;
+            }
+        }
+
+        function renderInboxMessages(items) {
+            const box = document.getElementById('inboxMessages');
+            box.innerHTML = '';
+
+            if (!items.length) {
+                box.innerHTML = '<div class="inbox-empty">Bu konuşmada mesaj bulunamadı.</div>';
+                return;
+            }
+
+            items.forEach(item => {
+                const senderType = String(item.sender_type || item.senderType || 'system');
+                const senderName = item.sender_name || item.senderName ||
+                    (senderType === 'user' ? currentUsername : '(Yönetici) Weizend');
+
+                const bubble = document.createElement('div');
+                bubble.className = `inbox-message ${senderType}`;
+
+                bubble.innerHTML = `
+                    <div class="inbox-message-sender">${escapeHtml(senderName)}</div>
+                    <div class="inbox-message-text">${escapeHtml(item.body || '')}</div>
+                    <div class="inbox-message-date">${escapeHtml(inboxDateText(item.created_at || item.createdAt))}</div>
+                `;
+
+                box.appendChild(bubble);
+            });
+
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function backToInbox(refresh = true) {
+            document.getElementById('inboxThreadView').style.display = 'none';
+            document.getElementById('inboxListView').style.display = 'flex';
+            currentInboxThread = null;
+
+            if (refresh) {
+                loadInbox().catch(() => {});
+            }
+        }
+
+        async function markAllInboxRead() {
+            try {
+                await inboxRequest('/inbox/read-all', {
+                    method: 'POST',
+                    body: JSON.stringify({})
+                });
+
+                currentInboxThreads.forEach(item => {
+                    item.unread_count = 0;
+                    item.unreadCount = 0;
+                });
+
+                updateInboxBadge();
+                renderInbox();
+                showStatusToast('✅ Tüm mesajlar okundu olarak işaretlendi', 3000);
+            } catch (error) {
+                showStatusToast(`❌ ${error.message || error}`, 4000);
+            }
+        }
+
+        async function deleteSelectedInbox() {
+            if (selectedInboxThreadIds.size === 0) return;
+
+            if (!confirm(`${selectedInboxThreadIds.size} konuşma Mesaj Kutusundan kaldırılsın mı?`)) {
+                return;
+            }
+
+            try {
+                await inboxRequest('/inbox/delete', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        threadIds: [...selectedInboxThreadIds]
+                    })
+                });
+
+                selectedInboxThreadIds.clear();
+                await loadInbox();
+                showStatusToast('✅ Seçilen mesajlar temizlendi', 3000);
+            } catch (error) {
+                showStatusToast(`❌ ${error.message || error}`, 4000);
+            }
+        }
+
+        async function clearInbox() {
+            if (currentInboxThreads.length === 0) return;
+
+            if (!confirm('Mesaj Kutundaki tüm konuşmalar temizlensin mi?')) {
+                return;
+            }
+
+            try {
+                await inboxRequest('/inbox/clear', {
+                    method: 'POST',
+                    body: JSON.stringify({})
+                });
+
+                selectedInboxThreadIds.clear();
+                currentInboxThreads = [];
+                updateInboxBadge();
+                renderInbox();
+                showStatusToast('✅ Mesaj Kutusu temizlendi', 3000);
+            } catch (error) {
+                showStatusToast(`❌ ${error.message || error}`, 4000);
+            }
+        }
+
+        async function sendInboxReply() {
+            const input = document.getElementById('inboxReplyInput');
+            const button = document.getElementById('inboxSendButton');
+
+            const message = String(input.value || '').trim();
+
+            if (!currentInboxThread?.id || !message) {
+                showStatusToast('⚠️ Yanıt mesajını yazmalısın.', 3000);
+                return;
+            }
+
+            const threadId = currentInboxThread.id;
+            button.disabled = true;
+
+            try {
+                await inboxRequest('/inbox/reply', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        threadId,
+                        message
+                    })
+                });
+
+                input.value = '';
+                await openInboxThread(encodeURIComponent(threadId));
+                showStatusToast('✅ Yanıtın gönderildi', 2600);
+            } catch (error) {
+                showStatusToast(`❌ ${error.message || error}`, 4000);
+            } finally {
+                button.disabled = false;
             }
         }
 
@@ -1725,9 +2120,10 @@
 
             disconnectRealtime();
             currentUsername = '';
-            currentNotifications = [];
-            updateNotificationBadge();
-            closeNotifications();
+            currentInboxThreads = [];
+            selectedInboxThreadIds.clear();
+            updateInboxBadge();
+            closeInbox();
             sessionGraceUntil = 0;
 
             showUsernameForm('✅ Güvenli çıkış yapıldı. Tekrar giriş yapmak için Kick kullanıcı adını yaz ve <b>!doğrula KOD</b> komutuyla hesabını doğrula.');
@@ -2044,6 +2440,52 @@
         });
 
 
+        function normalizeProductSearch(value) {
+            return String(value || '')
+                .toLocaleLowerCase('tr-TR')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        function setProductSearch(value) {
+            productSearchQuery = normalizeProductSearch(value);
+            urunleriYukle(aktifKategori || 'Tümü');
+        }
+
+        function clearProductSearch() {
+            productSearchQuery = '';
+
+            const input = document.getElementById('productSearchInput');
+            if (input) {
+                input.value = '';
+                input.focus();
+            }
+
+            urunleriYukle(aktifKategori || 'Tümü');
+        }
+
+        function productSearchText(urun) {
+            const plainDetails = String(urun.ozellikler || '')
+                .replace(/<[^>]*>/g, ' ');
+
+            return normalizeProductSearch([
+                urun.ad,
+                urun.kategori,
+                urun.komut,
+                urun.puan,
+                plainDetails
+            ].filter(Boolean).join(' '));
+        }
+
+        function updateProductSearchInfo(visibleCount) {
+            const info = document.getElementById('productSearchInfo');
+            if (!info) return;
+
+            info.textContent = productSearchQuery
+                ? `${visibleCount} ürün bulundu`
+                : '';
+        }
+
         async function syncCatalogStock() {
             const response = await fetch(`${MARKET_WORKER}/catalog?_=${Date.now()}`, {
                 method: 'GET',
@@ -2142,6 +2584,23 @@
                 });
             }
             
+            if (productSearchQuery) {
+                gosterilecekUrunler = gosterilecekUrunler.filter(
+                    urun => productSearchText(urun).includes(productSearchQuery)
+                );
+            }
+
+            updateProductSearchInfo(gosterilecekUrunler.length);
+
+            if (gosterilecekUrunler.length === 0) {
+                grid.innerHTML = `
+                    <div class="market-empty-search">
+                        🔎 Aramana uygun ürün bulunamadı.
+                    </div>
+                `;
+                return;
+            }
+
             gosterilecekUrunler.forEach(urun => {
                 const ilkGorsel = urun.gorseller[0];
                 const tukendiMi = stokDurumu(urun.stok) <= 0;
