@@ -296,6 +296,11 @@ pre{
 
 .searchBox{margin:0 0 14px}
 .userSummaryGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+.userRestrictionBanner{display:none;margin:0 0 14px;padding:14px 16px;border-radius:12px;border:1px solid #7d2525;background:#250d0d;color:#ffd1d1;line-height:1.55}
+.userRestrictionBanner strong{display:block;color:#ff6262;margin-bottom:4px;font-size:1rem}
+.userRestrictionActions{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+.userRestrictionActions button{width:auto;min-width:190px}
+tr.user-row-blocked{background:rgba(227,27,27,.045)}
 .userSummaryItem{background:#090909;border:1px solid #292929;border-radius:10px;padding:11px 12px}
 .userSummaryItem span{display:block;color:var(--muted);font-size:.78rem;margin-bottom:4px}
 .userSummaryItem strong{display:block;word-break:break-word}
@@ -422,6 +427,10 @@ pre{
     📦 Ürünler
   </button>
 
+  <button id="tab-giftcodes" onclick="openTab('giftcodes')">
+    🎁 Hediye Kodları
+  </button>
+
   <button id="tab-payments" onclick="openTab('payments')">
     💳 Ödemeler
   </button>
@@ -432,6 +441,11 @@ pre{
 
   <button id="tab-users" onclick="openTab('users')">
     👥 Kullanıcılar
+  </button>
+
+  <button id="tab-messages" onclick="openTab('messages')" style="position:relative;">
+    💬 Mesajlar
+    <span id="adminMessagesBadge" style="display:none;position:absolute;top:4px;right:5px;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:#e31b1b;color:#fff;font-size:11px;font-weight:900;align-items:center;justify-content:center;box-shadow:0 0 0 2px #111;">0</span>
   </button>
 
   <button id="tab-orders" onclick="openTab('orders')">
@@ -646,6 +660,66 @@ pre{
     </div>
 
     <!-- ===================================================== -->
+    <!-- GIFT CODES -->
+    <!-- ===================================================== -->
+
+    <div id="section-giftcodes" class="section">
+      <div class="card">
+        <div class="topbar">
+          <div>
+            <h2>🎁 Hediye Kodu Oluştur</h2>
+            <div class="muted">Kullanıcıya vereceğin tek kullanımlık market kodunu oluştur.</div>
+          </div>
+          <button class="secondary" style="width:auto" onclick="loadGiftCodes()">🔄 Yenile</button>
+        </div>
+
+        <div class="grid2">
+          <div class="field">
+            <label class="title">Ürün / Ödül Adı</label>
+            <input id="giftProductName" maxlength="160" placeholder="Örn: 375 VP Valorant Points">
+          </div>
+
+          <div class="field">
+            <label class="title">Kullanıcıya Teslim Edilecek VP / Ürün Kodu</label>
+            <input id="giftDeliveryValue" maxlength="2000" autocomplete="off" placeholder="Örn: XXXX-XXXX-XXXX-XXXX">
+          </div>
+        </div>
+
+        <button onclick="createGiftCode()">🎁 Tek Kullanımlık Kod Oluştur</button>
+
+        <div id="giftCreatedBox" style="display:none;margin-top:14px;padding:16px;border:1px solid #7c2b2b;border-radius:12px;background:#1a0d0d;">
+          <div class="muted" style="margin-bottom:6px;">Kullanıcıya vereceğin hediye kodu:</div>
+          <div id="giftCreatedCode" class="code" style="font-size:1.35rem;font-weight:900;word-break:break-all;"></div>
+          <button class="secondary smallBtn" style="margin-top:10px;width:auto" onclick="copyCreatedGiftCode()">📋 Kodu Kopyala</button>
+        </div>
+
+        <div id="giftCodeStatus" class="status"></div>
+      </div>
+
+      <div class="card">
+        <h2>🎟️ Oluşturulan Hediye Kodları</h2>
+        <div class="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Ürün</th>
+                <th>Kod</th>
+                <th>Durum</th>
+                <th>Kullanan</th>
+                <th>Oluşturulma</th>
+                <th>Kullanılma</th>
+                <th>İşlem</th>
+              </tr>
+            </thead>
+            <tbody id="giftCodesBody">
+              <tr><td colspan="7" class="muted">Hediye kodları henüz yüklenmedi.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================================================== -->
     <!-- PAYMENTS -->
     <!-- ===================================================== -->
 
@@ -804,6 +878,7 @@ pre{
           <tr>
             <th>Kullanıcı</th>
             <th>Ürün</th>
+            <th>Tür</th>
             <th>Adet</th>
             <th>Toplam</th>
             <th>Teslimat Kodu</th>
@@ -816,7 +891,7 @@ pre{
         <tbody id="adminOrdersBody">
 
           <tr>
-            <td colspan="8" class="muted">
+            <td colspan="9" class="muted">
               Satın alınanlar henüz yüklenmedi.
             </td>
           </tr>
@@ -864,10 +939,9 @@ pre{
           <div>
             <label class="title">Durum</label>
             <select id="userStatusFilter" onchange="loadUsers()">
-              <option value="">Aktif + Engelli</option>
+              <option value="">Tümü</option>
               <option value="active">Aktif</option>
-              <option value="blocked">Engelli</option>
-              <option value="archived">Arşivlenmiş</option>
+              <option value="blocked">Kısıtlı</option>
             </select>
           </div>
         </div>
@@ -897,23 +971,23 @@ pre{
 
         <div id="userSummary" class="userSummaryGrid"></div>
 
+        <div id="userRestrictionBanner" class="userRestrictionBanner"></div>
+
         <div class="grid2">
           <div class="field">
             <label class="title">Takma Ad</label>
             <input id="userNickname" maxlength="80" placeholder="Sadece admin görür">
           </div>
           <div class="field">
-            <label class="title">Engelleme Nedeni</label>
-            <input id="userBlockReason" maxlength="500" placeholder="Engellerken kullanılacak açıklama">
+            <label class="title">Kısıtlama Nedeni</label>
+            <input id="userBlockReason" maxlength="500" placeholder="Kullanıcının göreceği kısıtlama mesajını yaz">
           </div>
         </div>
 
         <div class="btnRow">
           <button onclick="saveUserNickname()">💾 Takma Adı Kaydet</button>
-          <button class="warn" onclick="setUserStatus('blocked')">⛔ Engelle</button>
-          <button class="success" onclick="setUserStatus('active')">✅ Aktifleştir</button>
-          <button class="danger" onclick="setUserStatus('archived')">🗃️ Arşivle</button>
         </div>
+        <div id="userRestrictionActions" class="userRestrictionActions"></div>
 
         <div class="card" style="margin-top:18px;margin-bottom:0;">
           <h3>✉️ Özel Mesaj Gönder</h3>
@@ -974,6 +1048,44 @@ pre{
           </div>
           <div id="adminThreadStatus" class="status"></div>
         </div>
+      </div>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- MESSAGES -->
+    <!-- ===================================================== -->
+
+    <div id="section-messages" class="section">
+      <div class="card">
+        <div class="topbar">
+          <div>
+            <h2>💬 Gelen Mesajlar</h2>
+            <div id="adminMessagesSummary" class="muted">Mesajlar kontrol ediliyor...</div>
+          </div>
+          <button class="secondary smallBtn" style="width:auto;min-width:0" onclick="loadAdminMessageCenter(false)">🔄 Yenile</button>
+        </div>
+
+        <div style="padding:12px 14px;border:1px solid #2b2b2b;border-radius:12px;background:#121212;margin-bottom:14px;">
+          Kullanıcılardan gelen okunmamış mesajlar burada görünür. Kırmızı sayı toplam okunmamış mesaj sayısını gösterir.
+        </div>
+
+        <div class="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Kick Adı</th>
+                <th>Takma Ad</th>
+                <th>Durum</th>
+                <th>Yeni Mesaj</th>
+                <th>İşlem</th>
+              </tr>
+            </thead>
+            <tbody id="adminMessagesBody">
+              <tr><td colspan="5" class="muted">Yeni mesajlar kontrol ediliyor...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div id="adminMessagesStatus" class="status"></div>
       </div>
     </div>
 
@@ -1283,7 +1395,10 @@ let editingProductId = null;
 let currentAdminUser = null;
 let currentAdminThread = null;
 let userSearchTimer = null;
+let refundWatchTimer = null;
 let adminChoiceContext = null;
+let adminMessagesPollTimer = null;
+let adminMessagesLastTotal = 0;
 
   
 function openAdminChoiceModal(config){
@@ -1541,6 +1656,10 @@ function openTab(name){
     loadProducts();
   }
 
+  if(name === 'giftcodes'){
+    loadGiftCodes();
+  }
+
   if(name === 'payments'){
     loadPayments();
   }
@@ -1551,6 +1670,10 @@ function openTab(name){
 
   if(name === 'users'){
     loadUsers();
+  }
+
+  if(name === 'messages'){
+    loadAdminMessageCenter(false);
   }
 
   if(name === 'tournaments'){
@@ -1675,6 +1798,7 @@ function openAdmin(){
     .style.display = 'block';
 
   loadProducts();
+  startAdminMessagesPolling();
 }
 
 
@@ -1727,6 +1851,117 @@ async function api(path,options={}){
   }
 
   return {r,d};
+}
+
+
+/* =========================================================
+   GIFT CODES
+========================================================= */
+
+let lastCreatedGiftCode = '';
+
+async function createGiftCode(){
+  const productName = String(document.getElementById('giftProductName')?.value || '').trim();
+  const deliveryValue = String(document.getElementById('giftDeliveryValue')?.value || '').trim();
+
+  if(!productName || !deliveryValue){
+    showStatus('giftCodeStatus','⚠️ Ürün adı ve teslim edilecek VP / ürün kodunu yazmalısın.',false);
+    return;
+  }
+
+  try{
+    const {r,d} = await api('/admin/gift-codes/create',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({productName,deliveryValue})
+    });
+
+    if(!r.ok || !d?.success || !d?.giftCode?.code){
+      throw new Error(d?.error || `HTTP ${r.status}`);
+    }
+
+    lastCreatedGiftCode = d.giftCode.code;
+    document.getElementById('giftCreatedCode').textContent = lastCreatedGiftCode;
+    document.getElementById('giftCreatedBox').style.display = 'block';
+    document.getElementById('giftDeliveryValue').value = '';
+
+    showStatus('giftCodeStatus','✅ Tek kullanımlık hediye kodu oluşturuldu. Bu kod yalnızca bir kez kullanılabilir.',true);
+    await loadGiftCodes();
+  }catch(error){
+    showStatus('giftCodeStatus','❌ '+esc(error.message || error),false);
+  }
+}
+
+async function copyCreatedGiftCode(){
+  if(!lastCreatedGiftCode) return;
+  try{
+    await navigator.clipboard.writeText(lastCreatedGiftCode);
+    showStatus('giftCodeStatus','✅ Hediye kodu kopyalandı.',true);
+  }catch(_){
+    showStatus('giftCodeStatus','⚠️ Kopyalanamadı. Kodu seçip manuel kopyalayabilirsin.',false);
+  }
+}
+
+async function loadGiftCodes(){
+  const body = document.getElementById('giftCodesBody');
+  if(!body) return;
+  body.innerHTML = '<tr><td colspan="7" class="muted">⏳ Hediye kodları yükleniyor...</td></tr>';
+
+  try{
+    const {r,d} = await api('/admin/gift-codes');
+    if(!r.ok || !d?.success) throw new Error(d?.error || `HTTP ${r.status}`);
+    renderGiftCodes(Array.isArray(d.giftCodes) ? d.giftCodes : []);
+  }catch(error){
+    body.innerHTML = `<tr><td colspan="7" class="muted">❌ ${esc(error.message || error)}</td></tr>`;
+  }
+}
+
+function renderGiftCodes(items){
+  const body = document.getElementById('giftCodesBody');
+  if(!body) return;
+  body.innerHTML = '';
+
+  if(!items.length){
+    body.innerHTML = '<tr><td colspan="7" class="muted">Henüz hediye kodu oluşturulmadı.</td></tr>';
+    return;
+  }
+
+  for(const item of items){
+    const status = String(item.status || 'unused');
+    const statusText = status === 'unused' ? 'Kullanılmadı' : status === 'redeemed' ? 'Kullanıldı' : 'Devre Dışı';
+    const badge = status === 'unused' ? 'ok' : status === 'redeemed' ? 'warn' : 'bad';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${esc(item.product_name || '-')}</strong></td>
+      <td class="code">••••-${esc(item.redeem_code_last4 || '----')}</td>
+      <td><span class="badge ${badge}">${esc(statusText)}</span></td>
+      <td>${esc(item.redeemed_by_username || '-')}</td>
+      <td>${esc(dateText(item.created_at))}</td>
+      <td>${esc(dateText(item.redeemed_at))}</td>
+      <td>
+        ${status === 'unused'
+          ? `<button class="smallBtn danger" onclick="disableGiftCode('${encodeURIComponent(item.id)}')">Devre Dışı Bırak</button>`
+          : '<span class="muted">-</span>'}
+      </td>`;
+    body.appendChild(tr);
+  }
+}
+
+async function disableGiftCode(encodedId){
+  const id = decodeURIComponent(encodedId || '');
+  if(!id || !confirm('Bu hediye kodu devre dışı bırakılsın mı?')) return;
+
+  try{
+    const {r,d} = await api('/admin/gift-codes/disable',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id})
+    });
+    if(!r.ok || !d?.success) throw new Error(d?.error || `HTTP ${r.status}`);
+    await loadGiftCodes();
+  }catch(error){
+    showStatus('giftCodeStatus','❌ '+esc(error.message || error),false);
+  }
 }
 
 
@@ -2501,11 +2736,147 @@ async function resolvePayment(
 
 
 /* =========================================================
+   ADMIN MESSAGE CENTER
+========================================================= */
+
+function setAdminMessagesBadge(total){
+  const n = Math.max(0, Number(total) || 0);
+  adminMessagesLastTotal = n;
+  const badge = document.getElementById('adminMessagesBadge');
+  if(!badge) return;
+
+  if(n > 0){
+    badge.style.display = 'inline-flex';
+    badge.textContent = n > 99 ? '99+' : String(n);
+    badge.title = `${n} okunmamış kullanıcı mesajı`;
+  }else{
+    badge.style.display = 'none';
+    badge.textContent = '0';
+    badge.title = 'Okunmamış kullanıcı mesajı yok';
+  }
+}
+
+async function fetchAdminUsersForMessages(){
+  const {r,d} = await api('/admin/users?status=');
+  if(!r.ok || !d?.success){
+    throw new Error(d?.error || `HTTP ${r.status}`);
+  }
+  return Array.isArray(d.users) ? d.users : [];
+}
+
+function startAdminMessagesPolling(){
+  if(adminMessagesPollTimer){
+    clearInterval(adminMessagesPollTimer);
+    adminMessagesPollTimer = null;
+  }
+
+  refreshAdminMessagesBadge().catch(() => {});
+
+  adminMessagesPollTimer = setInterval(() => {
+    if(!token()) return;
+    refreshAdminMessagesBadge().catch(() => {});
+  }, 8000);
+}
+
+async function refreshAdminMessagesBadge(){
+  try{
+    const users = await fetchAdminUsersForMessages();
+    const total = users.reduce(
+      (sum,u) => sum + Math.max(0, Number(u.unread_admin_messages || 0)),
+      0
+    );
+
+    setAdminMessagesBadge(total);
+
+    const section = document.getElementById('section-messages');
+    if(section?.classList.contains('active')){
+      renderAdminMessageCenter(users, true);
+    }
+  }catch(error){
+    console.warn('ADMIN MESSAGE BADGE ERROR:', error);
+  }
+}
+
+async function loadAdminMessageCenter(silent = false){
+  const body = document.getElementById('adminMessagesBody');
+  const summary = document.getElementById('adminMessagesSummary');
+
+  if(!silent && body){
+    body.innerHTML = '<tr><td colspan="5" class="muted">⏳ Mesajlar kontrol ediliyor...</td></tr>';
+  }
+
+  try{
+    const users = await fetchAdminUsersForMessages();
+    renderAdminMessageCenter(users, silent);
+  }catch(error){
+    if(summary) summary.textContent = 'Mesajlar alınamadı';
+    if(body && !silent){
+      body.innerHTML = `<tr><td colspan="5" class="muted">❌ ${esc(error.message || error)}</td></tr>`;
+    }
+    showStatus('adminMessagesStatus','❌ ' + esc(error.message || error),false);
+  }
+}
+
+function renderAdminMessageCenter(users, silent = false){
+  const body = document.getElementById('adminMessagesBody');
+  const summary = document.getElementById('adminMessagesSummary');
+  if(!body || !summary) return;
+
+  const unreadUsers = (users || [])
+    .map(u => ({...u, unread:Number(u.unread_admin_messages || 0)}))
+    .filter(u => u.unread > 0)
+    .sort((a,b) => {
+      if(b.unread !== a.unread) return b.unread - a.unread;
+      return String(b.last_activity_at || b.updated_at || '').localeCompare(String(a.last_activity_at || a.updated_at || ''));
+    });
+
+  const total = unreadUsers.reduce((sum,u) => sum + u.unread, 0);
+  setAdminMessagesBadge(total);
+  summary.textContent = total > 0
+    ? `${unreadUsers.length} kullanıcıdan ${total} okunmamış mesaj`
+    : 'Yeni okunmamış mesaj yok';
+
+  body.innerHTML = '';
+
+  if(unreadUsers.length === 0){
+    body.innerHTML = '<tr><td colspan="5" class="muted">📭 Şu anda okunmamış kullanıcı mesajı yok.</td></tr>';
+    return;
+  }
+
+  for(const u of unreadUsers){
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${esc(u.username || '-')}</strong></td>
+      <td>${esc(u.nickname || '-')}</td>
+      <td><span class="badge ${userStatusBadge(u.status)}">${esc(userStatusText(u.status))}</span></td>
+      <td><span class="badge bad">${u.unread} yeni</span></td>
+      <td><button class="smallBtn" onclick="openUnreadUserMessages('${encodeURIComponent(u.kick_uid)}')">💬 Mesajı Aç</button></td>
+    `;
+    body.appendChild(tr);
+  }
+}
+
+async function openUnreadUserMessages(encodedUid){
+  const uid = decodeURIComponent(encodedUid || '');
+  if(!uid) return;
+
+  openTab('users');
+  await openUser(encodeURIComponent(uid));
+
+  const firstThread = currentAdminUser?.threads?.[0];
+  if(firstThread?.id){
+    await openAdminThread(encodeURIComponent(firstThread.id));
+  }
+
+  refreshAdminMessagesBadge().catch(() => {});
+}
+
+/* =========================================================
    USERS
 ========================================================= */
 
 function userStatusText(status){
-  return {active:'Aktif',blocked:'Engelli',archived:'Arşivlenmiş'}[status] || status || '-';
+  return {active:'Aktif',blocked:'Kısıtlı',archived:'Arşivlenmiş'}[status] || status || '-';
 }
 function userStatusBadge(status){
   if(status === 'active') return 'ok';
@@ -2545,6 +2916,7 @@ function renderUsers(){
   for(const u of usersCache){
     const unread = Number(u.unread_admin_messages || 0);
     const tr = document.createElement('tr');
+    if(u.status === 'blocked') tr.classList.add('user-row-blocked');
     tr.innerHTML = `
       <td><strong>${esc(u.username || '-')}</strong></td>
       <td>${esc(u.nickname || '-')}</td>
@@ -2552,7 +2924,7 @@ function renderUsers(){
       <td>${esc(u.level ?? '-')}</td>
       <td>${esc(dateText(u.first_verified_at))}</td>
       <td>${esc(dateText(u.last_seen_at || u.last_activity_at))}</td>
-      <td><span class="badge ${userStatusBadge(u.status)}">${esc(userStatusText(u.status))}</span></td>
+      <td><span class="badge ${userStatusBadge(u.status)}" ${u.blocked_reason ? `title="${esc(u.blocked_reason)}"` : ''}>${esc(userStatusText(u.status))}</span></td>
       <td>${unread > 0 ? `<span class="badge bad">${unread} yeni</span>` : '<span class="muted">-</span>'}</td>
       <td><button class="smallBtn secondary" onclick="openUser('${encodeURIComponent(u.kick_uid)}')">⚙️ İşlem Yap</button></td>
     `;
@@ -2577,8 +2949,9 @@ function renderUserDetail(){
   if(!currentAdminUser) return;
   const u = currentAdminUser;
   document.getElementById('userDetailCard').classList.remove('hidden');
+  const restricted = u.status === 'blocked';
   document.getElementById('userDetailTitle').innerText = `👤 ${u.username || 'Kullanıcı'}`;
-  document.getElementById('userDetailStatusText').innerText = `${userStatusText(u.status)} · UID: ${u.kick_uid || '-'}`;
+  document.getElementById('userDetailStatusText').innerText = `${restricted ? '⛔ Kısıtlı' : '✅ Aktif'} · UID: ${u.kick_uid || '-'}`;
   document.getElementById('userSummary').innerHTML = `
     <div class="userSummaryItem"><span>Kick Adı</span><strong>${esc(u.username || '-')}</strong></div>
     <div class="userSummaryItem"><span>Takma Ad</span><strong>${esc(u.nickname || '-')}</strong></div>
@@ -2587,8 +2960,25 @@ function renderUserDetail(){
     <div class="userSummaryItem"><span>İlk Doğrulama</span><strong>${esc(dateText(u.first_verified_at))}</strong></div>
     <div class="userSummaryItem"><span>Son Görülme</span><strong>${esc(dateText(u.last_seen_at || u.last_activity_at))}</strong></div>
   `;
+
+  const restrictionBanner = document.getElementById('userRestrictionBanner');
+  if(restricted){
+    restrictionBanner.style.display = 'block';
+    restrictionBanner.innerHTML = `<strong>⛔ HESAP KISITLI</strong>${esc(u.blocked_reason || 'Kısıtlama nedeni belirtilmemiş.')}`;
+  }else{
+    restrictionBanner.style.display = 'none';
+    restrictionBanner.innerHTML = '';
+  }
+
+  const restrictionActions = document.getElementById('userRestrictionActions');
+  restrictionActions.innerHTML = restricted
+    ? `<button class="success" onclick="toggleUserRestriction()">✅ Kısıtlamayı Kaldır</button>`
+    : `<button class="danger" onclick="toggleUserRestriction()">⛔ Hesabı Kısıtla</button>`;
+
   document.getElementById('userNickname').value = u.nickname || '';
-  document.getElementById('userBlockReason').value = u.blocked_reason || '';
+  const reasonInput = document.getElementById('userBlockReason');
+  reasonInput.value = u.blocked_reason || '';
+  reasonInput.disabled = restricted;
   renderUserNotes();
   renderUserThreads();
   document.getElementById('adminThreadCard').classList.add('hidden');
@@ -2615,19 +3005,58 @@ async function saveUserNickname(){
     await loadUsers(); await refreshCurrentUser();
   }catch(error){ showStatus('usersStatus','❌ ' + esc(error.message || error),false); }
 }
-async function setUserStatus(status){
+async function toggleUserRestriction(){
   if(!currentAdminUser) return;
+
+  const currentlyRestricted = currentAdminUser.status === 'blocked';
+  const nextStatus = currentlyRestricted ? 'active' : 'blocked';
   const reason = document.getElementById('userBlockReason').value.trim();
-  const label = status === 'blocked' ? 'engellensin' : status === 'archived' ? 'arşivlensin' : 'aktif edilsin';
-  if(!confirm(`${currentAdminUser.username} kullanıcısı ${label} mi?`)) return;
+
+  if(!currentlyRestricted && !reason){
+    showStatus('usersStatus','⚠️ Hesabı kısıtlamak için kullanıcıya gösterilecek nedeni yazmalısın.',false);
+    document.getElementById('userBlockReason').focus();
+    return;
+  }
+
+  const question = currentlyRestricted
+    ? `${currentAdminUser.username} kullanıcısının hesap kısıtlaması kaldırılsın mı?`
+    : `${currentAdminUser.username} kullanıcısının hesabı kısıtlansın mı?\n\nKullanıcıya gönderilecek neden:\n${reason}`;
+
+  if(!confirm(question)) return;
+
+  await setUserStatus(nextStatus, reason);
+}
+
+async function setUserStatus(status, suppliedReason = ''){
+  if(!currentAdminUser) return;
+  const reason = String(suppliedReason || '').trim();
+
   try{
     const {r,d} = await api('/admin/user/status',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({kickUid:currentAdminUser.kick_uid,status,reason})
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        kickUid:currentAdminUser.kick_uid,
+        status,
+        reason
+      })
     });
+
     if(!r.ok || !d?.success) throw new Error(d?.error || `HTTP ${r.status}`);
-    await loadUsers(); await refreshCurrentUser();
-  }catch(error){ showStatus('usersStatus','❌ ' + esc(error.message || error),false); }
+
+    showStatus(
+      'usersStatus',
+      status === 'blocked'
+        ? '✅ Hesap kısıtlandı ve kullanıcıya HESABINIZ KISITLANDI mesajı gönderildi.'
+        : '✅ Hesap kısıtlaması kaldırıldı.',
+      true
+    );
+
+    await loadUsers();
+    await refreshCurrentUser();
+  }catch(error){
+    showStatus('usersStatus','❌ ' + esc(error.message || error),false);
+  }
 }
 async function addUserNote(){
   if(!currentAdminUser) return;
@@ -2702,6 +3131,7 @@ async function openAdminThread(encodedId){
     if(!r.ok || !d?.success || !d?.thread) throw new Error(d?.error || `HTTP ${r.status}`);
     currentAdminThread = {...d.thread,messages:Array.isArray(d.messages) ? d.messages : []};
     renderAdminThread();
+    refreshAdminMessagesBadge().catch(() => {});
   }catch(error){ showStatus('usersStatus','❌ ' + esc(error.message || error),false); }
 }
 function renderAdminThread(){
@@ -3023,7 +3453,7 @@ function renderAdminOrders(){
 
     body.innerHTML = `
       <tr>
-        <td colspan="8" class="muted">
+        <td colspan="9" class="muted">
           Gösterilecek sipariş bulunamadı.
         </td>
       </tr>
@@ -3038,9 +3468,18 @@ function renderAdminOrders(){
       document.createElement('tr');
 
     const total =
-      o.paymentType === 'points'
-        ? points(o.totalPoints)
-        : tlFromCents(o.totalTlCents);
+      o.paymentType === 'gift_code'
+        ? 'Hediye'
+        : o.paymentType === 'points'
+          ? points(o.totalPoints)
+          : tlFromCents(o.totalTlCents);
+
+    const purchaseTypeText =
+      o.paymentType === 'gift_code'
+        ? '🎁 Hediye Kodu'
+        : o.paymentType === 'points'
+          ? '🪙 Puan'
+          : '💳 TL / BynoGame';
 
     const deliveryCode =
       o.deliveryCode || '-';
@@ -3056,6 +3495,10 @@ function renderAdminOrders(){
           o.productId ||
           '-'
         )}
+      </td>
+
+      <td>
+        ${esc(purchaseTypeText)}
       </td>
 
       <td>
@@ -3082,17 +3525,19 @@ function renderAdminOrders(){
 
       <td>
         <div class="orderActions">
-          <button
-            class="smallBtn secondary"
-            onclick="openAdminOrder('${encodeURIComponent(o.id)}')">
-            Detayları Aç
-          </button>
-          ${Number(o.adminArchived || o.admin_archived || 0) === 1
+          ${o.paymentType === 'gift_code'
+            ? `<span class="badge ok">🎁 Teslim Edildi</span>`
+            : `<button
+                class="smallBtn secondary"
+                onclick="openAdminOrder('${encodeURIComponent(o.id)}')">
+                Detayları Aç
+              </button>`}
+          ${o.paymentType !== 'gift_code' && Number(o.adminArchived || o.admin_archived || 0) === 1
             ? `
               <button class="smallBtn iconRestore" title="Arşivden çıkar" onclick="archiveAdminOrder('${encodeURIComponent(o.id)}',false)">↩</button>
               <button class="smallBtn iconDanger" title="Tamamen sil" onclick="openOrderDeleteChoice('${encodeURIComponent(o.id)}',true)">🗑</button>
             `
-            : (['delivered','cancelled','expired','failed'].includes(o.status)
+            : (o.paymentType !== 'gift_code' && ['delivered','cancelled','expired','failed'].includes(o.status)
               ? `<button class="smallBtn iconDanger" title="Arşivle veya tamamen sil" onclick="openOrderDeleteChoice('${encodeURIComponent(o.id)}',false)">🗑</button>`
               : '')}
         </div>
@@ -3497,6 +3942,56 @@ if(
           : '✅ TESLİM EDİLDİ';
 }
 
+function stopRefundWatch(){
+  if(refundWatchTimer){
+    clearTimeout(refundWatchTimer);
+    refundWatchTimer = null;
+  }
+}
+
+async function watchRefundCompletion(orderId, attempt = 0){
+  stopRefundWatch();
+  if(!orderId || attempt > 60) return;
+
+  refundWatchTimer = setTimeout(async () => {
+    try{
+      const {r,d} = await api('/admin/orders');
+      if(!r.ok || !d?.success) throw new Error(d?.error || `HTTP ${r.status}`);
+
+      const fresh = (Array.isArray(d.orders) ? d.orders : [])
+        .find(o => String(o.id) === String(orderId));
+
+      if(fresh){
+        if(currentOrder?.id === orderId){
+          currentOrder = fresh;
+          renderOrder(currentOrder);
+        }
+
+        if(fresh.refund?.status === 'completed'){
+          stopRefundWatch();
+          await Promise.allSettled([
+            loadAdminOrders(),
+            loadProducts()
+          ]);
+          showStatus('lookupStatus','✅ Puan iadesi tamamlandı. Sipariş durumu ve stok otomatik güncellendi.',true);
+          return;
+        }
+
+        if(['failed','cancelled'].includes(String(fresh.refund?.status || ''))){
+          stopRefundWatch();
+          await loadAdminOrders();
+          showStatus('lookupStatus','⚠️ İade işlemi tamamlanamadı. Durum güncellendi.',false);
+          return;
+        }
+      }
+    }catch(error){
+      console.warn('REFUND WATCH ERROR:', error);
+    }
+
+    watchRefundCompletion(orderId, attempt + 1);
+  }, 1500);
+}
+
   async function refundOrder(){
 
   if(!currentOrder?.id){
@@ -3585,6 +4080,7 @@ if(
     );
 
     await loadAdminOrders();
+    watchRefundCompletion(currentOrder?.id);
 
   }catch(error){
 
