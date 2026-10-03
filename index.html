@@ -125,7 +125,7 @@
             .wallet-stat { min-width:0; width:100%; padding:8px 10px; }
             .wallet-source-note { margin-top:8px; font-size:.72rem; line-height:1.35; }
             .wallet-actions { width:100%; display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
-            .inbox-btn, .logout-btn { width:100%; min-width:0; min-height:44px; padding:10px 8px; font-size:.82rem; justify-content:center; }
+            .inbox-btn, .gift-btn, .logout-btn { width:100%; min-width:0; min-height:44px; padding:10px 8px; font-size:.82rem; justify-content:center; }
 
             .market-search-wrap { margin-top:4px; }
             .market-search-box { border-radius:12px; }
@@ -271,7 +271,24 @@
         /* PROFESYONEL MESAJ KUTUSU */
         .inbox-btn { position:relative; background:rgba(255,255,255,0.05); border:1px solid var(--border-color); color:#fff; border-radius:10px; padding:10px 13px; font-weight:800; cursor:pointer; transition:.2s; white-space:nowrap; display:inline-flex; align-items:center; justify-content:center; gap:6px; }
         .inbox-btn:hover { background:#1c1c1c; border-color:var(--weizend-red); transform:translateY(-1px); }
+        .gift-btn { position:relative; background:rgba(255,255,255,0.05); border:1px solid var(--border-color); color:#fff; border-radius:10px; padding:10px 13px; font-weight:800; cursor:pointer; transition:.2s; white-space:nowrap; display:inline-flex; align-items:center; justify-content:center; gap:6px; }
+        .gift-btn:hover { background:#1c1c1c; border-color:#c9972f; transform:translateY(-1px); }
+        .gift-redeem-note { color:#cfcfcf; font-size:.9rem; line-height:1.5; margin-bottom:12px; }
+        .gift-redeem-input { width:100%; border:1px solid #444; background:#0f0f0f; color:#fff; border-radius:10px; padding:12px; font:inherit; text-transform:uppercase; }
+        .gift-redeem-status { margin-top:12px; font-size:.9rem; line-height:1.45; }
         .inbox-badge { display:none; position:absolute; top:-8px; right:-8px; min-width:22px; height:22px; padding:0 6px; border-radius:999px; background:var(--weizend-red); color:#fff; font-size:.72rem; line-height:22px; text-align:center; font-weight:900; border:2px solid #050505; }
+
+        .account-restriction-banner { display:none; margin:12px 0 0; padding:14px 16px; border:1px solid #8d2424; border-radius:12px; background:linear-gradient(135deg,rgba(99,12,12,.94),rgba(35,7,7,.96)); color:#ffd6d6; box-shadow:0 12px 30px rgba(0,0,0,.24); }
+        .account-restriction-banner strong { display:block; color:#ff5b5b; font-size:1.02rem; margin-bottom:5px; }
+        .account-restriction-banner .reason { line-height:1.55; font-size:.92rem; white-space:pre-wrap; }
+        .action-btn.account-blocked { background:#551313 !important; border-color:#8d2424 !important; color:#ffb4b4 !important; cursor:not-allowed !important; opacity:1 !important; }
+        .inbox-appeal-box { display:none; border-top:1px solid #3a1b1b; background:#180b0b; padding:13px 15px; }
+        .inbox-appeal-note { color:#ffb3b3; font-size:.86rem; line-height:1.45; margin-bottom:9px; }
+        .inbox-appeal-btn { width:100%; border:1px solid #b52a2a; background:#7d1616; color:#fff; border-radius:9px; padding:11px 14px; font-weight:900; cursor:pointer; }
+        .inbox-appeal-btn:hover { background:#a21d1d; }
+        .inbox-appeal-row { display:none; gap:8px; align-items:flex-end; }
+        .inbox-appeal-input { flex:1; min-height:78px; resize:vertical; border:1px solid #563030; background:#0f0f0f; color:#fff; border-radius:9px; padding:10px; font:inherit; }
+        .inbox-appeal-send { width:auto; min-width:110px; border:1px solid #b52a2a; background:#8f1717; color:#fff; border-radius:9px; padding:11px 14px; font-weight:900; cursor:pointer; }
 
         .inbox-modal-content { max-width:780px; height:min(760px,88vh); }
         .inbox-shell { display:flex; flex-direction:column; min-height:0; height:100%; }
@@ -746,9 +763,15 @@
                             ✉️ Mesaj Kutusu
                             <span id="inboxBadge" class="inbox-badge">0</span>
                         </button>
+                        <button class="gift-btn" onclick="openGiftRedeem()" title="Hediye kodunu kullan">🎁 Hediye Kodu Kullan</button>
                         <button class="logout-btn" onclick="logoutAccount()" title="Güvenli oturumu kapat">🚪 Çıkış Yap</button>
                     </div>
                 </div>
+            </div>
+
+            <div id="accountRestrictionBanner" class="account-restriction-banner">
+                <strong>⛔ HESABIN KISITLANDI</strong>
+                <div id="accountRestrictionReason" class="reason">Bu hesap yönetici tarafından kısıtlandı.</div>
             </div>
 
             <div id="accessCard" class="access-card">
@@ -880,6 +903,21 @@
     </div>
 
     <!-- MODAL: MESAJ KUTUSU -->
+    <div id="giftRedeemModal" class="modal-overlay" onclick="closeGiftRedeemFromOutside(event)">
+        <div class="modal-content" style="max-width:470px;" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3>🎁 Hediye Kodu Kullan</h3>
+                <button class="close-icon" onclick="closeGiftRedeem()">✖</button>
+            </div>
+            <div class="redirect-modal-body">
+                <div class="gift-redeem-note">Yönetici tarafından verilen tek kullanımlık Weizend hediye kodunu aşağıya yaz.</div>
+                <input id="giftRedeemInput" class="gift-redeem-input" maxlength="40" autocomplete="off" placeholder="WZG-XXXX-XXXX">
+                <button id="giftRedeemButton" class="access-btn" style="margin-top:12px;" onclick="redeemGiftCode()">🎁 Kodu Kullan</button>
+                <div id="giftRedeemStatus" class="gift-redeem-status"></div>
+            </div>
+        </div>
+    </div>
+
     <div id="inboxModal" class="modal-overlay" onclick="closeInboxFromOutside(event)">
         <div class="modal-content inbox-modal-content" onclick="event.stopPropagation()">
             <div class="inbox-shell">
@@ -924,6 +962,22 @@
                     <div id="inboxMessages" class="inbox-messages"></div>
 
                     <div id="inboxReplyBox" class="inbox-reply-box">
+                        <div id="inboxAppealBox" class="inbox-appeal-box">
+                            <div id="inboxAppealNote" class="inbox-appeal-note">Hesabınızın kısıtlanmasına itiraz etmek için tek seferlik mesaj gönderebilirsiniz.</div>
+                            <button id="inboxAppealButton" class="inbox-appeal-btn" onclick="openRestrictionAppealComposer()">İTİRAZ ET</button>
+                            <div id="inboxAppealRow" class="inbox-appeal-row">
+                                <textarea id="inboxAppealInput" class="inbox-appeal-input" maxlength="3000" placeholder="İtirazınızı yazın..."></textarea>
+                                <button id="inboxAppealSend" class="inbox-appeal-send" onclick="sendRestrictionAppeal()">Gönder</button>
+                            </div>
+                        </div>
+                        <div id="inboxSupportBox" class="inbox-appeal-box">
+                            <div id="inboxSupportNote" class="inbox-appeal-note">Bu işlemle ilgili tek seferlik talep açabilirsiniz.</div>
+                            <button id="inboxSupportButton" class="inbox-appeal-btn" onclick="openSupportRequestComposer()">TALEP AÇ</button>
+                            <div id="inboxSupportRow" class="inbox-appeal-row">
+                                <textarea id="inboxSupportInput" class="inbox-appeal-input" maxlength="3000" placeholder="Talebinizi yazın..."></textarea>
+                                <button id="inboxSupportSend" class="inbox-appeal-send" onclick="sendSupportRequest()">Gönder</button>
+                            </div>
+                        </div>
                         <div id="inboxReplyAllowed">
                             <div class="inbox-reply-row">
                                 <textarea id="inboxReplyInput" class="inbox-reply-input" maxlength="3000" placeholder="Yanıtınızı yazın..."></textarea>
@@ -999,6 +1053,9 @@
         let authCheckInFlight = false;
         let marketInitialized = false;
         let marketAuthenticated = false;
+        let currentAccountStatus = 'active';
+        let currentBlockedReason = '';
+        let inboxBadgeWatchTimer = null;
         let sessionGraceUntil = 0;
         let verificationWaitTimer = null;
         let verificationFinishRunning = false;
@@ -1020,6 +1077,16 @@
 
             restoreVerificationWaitModal();
             initializeMarketAccount();
+        });
+
+        window.addEventListener('focus', () => {
+            if (marketAuthenticated) refreshInboxBadge().catch(() => {});
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && marketAuthenticated) {
+                refreshInboxBadge().catch(() => {});
+            }
         });
 
         function readNumber(value) {
@@ -1349,6 +1416,11 @@
 
         function showAccessBase() {
             marketAuthenticated = false;
+            currentAccountStatus = 'active';
+            currentBlockedReason = '';
+            stopInboxBadgeWatcher();
+            const restrictionBanner = document.getElementById('accountRestrictionBanner');
+            if (restrictionBanner) restrictionBanner.style.display = 'none';
             document.getElementById('walletCard').style.display = 'none';
             document.getElementById('marketContent').style.display = 'block';
             document.getElementById('accessCard').style.display = 'block';
@@ -1389,14 +1461,16 @@
             const username = normalizeUsername(profile.username);
             const points = readNumber(profile.points);
             const level = readNumber(profile.level);
+            const previousAccountStatus = currentAccountStatus;
+            const accountStatus = String(profile.accountStatus || 'active').toLowerCase();
+            const blockedReason = String(profile.blockedReason || '').trim();
 
-            // Profil artık periyodik olarak yenilenmiyor. Yalnızca realtime bildirim
-            // geldiğinde güncelleniyor. Ürünleri ilk açılışta veya doğrulanmamış durumdan
-            // doğrulanmış duruma geçerken yeniden çiz.
             const wasAuthenticated = marketAuthenticated;
 
             currentUsername = username;
             currentMarketPoints = points ?? 0;
+            currentAccountStatus = accountStatus;
+            currentBlockedReason = blockedReason;
             marketAuthenticated = true;
             closeVerificationWaitModal(true);
             document.getElementById('accessCard').style.display = 'none';
@@ -1408,14 +1482,26 @@
             document.getElementById('walletPoints').innerText = (points ?? 0).toLocaleString('tr-TR') + ' Puan';
             document.getElementById('walletLevel').innerText = level !== null ? level.toLocaleString('tr-TR') : '-';
 
+            const restrictionBanner = document.getElementById('accountRestrictionBanner');
+            const restrictionReason = document.getElementById('accountRestrictionReason');
+            if (accountStatus === 'blocked') {
+                if (restrictionBanner) restrictionBanner.style.display = 'block';
+                if (restrictionReason) restrictionReason.textContent = blockedReason || 'Bu hesap yönetici tarafından kısıtlandı.';
+                if (!purchaseInFlight && document.getElementById('purchaseModal')?.style.display === 'flex') {
+                    closePurchaseModal(true);
+                }
+            } else {
+                if (restrictionBanner) restrictionBanner.style.display = 'none';
+                if (restrictionReason) restrictionReason.textContent = '';
+            }
 
-            // Mesaj Kutusu sayacını girişte bir kez güncelle.
             refreshInboxBadge().catch(() => {});
+            startInboxBadgeWatcher();
 
             if (!marketInitialized) {
                 urunleriYukle('Tümü');
                 marketInitialized = true;
-            } else if (!wasAuthenticated) {
+            } else if (!wasAuthenticated || previousAccountStatus !== currentAccountStatus) {
                 urunleriYukle(aktifKategori || 'Tümü');
             }
 
@@ -1752,6 +1838,21 @@
             badge.style.display = unread > 0 ? 'inline-block' : 'none';
         }
 
+        function startInboxBadgeWatcher() {
+            stopInboxBadgeWatcher();
+            inboxBadgeWatchTimer = setInterval(() => {
+                if (!marketAuthenticated || document.hidden) return;
+                refreshInboxBadge().catch(() => {});
+            }, 15000);
+        }
+
+        function stopInboxBadgeWatcher() {
+            if (inboxBadgeWatchTimer) {
+                clearInterval(inboxBadgeWatchTimer);
+                inboxBadgeWatchTimer = null;
+            }
+        }
+
         async function inboxRequest(path, options = {}) {
             const token = localStorage.getItem(SESSION_STORAGE_KEY) || '';
 
@@ -1807,8 +1908,13 @@
             if (!marketAuthenticated) return;
 
             try {
+                const unreadBefore = inboxUnreadCount();
                 currentInboxThreads = await fetchInboxThreads();
                 updateInboxBadge();
+                const unreadAfter = inboxUnreadCount();
+                if (unreadAfter > unreadBefore) {
+                    showStatusToast(`✉️ ${unreadAfter} okunmamış mesajın var`, 3500);
+                }
 
                 const modal = document.getElementById('inboxModal');
                 const listView = document.getElementById('inboxListView');
@@ -1838,7 +1944,9 @@
 
                     document.getElementById('inboxReplyAllowed').style.display = replyAllowed ? 'block' : 'none';
                     document.getElementById('inboxReplyClosed').style.display = replyAllowed ? 'none' : 'block';
-                    renderInboxMessages(Array.isArray(data.messages) ? data.messages : []);
+                    const realtimeMessages = Array.isArray(data.messages) ? data.messages : [];
+                    renderInboxMessages(realtimeMessages);
+                    configureRestrictionAppeal(realtimeMessages, replyAllowed);
 
                     const input = document.getElementById('inboxReplyInput');
                     if (input && replyAllowed) input.value = draft;
@@ -2019,10 +2127,215 @@
                 document.getElementById('inboxReplyClosed').style.display = replyAllowed ? 'none' : 'block';
                 document.getElementById('inboxReplyInput').value = '';
 
-                renderInboxMessages(Array.isArray(data.messages) ? data.messages : []);
+                const threadMessages = Array.isArray(data.messages) ? data.messages : [];
+                renderInboxMessages(threadMessages);
+                configureRestrictionAppeal(threadMessages, replyAllowed);
+                configureSupportRequest(data, replyAllowed);
                 renderInbox();
             } catch (error) {
                 messagesBox.innerHTML = `<div class="inbox-empty">❌ ${escapeHtml(error.message || error)}</div>`;
+            }
+        }
+
+        function configureRestrictionAppeal(messages = [], replyAllowed = false) {
+            const box = document.getElementById('inboxAppealBox');
+            const button = document.getElementById('inboxAppealButton');
+            const row = document.getElementById('inboxAppealRow');
+            const note = document.getElementById('inboxAppealNote');
+            const input = document.getElementById('inboxAppealInput');
+            if (!box || !button || !row || !note) return;
+
+            const subject = String(currentInboxThread?.subject || '').trim().toLocaleUpperCase('tr-TR');
+            const restrictionThread = subject === 'HESABINIZ KISITLANDI';
+            const isBlocked = currentAccountStatus === 'blocked';
+            const hasAppeal = (messages || []).some(item => String(item.sender_type || item.senderType || '') === 'user');
+
+            if (!restrictionThread || !isBlocked || replyAllowed) {
+                box.style.display = 'none';
+                row.style.display = 'none';
+                if (input) input.value = '';
+                return;
+            }
+
+            box.style.display = 'block';
+            row.style.display = 'none';
+
+            if (hasAppeal) {
+                button.style.display = 'none';
+                note.innerHTML = '✅ İtirazınız gönderildi. Yönetici yanıtını bekleyin. Yönetici mesaj göndermeyi açtığında konuşmaya devam edebilirsiniz.';
+            } else {
+                button.style.display = 'block';
+                button.textContent = 'İTİRAZ ET';
+                note.innerHTML = 'Hesabınızın kısıtlanmasına <b>tek seferlik</b> itiraz mesajı gönderebilirsiniz.';
+            }
+        }
+
+        function openRestrictionAppealComposer() {
+            const row = document.getElementById('inboxAppealRow');
+            const button = document.getElementById('inboxAppealButton');
+            const input = document.getElementById('inboxAppealInput');
+            if (!row || !button || !input) return;
+            button.style.display = 'none';
+            row.style.display = 'flex';
+            input.focus();
+        }
+
+        async function sendRestrictionAppeal() {
+            const input = document.getElementById('inboxAppealInput');
+            const sendButton = document.getElementById('inboxAppealSend');
+            const message = String(input?.value || '').trim();
+            const threadId = currentInboxThread?.id;
+
+            if (!threadId || !message) {
+                showStatusToast('⚠️ İtiraz mesajınızı yazmalısınız.', 3000);
+                input?.focus();
+                return;
+            }
+
+            if (sendButton) sendButton.disabled = true;
+            try {
+                await inboxRequest('/inbox/appeal', {
+                    method: 'POST',
+                    body: JSON.stringify({ threadId, message })
+                });
+                if (input) input.value = '';
+                await openInboxThread(encodeURIComponent(threadId));
+                showStatusToast('✅ İtirazınız yöneticiye gönderildi', 3200);
+            } catch (error) {
+                showStatusToast(`❌ ${error.message || error}`, 4200);
+            } finally {
+                if (sendButton) sendButton.disabled = false;
+            }
+        }
+
+        function openGiftRedeem() {
+            if (!marketAuthenticated || !localStorage.getItem(SESSION_STORAGE_KEY)) {
+                goToVerification();
+                return;
+            }
+
+            const modal = document.getElementById('giftRedeemModal');
+            const input = document.getElementById('giftRedeemInput');
+            const status = document.getElementById('giftRedeemStatus');
+            if (status) status.textContent = '';
+            if (input) input.value = '';
+            if (modal) modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            setTimeout(() => input?.focus(), 50);
+        }
+
+        function closeGiftRedeem() {
+            const modal = document.getElementById('giftRedeemModal');
+            if (modal) modal.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+
+        function closeGiftRedeemFromOutside(event) {
+            if (event.target?.id === 'giftRedeemModal') closeGiftRedeem();
+        }
+
+        async function redeemGiftCode() {
+            const input = document.getElementById('giftRedeemInput');
+            const button = document.getElementById('giftRedeemButton');
+            const status = document.getElementById('giftRedeemStatus');
+            const code = String(input?.value || '').trim().toUpperCase();
+
+            if (!code) {
+                if (status) status.innerHTML = '<span style="color:#ff8d8d">⚠️ Hediye kodunu yazmalısın.</span>';
+                input?.focus();
+                return;
+            }
+
+            if (button) button.disabled = true;
+            if (status) status.textContent = '⏳ Kod kontrol ediliyor...';
+
+            try {
+                const data = await inboxRequest('/gift/redeem', {
+                    method: 'POST',
+                    body: JSON.stringify({ code })
+                });
+
+                if (status) status.innerHTML = `<span style="color:#78e59a">✅ ${escapeHtml(data.message || 'Hediye kodu kullanıldı.')}</span>`;
+                if (input) input.value = '';
+                await refreshInboxBadge().catch(() => {});
+                showStatusToast('🎁 Hediyen teslim edildi. Mesaj Kutunu kontrol et.', 4200);
+                setTimeout(() => {
+                    closeGiftRedeem();
+                    openInbox();
+                }, 800);
+            } catch (error) {
+                if (status) status.innerHTML = `<span style="color:#ff8d8d">❌ ${escapeHtml(error.message || error)}</span>`;
+            } finally {
+                if (button) button.disabled = false;
+            }
+        }
+
+        function configureSupportRequest(data = {}, replyAllowed = false) {
+            const box = document.getElementById('inboxSupportBox');
+            const button = document.getElementById('inboxSupportButton');
+            const row = document.getElementById('inboxSupportRow');
+            const note = document.getElementById('inboxSupportNote');
+            const input = document.getElementById('inboxSupportInput');
+            if (!box || !button || !row || !note) return;
+
+            const allowed = data?.supportAllowed === true;
+            const used = data?.supportUsed === true;
+
+            if (replyAllowed || (!allowed && !used)) {
+                box.style.display = 'none';
+                row.style.display = 'none';
+                if (input) input.value = '';
+                return;
+            }
+
+            box.style.display = 'block';
+            row.style.display = 'none';
+
+            if (used) {
+                button.style.display = 'none';
+                note.innerHTML = '✅ Talebiniz gönderildi. Yönetici yanıtını bekleyin. Yönetici mesaj göndermeyi açtığında bu konuşmadan devam edebilirsiniz.';
+            } else {
+                button.style.display = 'block';
+                button.textContent = 'TALEP AÇ';
+                note.innerHTML = 'Bu teslimatla ilgili <b>tek seferlik</b> talep mesajı gönderebilirsiniz.';
+            }
+        }
+
+        function openSupportRequestComposer() {
+            const row = document.getElementById('inboxSupportRow');
+            const button = document.getElementById('inboxSupportButton');
+            const input = document.getElementById('inboxSupportInput');
+            if (!row || !button || !input) return;
+            button.style.display = 'none';
+            row.style.display = 'flex';
+            input.focus();
+        }
+
+        async function sendSupportRequest() {
+            const input = document.getElementById('inboxSupportInput');
+            const sendButton = document.getElementById('inboxSupportSend');
+            const message = String(input?.value || '').trim();
+            const threadId = currentInboxThread?.id;
+
+            if (!threadId || !message) {
+                showStatusToast('⚠️ Talep mesajını yazmalısın.', 3000);
+                input?.focus();
+                return;
+            }
+
+            if (sendButton) sendButton.disabled = true;
+            try {
+                await inboxRequest('/inbox/support-request', {
+                    method: 'POST',
+                    body: JSON.stringify({ threadId, message })
+                });
+                if (input) input.value = '';
+                await openInboxThread(encodeURIComponent(threadId));
+                showStatusToast('✅ Talebin yöneticiye gönderildi', 3200);
+            } catch (error) {
+                showStatusToast(`❌ ${error.message || error}`, 4200);
+            } finally {
+                if (sendButton) sendButton.disabled = false;
             }
         }
 
@@ -2059,6 +2372,10 @@
             document.getElementById('inboxThreadView').style.display = 'none';
             document.getElementById('inboxListView').style.display = 'flex';
             currentInboxThread = null;
+            const appealBox = document.getElementById('inboxAppealBox');
+            if (appealBox) appealBox.style.display = 'none';
+            const supportBox = document.getElementById('inboxSupportBox');
+            if (supportBox) supportBox.style.display = 'none';
 
             if (refresh) {
                 loadInbox().catch(() => {});
@@ -2719,15 +3036,20 @@
                 }
 
                 const komutClass = tukendiMi ? "command disabled" : "command";
-                const actionBtnClass = tukendiMi
-                    ? "action-btn disabled"
-                    : (marketAuthenticated ? "action-btn" : "action-btn auth-required");
-                const actionBtnText = tukendiMi
-                    ? "TÜKENDİ"
-                    : (marketAuthenticated
-                        ? (webPurchase ? "SATIN AL" : "İşlem Yap")
-                        : "🔒 Doğrulama Gerekiyor");
-                const actionBtnClick = tukendiMi
+                const accountRestricted = marketAuthenticated && currentAccountStatus === 'blocked';
+                const actionBtnClass = accountRestricted
+                    ? "action-btn disabled account-blocked"
+                    : (tukendiMi
+                        ? "action-btn disabled"
+                        : (marketAuthenticated ? "action-btn" : "action-btn auth-required"));
+                const actionBtnText = accountRestricted
+                    ? "⛔ HESABIN KISITLANDI"
+                    : (tukendiMi
+                        ? "TÜKENDİ"
+                        : (marketAuthenticated
+                            ? (webPurchase ? "SATIN AL" : "İşlem Yap")
+                            : "🔒 Doğrulama Gerekiyor"));
+                const actionBtnClick = (accountRestricted || tukendiMi)
                     ? ""
                     : (marketAuthenticated
                         ? (webPurchase
@@ -2815,6 +3137,11 @@
         }
 
         function startSitePurchase(productId) {
+            if (currentAccountStatus === 'blocked') {
+                showStatusToast(`⛔ HESABIN KISITLANDI${currentBlockedReason ? ': ' + currentBlockedReason : ''}`, 5000);
+                return;
+            }
+
             if (!marketAuthenticated || !localStorage.getItem(SESSION_STORAGE_KEY)) {
                 goToVerification();
                 return;
@@ -3068,6 +3395,11 @@
         }
 
         function islemYapBaslat(komut) {
+            if (currentAccountStatus === 'blocked') {
+                showStatusToast(`⛔ HESABIN KISITLANDI${currentBlockedReason ? ': ' + currentBlockedReason : ''}`, 5000);
+                return;
+            }
+
             // Ürün komutunu hemen kopyala.
             copyTextFallback(komut);
             if (navigator.clipboard && navigator.clipboard.writeText) {
