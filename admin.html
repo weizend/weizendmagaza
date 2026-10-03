@@ -299,22 +299,75 @@ pre{
 .userSummaryItem{background:#090909;border:1px solid #292929;border-radius:10px;padding:11px 12px}
 .userSummaryItem span{display:block;color:var(--muted);font-size:.78rem;margin-bottom:4px}
 .userSummaryItem strong{display:block;word-break:break-word}
-.messageList{display:flex;flex-direction:column;gap:10px;max-height:420px;overflow:auto;padding:4px;margin:12px 0}
-.messageBubble{max-width:88%;padding:11px 13px;border-radius:12px;border:1px solid #2b2b2b;background:#090909;line-height:1.5;white-space:pre-wrap;word-break:break-word}
+.messageList{display:flex;flex-direction:column;gap:10px;max-height:460px;overflow:auto;padding:6px;margin:12px 0;scroll-behavior:smooth}
+.messageBubble{position:relative;max-width:88%;padding:12px 42px 12px 14px;border-radius:14px;border:1px solid #2b2b2b;background:#090909;line-height:1.5;white-space:pre-wrap;word-break:break-word}
 .messageBubble.user{align-self:flex-end;border-color:#5a1d1d;background:#1a0909}
 .messageBubble.admin,.messageBubble.system{align-self:flex-start}
 .messageMeta{color:var(--muted);font-size:.75rem;margin-top:6px}
+.messageDeleteBtn{position:absolute;right:8px;top:8px;width:28px;height:28px;padding:0;border-radius:8px;background:#211010;border:1px solid #5a2424;color:#ff9d9d;font-size:.78rem;display:flex;align-items:center;justify-content:center}
+.messageDeleteBtn:hover{background:#6f1d1d;color:#fff}
 .inlineActions{display:flex;gap:6px;flex-wrap:wrap}
 .inlineActions button{width:auto}
+.threadHeader{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.threadHeaderActions{display:flex;gap:8px;flex-wrap:wrap}
+.threadHeaderActions button{width:auto}
+.orderActions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.orderActions button{width:auto}
+.iconDanger{width:36px!important;height:34px;padding:0!important;display:inline-flex;align-items:center;justify-content:center;background:#2a0d0d!important;border:1px solid #6a2222!important;color:#ff9b9b!important}
+.iconDanger:hover{background:#761d1d!important;color:#fff!important}
+.iconRestore{width:36px!important;height:34px;padding:0!important;display:inline-flex;align-items:center;justify-content:center;background:#102616!important;border:1px solid #285b37!important;color:#8ff0aa!important}
+.iconRestore:hover{background:#1d6b36!important;color:#fff!important}
 
 @media(max-width:760px){
   .userSummaryGrid{grid-template-columns:1fr}
-  body{padding:10px}
+  body{padding:8px}
+  .wrap{width:100%}
+  h1{font-size:1.35rem;margin:8px 0 16px}
+  .card{padding:14px;border-radius:13px}
   .grid2,.grid3{grid-template-columns:1fr}
-  .topbar{align-items:flex-start;flex-direction:column}
+  .topbar{align-items:flex-start;flex-direction:column;gap:8px}
+  .topbar>button{width:100%!important}
+  .tabs{overflow-x:auto;flex-wrap:nowrap;padding-bottom:6px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .tabs::-webkit-scrollbar{display:none}
+  .tabs button{flex:0 0 auto;white-space:nowrap}
   .row{flex-direction:column;gap:4px}
   .row strong{text-align:left}
+  .messageBubble{max-width:96%}
+  .threadHeader{flex-direction:column}
+  .threadHeaderActions{width:100%}
+  .threadHeaderActions button{flex:1;min-width:130px}
+  .btnRow button{min-width:100%}
+  table{min-width:760px}
 }
+
+.choiceOverlay{
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:10000;
+  background:rgba(0,0,0,.82);
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+}
+.choiceOverlay.open{display:flex}
+.choiceCard{
+  width:min(520px,100%);
+  background:linear-gradient(145deg,#121212,#080808);
+  border:1px solid #3a3a3a;
+  border-radius:18px;
+  box-shadow:0 20px 70px rgba(0,0,0,.65);
+  padding:20px;
+}
+.choiceCard h3{margin:0 0 8px}
+.choiceCard p{color:var(--muted);line-height:1.55;margin:0 0 16px}
+.choiceActions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.choiceActions button{width:100%}
+.choiceCancel{margin-top:10px}
+@media(max-width:560px){
+  .choiceActions{grid-template-columns:1fr}
+}
+
 </style>
 </head>
 
@@ -738,6 +791,11 @@ pre{
 
     </div>
 
+    <label class="checkline" style="margin:0 0 14px;">
+      <input id="showArchivedOrders" type="checkbox" onchange="loadAdminOrders()">
+      <span>🗃️ Arşivlenen geçmiş işlemleri göster</span>
+    </label>
+
     <div class="tableWrap">
 
       <table>
@@ -892,8 +950,16 @@ pre{
         </div>
 
         <div id="adminThreadCard" class="card hidden" style="margin-top:18px;margin-bottom:0;">
-          <h3 id="adminThreadTitle">💬 Konuşma</h3>
-          <div id="adminThreadMeta" class="muted"></div>
+          <div class="threadHeader">
+            <div>
+              <h3 id="adminThreadTitle" style="margin-bottom:5px;">💬 Konuşma</h3>
+              <div id="adminThreadMeta" class="muted"></div>
+            </div>
+            <div class="threadHeaderActions">
+              <button class="secondary smallBtn" onclick="refreshAdminThread()">🔄 Yenile</button>
+              <button class="danger smallBtn" onclick="deleteCurrentAdminThread()">🗑️ Konuşmayı Sil</button>
+            </div>
+          </div>
           <div id="adminThreadMessages" class="messageList"></div>
           <div class="field">
             <label class="title">Yanıt Yaz</label>
@@ -1175,6 +1241,28 @@ pre{
 
 </div>
 
+
+<div id="adminChoiceModal" class="choiceOverlay" onclick="if(event.target===this) closeAdminChoiceModal()">
+  <div class="choiceCard" onclick="event.stopPropagation()">
+    <h3 id="adminChoiceTitle">İşlem seç</h3>
+    <p id="adminChoiceText"></p>
+
+    <div class="choiceActions">
+      <button id="adminChoicePrimary" class="secondary" onclick="handleAdminChoice('primary')">
+        Seçenek 1
+      </button>
+
+      <button id="adminChoiceSecondary" class="danger" onclick="handleAdminChoice('secondary')">
+        Seçenek 2
+      </button>
+    </div>
+
+    <button class="secondary choiceCancel" onclick="closeAdminChoiceModal()">
+      Vazgeç
+    </button>
+  </div>
+</div>
+
 <script>
 
 const MARKET_WORKER =
@@ -1192,8 +1280,84 @@ let editingProductId = null;
 let currentAdminUser = null;
 let currentAdminThread = null;
 let userSearchTimer = null;
+let adminChoiceContext = null;
 
-  function turkishToAscii(value){
+  
+function openAdminChoiceModal(config){
+  adminChoiceContext = config || null;
+
+  document.getElementById('adminChoiceTitle').innerText =
+    config?.title || 'İşlem seç';
+
+  document.getElementById('adminChoiceText').innerText =
+    config?.text || '';
+
+  const primary =
+    document.getElementById('adminChoicePrimary');
+
+  const secondary =
+    document.getElementById('adminChoiceSecondary');
+
+  primary.innerText =
+    config?.primaryLabel || 'Seçenek 1';
+
+  secondary.innerText =
+    config?.secondaryLabel || 'Seçenek 2';
+
+  primary.className =
+    config?.primaryClass || 'secondary';
+
+  secondary.className =
+    config?.secondaryClass || 'danger';
+
+  document
+    .getElementById('adminChoiceModal')
+    .classList
+    .add('open');
+}
+
+function closeAdminChoiceModal(){
+  document
+    .getElementById('adminChoiceModal')
+    ?.classList
+    .remove('open');
+
+  adminChoiceContext = null;
+}
+
+async function handleAdminChoice(choice){
+  const ctx = adminChoiceContext;
+  if(!ctx) return;
+
+  closeAdminChoiceModal();
+
+  if(ctx.type === 'message'){
+    await performDeleteAdminMessage(
+      ctx.messageId,
+      ctx.threadId,
+      choice === 'secondary'
+        ? 'everyone'
+        : 'admin'
+    );
+    return;
+  }
+
+  if(ctx.type === 'order'){
+    if(choice === 'secondary'){
+      await hardDeleteAdminOrder(
+        encodeURIComponent(ctx.orderId)
+      );
+    }else{
+      await archiveAdminOrder(
+        encodeURIComponent(ctx.orderId),
+        true,
+        true
+      );
+    }
+  }
+}
+
+function turkishToAscii(value){
   return String(value || '')
     .replaceAll('ç','c')
     .replaceAll('Ç','C')
@@ -2496,11 +2660,13 @@ async function sendAdminMessage(){
       body:JSON.stringify({kickUid:currentAdminUser.kick_uid,subject,message,allowReply})
     });
     if(!r.ok || !d?.success) throw new Error(d?.error || `HTTP ${r.status}`);
+    const newThreadId = d.threadId;
     document.getElementById('adminMessageSubject').value = '';
     document.getElementById('adminMessageBody').value = '';
     document.getElementById('adminMessageAllowReply').checked = false;
-    showStatus('adminMessageStatus','✅ Mesaj kullanıcıya gönderildi.',true);
+    showStatus('adminMessageStatus','✅ Mesaj kullanıcıya gönderildi. Konuşma açık tutuluyor.',true);
     await refreshCurrentUser();
+    if(newThreadId) await openAdminThread(encodeURIComponent(newThreadId));
   }catch(error){ showStatus('adminMessageStatus','❌ ' + esc(error.message || error),false); }
 }
 function renderUserThreads(){
@@ -2516,7 +2682,12 @@ function renderUserThreads(){
       <td>${Number(t.allow_reply) === 1 ? 'Açık' : 'Kapalı'}</td>
       <td>${esc(t.status || '-')}</td>
       <td>${esc(dateText(t.updated_at || t.created_at))}</td>
-      <td><button class="smallBtn secondary" onclick="openAdminThread('${encodeURIComponent(t.id)}')">Aç</button></td>
+      <td>
+        <div class="inlineActions">
+          <button class="smallBtn secondary" onclick="openAdminThread('${encodeURIComponent(t.id)}')">Aç</button>
+          <button class="smallBtn iconDanger" title="Konuşmayı sil" onclick="deleteAdminThread('${encodeURIComponent(t.id)}')">🗑</button>
+        </div>
+      </td>
     `;
     body.appendChild(tr);
   }
@@ -2540,6 +2711,7 @@ function renderAdminThread(){
   document.getElementById('adminThreadMessages').innerHTML =
     (t.messages || []).map(m => `
       <div class="messageBubble ${esc(m.sender_type || 'system')}">
+        <button class="messageDeleteBtn" title="Bu mesajı admin görünümünden sil" onclick="deleteAdminMessage('${encodeURIComponent(m.id)}')">🗑</button>
         <strong>${esc(m.sender_name || '-')}</strong>
         <div>${esc(m.body || '')}</div>
         <div class="messageMeta">${esc(dateText(m.created_at))}</div>
@@ -2556,19 +2728,128 @@ function renderAdminThread(){
 }
 async function sendAdminThreadReply(){
   if(!currentAdminThread) return;
+  const threadId = currentAdminThread.id;
   const message = document.getElementById('adminThreadReply').value.trim();
   if(!message) return;
   try{
     const {r,d} = await api('/admin/message/reply',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({threadId:currentAdminThread.id,message})
+      body:JSON.stringify({threadId,message})
     });
     if(!r.ok || !d?.success) throw new Error(d?.error || `HTTP ${r.status}`);
     document.getElementById('adminThreadReply').value = '';
-    await openAdminThread(encodeURIComponent(currentAdminThread.id));
     await refreshCurrentUser();
+    await openAdminThread(encodeURIComponent(threadId));
+    showStatus('adminThreadStatus','✅ Mesaj gönderildi.',true);
   }catch(error){ showStatus('adminThreadStatus','❌ ' + esc(error.message || error),false); }
 }
+async function refreshAdminThread(){
+  if(!currentAdminThread?.id) return;
+  await openAdminThread(encodeURIComponent(currentAdminThread.id));
+}
+
+function deleteAdminMessage(encodedId){
+  if(!currentAdminThread) return;
+
+  const messageId =
+    decodeURIComponent(encodedId);
+
+  openAdminChoiceModal({
+    type:'message',
+    messageId,
+    threadId:currentAdminThread.id,
+    title:'🗑 Mesajı nasıl silmek istiyorsun?',
+    text:
+      'Sadece Benden Sil seçeneği mesajı yalnızca admin panelinden kaldırır. ' +
+      'Herkesten Sil seçeneği mesajı kullanıcının Mesaj Kutusu dahil iki taraftan da kaldırır.',
+    primaryLabel:'👤 Sadece Benden Sil',
+    primaryClass:'secondary',
+    secondaryLabel:'👥 Herkesten Sil',
+    secondaryClass:'danger'
+  });
+}
+
+async function performDeleteAdminMessage(
+  messageId,
+  threadId,
+  scope
+){
+  try{
+    const {r,d} =
+      await api(
+        '/admin/message/delete',
+        {
+          method:'POST',
+          headers:{
+            'Content-Type':'application/json'
+          },
+          body:JSON.stringify({
+            messageId,
+            scope
+          })
+        }
+      );
+
+    if(!r.ok || !d?.success){
+      throw new Error(
+        d?.error ||
+        `HTTP ${r.status}`
+      );
+    }
+
+    if(currentAdminThread?.id === threadId){
+      try{
+        await openAdminThread(
+          encodeURIComponent(threadId)
+        );
+      }catch(_){
+        currentAdminThread = null;
+        document
+          .getElementById('adminThreadCard')
+          ?.classList
+          .add('hidden');
+      }
+    }
+
+    await refreshCurrentUser();
+
+    showStatus(
+      'usersStatus',
+      scope === 'everyone'
+        ? '✅ Mesaj herkesten silindi.'
+        : '✅ Mesaj yalnızca admin görünümünden silindi.',
+      true
+    );
+
+  }catch(error){
+    showStatus(
+      'adminThreadStatus',
+      '❌ ' + esc(error.message || error),
+      false
+    );
+  }
+}
+
+async function deleteAdminThread(encodedId){
+  const threadId = decodeURIComponent(encodedId);
+  if(!confirm('Bu konuşma admin mesaj listesinden silinsin mi? Kullanıcının mesaj kutusu etkilenmez.')) return;
+  try{
+    const {r,d} = await api('/admin/message/delete',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({threadId})
+    });
+    if(!r.ok || !d?.success) throw new Error(d?.error || `HTTP ${r.status}`);
+    currentAdminThread = null;
+    document.getElementById('adminThreadCard').classList.add('hidden');
+    await refreshCurrentUser();
+  }catch(error){ showStatus('usersStatus','❌ ' + esc(error.message || error),false); }
+}
+
+async function deleteCurrentAdminThread(){
+  if(!currentAdminThread?.id) return;
+  await deleteAdminThread(encodeURIComponent(currentAdminThread.id));
+}
+
 async function toggleAdminThreadReply(){
   if(!currentAdminThread) return;
   const allowReply = Number(currentAdminThread.allow_reply) !== 1;
@@ -2580,7 +2861,7 @@ async function toggleAdminThreadReply(){
     if(!r.ok || !d?.success) throw new Error(d?.error || `HTTP ${r.status}`);
     currentAdminThread.allow_reply = d.allowReply ? 1 : 0;
     renderAdminThread();
-    await refreshCurrentUser();
+    await loadUsers();
   }catch(error){ showStatus('adminThreadStatus','❌ ' + esc(error.message || error),false); }
 }
 
@@ -2632,9 +2913,16 @@ async function loadAdminOrders(){
       )
       ?.value || '';
 
+  const archived =
+    document.getElementById('showArchivedOrders')?.checked === true;
+
+  const params = new URLSearchParams();
+  if(status) params.set('status',status);
+  if(archived) params.set('archived','1');
+
   const query =
-    status
-      ? `?status=${encodeURIComponent(status)}`
+    params.toString()
+      ? `?${params.toString()}`
       : '';
 
   try{
@@ -2790,17 +3078,177 @@ function renderAdminOrders(){
       </td>
 
       <td>
-        <button
-          class="smallBtn secondary"
-          onclick="openAdminOrder(
-            '${encodeURIComponent(o.id)}'
-          )">
-          Detayları Aç
-        </button>
+        <div class="orderActions">
+          <button
+            class="smallBtn secondary"
+            onclick="openAdminOrder('${encodeURIComponent(o.id)}')">
+            Detayları Aç
+          </button>
+          ${Number(o.adminArchived || o.admin_archived || 0) === 1
+            ? `
+              <button class="smallBtn iconRestore" title="Arşivden çıkar" onclick="archiveAdminOrder('${encodeURIComponent(o.id)}',false)">↩</button>
+              <button class="smallBtn iconDanger" title="Tamamen sil" onclick="openOrderDeleteChoice('${encodeURIComponent(o.id)}',true)">🗑</button>
+            `
+            : (['delivered','cancelled','expired','failed'].includes(o.status)
+              ? `<button class="smallBtn iconDanger" title="Arşivle veya tamamen sil" onclick="openOrderDeleteChoice('${encodeURIComponent(o.id)}',false)">🗑</button>`
+              : '')}
+        </div>
       </td>
     `;
 
     body.appendChild(tr);
+  }
+}
+
+function openOrderDeleteChoice(
+  encodedId,
+  alreadyArchived=false
+){
+  const orderId =
+    decodeURIComponent(encodedId);
+
+  if(alreadyArchived){
+    openAdminChoiceModal({
+      type:'order',
+      orderId,
+      title:'🗑 Geçmiş işlemi yönet',
+      text:
+        'Bu işlem zaten arşivde. Geri dönmek için Vazgeç deyip ↩ butonunu kullanabilirsin. ' +
+        'Tamamen Sil seçeneği sipariş kaydını ve ilişkili operasyon kayıtlarını geri alınamayacak şekilde siler.',
+      primaryLabel:'📦 Arşivde Bırak',
+      primaryClass:'secondary',
+      secondaryLabel:'🗑 Tamamen Sil',
+      secondaryClass:'danger'
+    });
+    return;
+  }
+
+  openAdminChoiceModal({
+    type:'order',
+    orderId,
+    title:'🗑 Geçmiş işlem için seçim yap',
+    text:
+      'Arşivle seçeneği işlemi Satın Alınanlar listesinden gizler ve daha sonra geri alabilirsin. ' +
+      'Tamamen Sil seçeneği geri alınamaz.',
+    primaryLabel:'📦 Arşivle',
+    primaryClass:'secondary',
+    secondaryLabel:'🗑 Tamamen Sil',
+    secondaryClass:'danger'
+  });
+}
+
+async function archiveAdminOrder(
+  encodedId,
+  archived=true,
+  skipConfirm=false
+){
+  const orderId =
+    decodeURIComponent(encodedId);
+
+  if(!skipConfirm){
+    const message = archived
+      ? 'Bu geçmiş işlem arşivlensin mi?'
+      : 'Bu işlem arşivden geri çıkarılsın mı?';
+
+    if(!confirm(message)) return;
+  }
+
+  try{
+    const {r,d} =
+      await api(
+        '/admin/order/archive',
+        {
+          method:'POST',
+          headers:{
+            'Content-Type':'application/json'
+          },
+          body:JSON.stringify({
+            orderId,
+            archived
+          })
+        }
+      );
+
+    if(!r.ok || !d?.success){
+      throw new Error(
+        d?.error ||
+        `HTTP ${r.status}`
+      );
+    }
+
+    await loadAdminOrders();
+
+  }catch(error){
+    showStatus(
+      'adminOrdersStatus',
+      '❌ ' + esc(error.message || error),
+      false
+    );
+  }
+}
+
+async function hardDeleteAdminOrder(encodedId){
+  const orderId =
+    decodeURIComponent(encodedId);
+
+  const typed =
+    prompt(
+      'Bu işlem GERİ ALINAMAZ.\n\n' +
+      'Siparişi tamamen silmek için SIL yaz:'
+    );
+
+  if(
+    String(typed || '')
+      .trim()
+      .toLocaleUpperCase('tr-TR') !== 'SIL'
+  ){
+    return;
+  }
+
+  try{
+    const {r,d} =
+      await api(
+        '/admin/order/delete',
+        {
+          method:'POST',
+          headers:{
+            'Content-Type':'application/json'
+          },
+          body:JSON.stringify({
+            orderId
+          })
+        }
+      );
+
+    if(!r.ok || !d?.success){
+      throw new Error(
+        d?.error ||
+        `HTTP ${r.status}`
+      );
+    }
+
+    if(currentOrder?.id === orderId){
+      currentOrder = null;
+      document
+        .getElementById('orderCard')
+        ?.classList
+        .add('hidden');
+    }
+
+    await loadAdminOrders();
+
+    showStatus(
+      'adminOrdersStatus',
+      '✅ Geçmiş işlem tamamen silindi.',
+      true
+    );
+
+  }catch(error){
+    showStatus(
+      'adminOrdersStatus',
+      '❌ ' + esc(error.message || error),
+      false
+    );
   }
 }
 
