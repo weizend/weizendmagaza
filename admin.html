@@ -848,7 +848,10 @@ pre{
             <h2>👥 Kullanıcılar</h2>
             <div id="userCount" class="muted">Kullanıcılar yüklenmedi</div>
           </div>
-          <button class="secondary" style="width:auto" onclick="loadUsers()">🔄 Yenile</button>
+          <div class="btnRow" style="width:auto; justify-content:flex-end;">
+            <button class="secondary smallBtn" style="width:auto; min-width:0" onclick="loadUsers()">🔄 Yenile</button>
+            <button class="danger smallBtn" style="width:auto; min-width:0" onclick="invalidateAllUserSessions()">⛔ Tüm Oturumları Sonlandır</button>
+          </div>
         </div>
 
         <div class="grid2" style="margin-bottom:14px;">
@@ -4181,6 +4184,60 @@ updateStockField();
 
 if(token()){
   openAdmin();
+}
+
+
+
+/* =========================================================
+   GLOBAL USER SESSION RESET
+========================================================= */
+async function invalidateAllUserSessions(){
+  const first = confirm(
+    'Tüm market kullanıcılarının mevcut oturumları sonlandırılsın mı?\n\n' +
+    'Kullanıcılar yalnızca bir kez yeniden !doğrula işlemi yapacak. ' +
+    'Yeni doğrulamadan sonra normal şekilde girişleri kalıcı devam edecek.'
+  );
+
+  if(!first) return;
+
+  const confirmation = prompt(
+    'Yanlışlıkla çalıştırmayı önlemek için aşağıya TAMAM yaz:'
+  );
+
+  if(String(confirmation || '').trim().toUpperCase() !== 'TAMAM'){
+    return showStatus(
+      'usersStatus',
+      '⚠️ İşlem iptal edildi. Oturumlara dokunulmadı.',
+      false
+    );
+  }
+
+  try{
+    const {r,d} = await api(
+      '/admin/sessions/invalidate-all',
+      {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({confirmation:'LOGOUT_ALL_USERS'})
+      }
+    );
+
+    if(!r.ok || !d?.success){
+      throw new Error(d?.error || `HTTP ${r.status}`);
+    }
+
+    showStatus(
+      'usersStatus',
+      '✅ Tüm kullanıcı oturumları sonlandırıldı. Kullanıcılar markete girdiklerinde bir kez yeniden doğrulama yapacak.',
+      true
+    );
+  }catch(error){
+    showStatus(
+      'usersStatus',
+      '❌ ' + esc(error.message || error),
+      false
+    );
+  }
 }
 
 </script>
