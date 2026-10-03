@@ -293,7 +293,22 @@ pre{
 
 .hidden{display:none!important}
 
+
+.searchBox{margin:0 0 14px}
+.userSummaryGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+.userSummaryItem{background:#090909;border:1px solid #292929;border-radius:10px;padding:11px 12px}
+.userSummaryItem span{display:block;color:var(--muted);font-size:.78rem;margin-bottom:4px}
+.userSummaryItem strong{display:block;word-break:break-word}
+.messageList{display:flex;flex-direction:column;gap:10px;max-height:420px;overflow:auto;padding:4px;margin:12px 0}
+.messageBubble{max-width:88%;padding:11px 13px;border-radius:12px;border:1px solid #2b2b2b;background:#090909;line-height:1.5;white-space:pre-wrap;word-break:break-word}
+.messageBubble.user{align-self:flex-end;border-color:#5a1d1d;background:#1a0909}
+.messageBubble.admin,.messageBubble.system{align-self:flex-start}
+.messageMeta{color:var(--muted);font-size:.75rem;margin-top:6px}
+.inlineActions{display:flex;gap:6px;flex-wrap:wrap}
+.inlineActions button{width:auto}
+
 @media(max-width:760px){
+  .userSummaryGrid{grid-template-columns:1fr}
   body{padding:10px}
   .grid2,.grid3{grid-template-columns:1fr}
   .topbar{align-items:flex-start;flex-direction:column}
@@ -362,6 +377,10 @@ pre{
     🛒 Satın Alınanlar
   </button>
 
+  <button id="tab-users" onclick="openTab('users')">
+    👥 Kullanıcılar
+  </button>
+
   <button id="tab-orders" onclick="openTab('orders')">
     🎟️ Teslimat
   </button>
@@ -417,6 +436,8 @@ pre{
               <option value="Valorant">
               <option value="Steam">
               <option value="Dijital Ürün">
+              <option value="Turnuva">
+              <option value="Şans Oyunları">
             </datalist>
           </div>
 
@@ -537,6 +558,13 @@ pre{
           </button>
         </div>
 
+        <div class="searchBox">
+          <label class="title">Ürün Ara</label>
+          <input id="productSearch" type="text" autocomplete="off"
+            placeholder="Ürün adı, sistem kodu veya kategori..."
+            oninput="renderProducts()">
+        </div>
+
         <div class="tableWrap">
           <table>
 
@@ -590,6 +618,13 @@ pre{
             Ödemeleri Getir
           </button>
 
+        </div>
+
+        <div class="searchBox" style="margin-top:12px;">
+          <label class="title">Ödeme Ara</label>
+          <input id="paymentSearch" type="text" autocomplete="off"
+            placeholder="Referans, ödeme no, tür veya durum..."
+            oninput="renderPayments()">
         </div>
 
         <div id="paymentsStatus" class="status"></div>
@@ -743,6 +778,136 @@ pre{
 
 </div>
     
+
+    <!-- ===================================================== -->
+    <!-- USERS -->
+    <!-- ===================================================== -->
+
+    <div id="section-users" class="section">
+      <div class="card">
+        <div class="topbar">
+          <div>
+            <h2>👥 Kullanıcılar</h2>
+            <div id="userCount" class="muted">Kullanıcılar yüklenmedi</div>
+          </div>
+          <button class="secondary" style="width:auto" onclick="loadUsers()">🔄 Yenile</button>
+        </div>
+
+        <div class="grid2" style="margin-bottom:14px;">
+          <div>
+            <label class="title">Kick Adı / Takma Ad Ara</label>
+            <input id="userSearch" type="text" autocomplete="off"
+              placeholder="Örn: weizend veya Burak"
+              oninput="scheduleUserSearch()">
+          </div>
+          <div>
+            <label class="title">Durum</label>
+            <select id="userStatusFilter" onchange="loadUsers()">
+              <option value="">Aktif + Engelli</option>
+              <option value="active">Aktif</option>
+              <option value="blocked">Engelli</option>
+              <option value="archived">Arşivlenmiş</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="tableWrap">
+          <table>
+            <thead><tr>
+              <th>Kick Adı</th><th>Takma Ad</th><th>Puan</th><th>Level</th>
+              <th>İlk Doğrulama</th><th>Son Görülme</th><th>Durum</th><th>Mesaj</th><th>İşlem</th>
+            </tr></thead>
+            <tbody id="usersBody">
+              <tr><td colspan="9" class="muted">Kullanıcılar henüz yüklenmedi.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div id="usersStatus" class="status"></div>
+      </div>
+
+      <div id="userDetailCard" class="card hidden">
+        <div class="topbar">
+          <div>
+            <h2 id="userDetailTitle">👤 Kullanıcı</h2>
+            <div id="userDetailStatusText" class="muted">-</div>
+          </div>
+          <button class="secondary" style="width:auto" onclick="closeUserDetail()">Kapat</button>
+        </div>
+
+        <div id="userSummary" class="userSummaryGrid"></div>
+
+        <div class="grid2">
+          <div class="field">
+            <label class="title">Takma Ad</label>
+            <input id="userNickname" maxlength="80" placeholder="Sadece admin görür">
+          </div>
+          <div class="field">
+            <label class="title">Engelleme Nedeni</label>
+            <input id="userBlockReason" maxlength="500" placeholder="Engellerken kullanılacak açıklama">
+          </div>
+        </div>
+
+        <div class="btnRow">
+          <button onclick="saveUserNickname()">💾 Takma Adı Kaydet</button>
+          <button class="warn" onclick="setUserStatus('blocked')">⛔ Engelle</button>
+          <button class="success" onclick="setUserStatus('active')">✅ Aktifleştir</button>
+          <button class="danger" onclick="setUserStatus('archived')">🗃️ Arşivle</button>
+        </div>
+
+        <div class="card" style="margin-top:18px;margin-bottom:0;">
+          <h3>✉️ Özel Mesaj Gönder</h3>
+          <div class="field">
+            <label class="title">Başlık</label>
+            <input id="adminMessageSubject" maxlength="160" placeholder="Mesaj başlığı">
+          </div>
+          <div class="field">
+            <label class="title">Mesaj</label>
+            <textarea id="adminMessageBody" maxlength="5000" placeholder="Kullanıcıya göndereceğin mesaj"></textarea>
+          </div>
+          <label class="checkline">
+            <input id="adminMessageAllowReply" type="checkbox">
+            <span>Kullanıcı bu konuşmaya yanıt verebilsin</span>
+          </label>
+          <button onclick="sendAdminMessage()">✉️ Mesaj Gönder</button>
+          <div id="adminMessageStatus" class="status"></div>
+        </div>
+
+        <div class="card" style="margin-top:18px;margin-bottom:0;">
+          <h3>📝 Admin Notu</h3>
+          <textarea id="userAdminNote" maxlength="2000" placeholder="Bu notu yalnızca admin görür"></textarea>
+          <button class="secondary" onclick="addUserNote()">Not Ekle</button>
+          <div id="userNotesList" style="margin-top:12px;"></div>
+        </div>
+
+        <div class="card" style="margin-top:18px;margin-bottom:0;">
+          <h3>💬 Mesaj Konuşmaları</h3>
+          <div class="tableWrap">
+            <table>
+              <thead><tr>
+                <th>Başlık</th><th>Tür</th><th>Yanıt</th><th>Durum</th><th>Son İşlem</th><th>İşlem</th>
+              </tr></thead>
+              <tbody id="userThreadsBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="adminThreadCard" class="card hidden" style="margin-top:18px;margin-bottom:0;">
+          <h3 id="adminThreadTitle">💬 Konuşma</h3>
+          <div id="adminThreadMeta" class="muted"></div>
+          <div id="adminThreadMessages" class="messageList"></div>
+          <div class="field">
+            <label class="title">Yanıt Yaz</label>
+            <textarea id="adminThreadReply" maxlength="5000" placeholder="Yönetici yanıtı"></textarea>
+          </div>
+          <div class="btnRow">
+            <button onclick="sendAdminThreadReply()">Yanıt Gönder</button>
+            <button id="threadReplyToggleButton" class="secondary" onclick="toggleAdminThreadReply()">Yanıt Durumunu Değiştir</button>
+          </div>
+          <div id="adminThreadStatus" class="status"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- ===================================================== -->
     <!-- ORDERS -->
     <!-- ===================================================== -->
@@ -858,6 +1023,13 @@ pre{
       <div class="card">
 
         <h2>🏆 Turnuva Ayarları</h2>
+
+        <div class="searchBox">
+          <label class="title">Turnuva Ara</label>
+          <input id="tournamentSearch" type="text" autocomplete="off"
+            placeholder="Örn: 1 VS 1"
+            oninput="filterTournamentOptions()">
+        </div>
 
         <select
           id="tournamentSelect"
@@ -1013,7 +1185,13 @@ const ADMIN_TOKEN_KEY =
 
 let currentOrder = null;
 let productsCache = [];
+let paymentsCache = [];
+let adminOrdersCache = [];
+let usersCache = [];
 let editingProductId = null;
+let currentAdminUser = null;
+let currentAdminThread = null;
+let userSearchTimer = null;
 
   function turkishToAscii(value){
   return String(value || '')
@@ -1201,8 +1379,12 @@ function openTab(name){
   }
 
   if(name === 'purchases'){
-  loadAdminOrders();
-}
+    loadAdminOrders();
+  }
+
+  if(name === 'users'){
+    loadUsers();
+  }
 
   if(name === 'tournaments'){
     loadTournamentConfig();
@@ -1429,12 +1611,34 @@ function renderProducts(){
 
   body.innerHTML = '';
 
+  const search =
+    String(
+      document.getElementById('productSearch')?.value || ''
+    )
+    .trim()
+    .toLocaleLowerCase('tr-TR');
+
+  const items =
+    productsCache.filter(p => {
+      if(!search) return true;
+      return [p.id,p.name,p.category,p.paymentType,p.deliveryType]
+        .filter(Boolean)
+        .join(' ')
+        .toLocaleLowerCase('tr-TR')
+        .includes(search);
+    });
+
   document
     .getElementById('productCount')
     .innerText =
-      `${productsCache.length} ürün`;
+      `${items.length} / ${productsCache.length} ürün`;
 
-  for(const p of productsCache){
+  if(items.length === 0){
+    body.innerHTML = `<tr><td colspan="8" class="muted">Ürün bulunamadı.</td></tr>`;
+    return;
+  }
+
+  for(const p of items){
 
     const tr =
       document.createElement('tr');
@@ -1505,7 +1709,9 @@ function updateCategoryList(){
     'Fiziksel Ürün',
     'Valorant',
     'Steam',
-    'Dijital Ürün'
+    'Dijital Ürün',
+    'Turnuva',
+    'Şans Oyunları'
   ];
 
   const categories =
@@ -1929,15 +2135,16 @@ async function loadPayments(){
       );
     }
 
-    renderPayments(
+    paymentsCache =
       Array.isArray(d.payments)
         ? d.payments
-        : []
-    );
+        : [];
+
+    renderPayments();
 
     showStatus(
       'paymentsStatus',
-      `✅ ${(d.payments || []).length} ödeme bulundu.`,
+      `✅ ${paymentsCache.length} ödeme bulundu.`,
       true
     );
 
@@ -1952,7 +2159,7 @@ async function loadPayments(){
   }
 }
 
-function renderPayments(items){
+function renderPayments(){
 
   const body =
     document.getElementById(
@@ -1960,6 +2167,30 @@ function renderPayments(items){
     );
 
   body.innerHTML = '';
+
+  const search =
+    String(
+      document.getElementById('paymentSearch')?.value || ''
+    )
+    .trim()
+    .toLocaleLowerCase('tr-TR');
+
+  const items =
+    paymentsCache.filter(p => {
+      if(!search) return true;
+      return [p.reference,p.id,p.purposeType,p.status]
+        .filter(Boolean)
+        .join(' ')
+        .toLocaleLowerCase('tr-TR')
+        .includes(search);
+    });
+
+  if(items.length === 0){
+    body.innerHTML = `
+      <tr><td colspan="7" class="muted">Gösterilecek ödeme bulunamadı.</td></tr>
+    `;
+    return;
+  }
 
   for(const p of items){
 
@@ -2101,11 +2332,262 @@ async function resolvePayment(
   }
 }
 
+
+/* =========================================================
+   USERS
+========================================================= */
+
+function userStatusText(status){
+  return {active:'Aktif',blocked:'Engelli',archived:'Arşivlenmiş'}[status] || status || '-';
+}
+function userStatusBadge(status){
+  if(status === 'active') return 'ok';
+  if(status === 'blocked') return 'bad';
+  return 'warn';
+}
+function scheduleUserSearch(){
+  if(userSearchTimer) clearTimeout(userSearchTimer);
+  userSearchTimer = setTimeout(() => loadUsers(),300);
+}
+async function loadUsers(){
+  const q = String(document.getElementById('userSearch')?.value || '').trim();
+  const status = String(document.getElementById('userStatusFilter')?.value || '').trim();
+  const params = new URLSearchParams();
+  if(q) params.set('q',q);
+  if(status) params.set('status',status);
+  try{
+    const query = params.toString() ? `?${params.toString()}` : '';
+    const {r,d} = await api(`/admin/users${query}`);
+    if(!r.ok || !d?.success) throw new Error(d?.error || `HTTP ${r.status}`);
+    usersCache = Array.isArray(d.users) ? d.users : [];
+    renderUsers();
+    hideStatus('usersStatus');
+  }catch(error){
+    showStatus('usersStatus','❌ ' + esc(error.message || error),false);
+  }
+}
+function renderUsers(){
+  const body = document.getElementById('usersBody');
+  if(!body) return;
+  document.getElementById('userCount').innerText = `${usersCache.length} kullanıcı`;
+  body.innerHTML = '';
+  if(usersCache.length === 0){
+    body.innerHTML = `<tr><td colspan="9" class="muted">Kullanıcı bulunamadı.</td></tr>`;
+    return;
+  }
+  for(const u of usersCache){
+    const unread = Number(u.unread_admin_messages || 0);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${esc(u.username || '-')}</strong></td>
+      <td>${esc(u.nickname || '-')}</td>
+      <td>${esc(points(u.points))}</td>
+      <td>${esc(u.level ?? '-')}</td>
+      <td>${esc(dateText(u.first_verified_at))}</td>
+      <td>${esc(dateText(u.last_seen_at || u.last_activity_at))}</td>
+      <td><span class="badge ${userStatusBadge(u.status)}">${esc(userStatusText(u.status))}</span></td>
+      <td>${unread > 0 ? `<span class="badge bad">${unread} yeni</span>` : '<span class="muted">-</span>'}</td>
+      <td><button class="smallBtn secondary" onclick="openUser('${encodeURIComponent(u.kick_uid)}')">⚙️ İşlem Yap</button></td>
+    `;
+    body.appendChild(tr);
+  }
+}
+async function openUser(encodedUid){
+  const uid = decodeURIComponent(encodedUid);
+  try{
+    const {r,d} = await api(`/admin/user?uid=${encodeURIComponent(uid)}`);
+    if(!r.ok || !d?.success || !d?.user) throw new Error(d?.error || `HTTP ${r.status}`);
+    currentAdminUser = d.user;
+    currentAdminUser.threads = Array.isArray(d.threads) ? d.threads : [];
+    currentAdminUser.notes = Array.isArray(d.notes) ? d.notes : [];
+    currentAdminThread = null;
+    renderUserDetail();
+  }catch(error){
+    showStatus('usersStatus','❌ ' + esc(error.message || error),false);
+  }
+}
+function renderUserDetail(){
+  if(!currentAdminUser) return;
+  const u = currentAdminUser;
+  document.getElementById('userDetailCard').classList.remove('hidden');
+  document.getElementById('userDetailTitle').innerText = `👤 ${u.username || 'Kullanıcı'}`;
+  document.getElementById('userDetailStatusText').innerText = `${userStatusText(u.status)} · UID: ${u.kick_uid || '-'}`;
+  document.getElementById('userSummary').innerHTML = `
+    <div class="userSummaryItem"><span>Kick Adı</span><strong>${esc(u.username || '-')}</strong></div>
+    <div class="userSummaryItem"><span>Takma Ad</span><strong>${esc(u.nickname || '-')}</strong></div>
+    <div class="userSummaryItem"><span>Bakiye</span><strong>${esc(points(u.points))}</strong></div>
+    <div class="userSummaryItem"><span>Level</span><strong>${esc(u.level ?? '-')}</strong></div>
+    <div class="userSummaryItem"><span>İlk Doğrulama</span><strong>${esc(dateText(u.first_verified_at))}</strong></div>
+    <div class="userSummaryItem"><span>Son Görülme</span><strong>${esc(dateText(u.last_seen_at || u.last_activity_at))}</strong></div>
+  `;
+  document.getElementById('userNickname').value = u.nickname || '';
+  document.getElementById('userBlockReason').value = u.blocked_reason || '';
+  renderUserNotes();
+  renderUserThreads();
+  document.getElementById('adminThreadCard').classList.add('hidden');
+  document.getElementById('userDetailCard').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function closeUserDetail(){
+  currentAdminUser = null;
+  currentAdminThread = null;
+  document.getElementById('userDetailCard').classList.add('hidden');
+}
+async function refreshCurrentUser(){
+  if(!currentAdminUser?.kick_uid) return;
+  await openUser(encodeURIComponent(currentAdminUser.kick_uid));
+}
+async function saveUserNickname(){
+  if(!currentAdminUser) return;
+  const nickname = document.getElementById('userNickname').value.trim();
+  try{
+    const {r,d} = await api('/admin/user/nickname',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({kickUid:currentAdminUser.kick_uid,nickname})
+    });
+    if(!r.ok || !d?.success) throw new Error(d?.error || `HTTP ${r.status}`);
+    await loadUsers(); await refreshCurrentUser();
+  }catch(error){ showStatus('usersStatus','❌ ' + esc(error.message || error),false); }
+}
+async function setUserStatus(status){
+  if(!currentAdminUser) return;
+  const reason = document.getElementById('userBlockReason').value.trim();
+  const label = status === 'blocked' ? 'engellensin' : status === 'archived' ? 'arşivlensin' : 'aktif edilsin';
+  if(!confirm(`${currentAdminUser.username} kullanıcısı ${label} mi?`)) return;
+  try{
+    const {r,d} = await api('/admin/user/status',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({kickUid:currentAdminUser.kick_uid,status,reason})
+    });
+    if(!r.ok || !d?.success) throw new Error(d?.error || `HTTP ${r.status}`);
+    await loadUsers(); await refreshCurrentUser();
+  }catch(error){ showStatus('usersStatus','❌ ' + esc(error.message || error),false); }
+}
+async function addUserNote(){
+  if(!currentAdminUser) return;
+  const note = document.getElementById('userAdminNote').value.trim();
+  if(!note) return;
+  try{
+    const {r,d} = await api('/admin/user/note',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({kickUid:currentAdminUser.kick_uid,note})
+    });
+    if(!r.ok || !d?.success) throw new Error(d?.error || `HTTP ${r.status}`);
+    document.getElementById('userAdminNote').value = '';
+    await refreshCurrentUser();
+  }catch(error){ showStatus('usersStatus','❌ ' + esc(error.message || error),false); }
+}
+function renderUserNotes(){
+  const box = document.getElementById('userNotesList');
+  const notes = currentAdminUser?.notes || [];
+  if(notes.length === 0){ box.innerHTML = '<div class="muted">Admin notu yok.</div>'; return; }
+  box.innerHTML = notes.map(n => `
+    <div class="row"><span>${esc(dateText(n.created_at))}</span><strong>${esc(n.note)}</strong></div>
+  `).join('');
+}
+async function sendAdminMessage(){
+  if(!currentAdminUser) return;
+  const subject = document.getElementById('adminMessageSubject').value.trim();
+  const message = document.getElementById('adminMessageBody').value.trim();
+  const allowReply = document.getElementById('adminMessageAllowReply').checked;
+  if(!subject || !message) return showStatus('adminMessageStatus','⚠️ Başlık ve mesaj gerekli.',false);
+  try{
+    const {r,d} = await api('/admin/message/send',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({kickUid:currentAdminUser.kick_uid,subject,message,allowReply})
+    });
+    if(!r.ok || !d?.success) throw new Error(d?.error || `HTTP ${r.status}`);
+    document.getElementById('adminMessageSubject').value = '';
+    document.getElementById('adminMessageBody').value = '';
+    document.getElementById('adminMessageAllowReply').checked = false;
+    showStatus('adminMessageStatus','✅ Mesaj kullanıcıya gönderildi.',true);
+    await refreshCurrentUser();
+  }catch(error){ showStatus('adminMessageStatus','❌ ' + esc(error.message || error),false); }
+}
+function renderUserThreads(){
+  const body = document.getElementById('userThreadsBody');
+  const threads = currentAdminUser?.threads || [];
+  body.innerHTML = '';
+  if(threads.length === 0){ body.innerHTML = `<tr><td colspan="6" class="muted">Mesaj konuşması yok.</td></tr>`; return; }
+  for(const t of threads){
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${esc(t.subject || '-')}</td>
+      <td>${esc(t.thread_type === 'admin' ? 'Özel Mesaj' : 'Sistem')}</td>
+      <td>${Number(t.allow_reply) === 1 ? 'Açık' : 'Kapalı'}</td>
+      <td>${esc(t.status || '-')}</td>
+      <td>${esc(dateText(t.updated_at || t.created_at))}</td>
+      <td><button class="smallBtn secondary" onclick="openAdminThread('${encodeURIComponent(t.id)}')">Aç</button></td>
+    `;
+    body.appendChild(tr);
+  }
+}
+async function openAdminThread(encodedId){
+  const id = decodeURIComponent(encodedId);
+  try{
+    const {r,d} = await api(`/admin/message/thread?id=${encodeURIComponent(id)}`);
+    if(!r.ok || !d?.success || !d?.thread) throw new Error(d?.error || `HTTP ${r.status}`);
+    currentAdminThread = {...d.thread,messages:Array.isArray(d.messages) ? d.messages : []};
+    renderAdminThread();
+  }catch(error){ showStatus('usersStatus','❌ ' + esc(error.message || error),false); }
+}
+function renderAdminThread(){
+  if(!currentAdminThread) return;
+  const t = currentAdminThread;
+  document.getElementById('adminThreadCard').classList.remove('hidden');
+  document.getElementById('adminThreadTitle').innerText = `💬 ${t.subject || 'Konuşma'}`;
+  document.getElementById('adminThreadMeta').innerText =
+    `${t.username || currentAdminUser?.username || '-'} · Yanıt ${Number(t.allow_reply) === 1 ? 'Açık' : 'Kapalı'}`;
+  document.getElementById('adminThreadMessages').innerHTML =
+    (t.messages || []).map(m => `
+      <div class="messageBubble ${esc(m.sender_type || 'system')}">
+        <strong>${esc(m.sender_name || '-')}</strong>
+        <div>${esc(m.body || '')}</div>
+        <div class="messageMeta">${esc(dateText(m.created_at))}</div>
+      </div>
+    `).join('');
+  const btn = document.getElementById('threadReplyToggleButton');
+  if(t.thread_type !== 'admin'){
+    btn.disabled = true; btn.innerText = 'Sistem mesajında yanıt kapalı';
+  }else{
+    btn.disabled = false;
+    btn.innerText = Number(t.allow_reply) === 1 ? '🔒 Kullanıcı Yanıtını Kapat' : '💬 Kullanıcı Yanıtını Aç';
+  }
+  document.getElementById('adminThreadCard').scrollIntoView({behavior:'smooth',block:'start'});
+}
+async function sendAdminThreadReply(){
+  if(!currentAdminThread) return;
+  const message = document.getElementById('adminThreadReply').value.trim();
+  if(!message) return;
+  try{
+    const {r,d} = await api('/admin/message/reply',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({threadId:currentAdminThread.id,message})
+    });
+    if(!r.ok || !d?.success) throw new Error(d?.error || `HTTP ${r.status}`);
+    document.getElementById('adminThreadReply').value = '';
+    await openAdminThread(encodeURIComponent(currentAdminThread.id));
+    await refreshCurrentUser();
+  }catch(error){ showStatus('adminThreadStatus','❌ ' + esc(error.message || error),false); }
+}
+async function toggleAdminThreadReply(){
+  if(!currentAdminThread) return;
+  const allowReply = Number(currentAdminThread.allow_reply) !== 1;
+  try{
+    const {r,d} = await api('/admin/message/reply-toggle',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({threadId:currentAdminThread.id,allowReply})
+    });
+    if(!r.ok || !d?.success) throw new Error(d?.error || `HTTP ${r.status}`);
+    currentAdminThread.allow_reply = d.allowReply ? 1 : 0;
+    renderAdminThread();
+    await refreshCurrentUser();
+  }catch(error){ showStatus('adminThreadStatus','❌ ' + esc(error.message || error),false); }
+}
+
+
   /* =========================================================
    SATIN ALINANLAR
 ========================================================= */
-
-let adminOrdersCache = [];
 
 function orderStatusText(status){
 
@@ -2750,6 +3232,25 @@ async function completeOrder(){
 /* =========================================================
    TOURNAMENT
 ========================================================= */
+
+function filterTournamentOptions(){
+  const search = String(document.getElementById('tournamentSearch')?.value || '')
+    .trim().toLocaleLowerCase('tr-TR');
+  const select = document.getElementById('tournamentSelect');
+  if(!select) return;
+  let firstVisible = null;
+  for(const option of select.options){
+    const visible = !search ||
+      option.textContent.toLocaleLowerCase('tr-TR').includes(search) ||
+      option.value.toLocaleLowerCase('tr-TR').includes(search);
+    option.hidden = !visible;
+    if(visible && !firstVisible) firstVisible = option;
+  }
+  if(select.selectedOptions[0]?.hidden && firstVisible){
+    select.value = firstVisible.value;
+    loadTournamentConfig();
+  }
+}
 
 async function loadTournamentConfig(){
 
