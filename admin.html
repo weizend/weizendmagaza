@@ -349,26 +349,32 @@ pre{
     </div>
 
     <div class="tabs">
-      <button id="tab-products" class="active" onclick="openTab('products')">
-        📦 Ürünler
-      </button>
 
-      <button id="tab-payments" onclick="openTab('payments')">
-        💳 Ödemeler
-      </button>
+  <button id="tab-products" class="active" onclick="openTab('products')">
+    📦 Ürünler
+  </button>
 
-      <button id="tab-orders" onclick="openTab('orders')">
-        🎟️ Teslimat
-      </button>
+  <button id="tab-payments" onclick="openTab('payments')">
+    💳 Ödemeler
+  </button>
 
-      <button id="tab-tournaments" onclick="openTab('tournaments')">
-        🏆 Turnuva
-      </button>
+  <button id="tab-purchases" onclick="openTab('purchases')">
+    🛒 Satın Alınanlar
+  </button>
 
-      <button id="tab-missxss" onclick="openTab('missxss')">
-        🤖 MissXss
-      </button>
-    </div>
+  <button id="tab-orders" onclick="openTab('orders')">
+    🎟️ Teslimat
+  </button>
+
+  <button id="tab-tournaments" onclick="openTab('tournaments')">
+    🏆 Turnuva
+  </button>
+
+  <button id="tab-missxss" onclick="openTab('missxss')">
+    🤖 MissXss
+  </button>
+
+</div>
 
     <!-- ===================================================== -->
     <!-- PRODUCTS -->
@@ -618,6 +624,125 @@ pre{
 
     </div>
 
+<!-- ===================================================== -->
+<!-- SATIN ALINANLAR -->
+<!-- ===================================================== -->
+
+<div id="section-purchases" class="section">
+
+  <div class="card">
+
+    <div class="topbar">
+      <div>
+        <h2>🛒 Satın Alınanlar</h2>
+        <div id="purchaseAdminCount" class="muted">
+          Siparişler yüklenmedi
+        </div>
+      </div>
+
+      <button
+        class="secondary"
+        style="width:auto"
+        onclick="loadAdminOrders()">
+        🔄 Yenile
+      </button>
+    </div>
+
+    <div class="grid2" style="margin-bottom:14px;">
+
+      <div>
+        <label class="title">Duruma Göre Filtrele</label>
+
+        <select
+          id="adminOrderStatusFilter"
+          onchange="loadAdminOrders()">
+
+          <option value="">Tüm Siparişler</option>
+
+          <option value="delivery_pending">
+            Teslimat Bekliyor
+          </option>
+
+          <option value="delivered">
+            Teslim Edildi
+          </option>
+
+          <option value="cancelled">
+            İade / İptal Edildi
+          </option>
+
+          <option value="pending">
+            Puan Onayı Bekliyor
+          </option>
+
+          <option value="payment_pending">
+            Ödeme Bekliyor
+          </option>
+
+          <option value="expired">
+            Süresi Doldu
+          </option>
+
+          <option value="failed">
+            Başarısız
+          </option>
+
+        </select>
+      </div>
+
+      <div>
+        <label class="title">Kullanıcı / Ürün Ara</label>
+
+        <input
+          id="adminOrderSearch"
+          type="text"
+          autocomplete="off"
+          placeholder="Örn: Weizend veya 375 VP"
+          oninput="renderAdminOrders()">
+      </div>
+
+    </div>
+
+    <div class="tableWrap">
+
+      <table>
+
+        <thead>
+          <tr>
+            <th>Kullanıcı</th>
+            <th>Ürün</th>
+            <th>Adet</th>
+            <th>Toplam</th>
+            <th>Teslimat Kodu</th>
+            <th>Durum</th>
+            <th>Tarih</th>
+            <th>İşlem</th>
+          </tr>
+        </thead>
+
+        <tbody id="adminOrdersBody">
+
+          <tr>
+            <td colspan="8" class="muted">
+              Satın alınanlar henüz yüklenmedi.
+            </td>
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+    <div
+      id="adminOrdersStatus"
+      class="status">
+    </div>
+
+  </div>
+
+</div>
+    
     <!-- ===================================================== -->
     <!-- ORDERS -->
     <!-- ===================================================== -->
@@ -709,6 +834,16 @@ pre{
           ✅ TESLİM EDİLDİ
 
         </button>
+
+        <button
+  id="refundButton"
+  class="danger"
+  style="margin-top:10px"
+  onclick="refundOrder()">
+
+  ❌ SİPARİŞİ İPTAL ET VE PUANI İADE ET
+
+</button>
 
       </div>
 
@@ -1064,6 +1199,10 @@ function openTab(name){
   if(name === 'payments'){
     loadPayments();
   }
+
+  if(name === 'purchases'){
+  loadAdminOrders();
+}
 
   if(name === 'tournaments'){
     loadTournamentConfig();
@@ -1962,6 +2101,269 @@ async function resolvePayment(
   }
 }
 
+  /* =========================================================
+   SATIN ALINANLAR
+========================================================= */
+
+let adminOrdersCache = [];
+
+function orderStatusText(status){
+
+  const map = {
+    pending:'Puan Onayı Bekliyor',
+    payment_pending:'Ödeme Bekliyor',
+    partial_payment:'Eksik Ödeme',
+    paid:'Ödendi',
+    delivery_pending:'Teslimat Bekliyor',
+    delivered:'Teslim Edildi',
+    manual_review:'İnceleme Gerekli',
+    cancelled:'İade / İptal Edildi',
+    expired:'Süresi Doldu',
+    failed:'Başarısız'
+  };
+
+  return map[status] || status || '-';
+}
+
+function orderStatusBadge(status){
+
+  if(status === 'delivered'){
+    return 'ok';
+  }
+
+  if(
+    status === 'cancelled' ||
+    status === 'failed'
+  ){
+    return 'bad';
+  }
+
+  return 'warn';
+}
+
+async function loadAdminOrders(){
+
+  const status =
+    document
+      .getElementById(
+        'adminOrderStatusFilter'
+      )
+      ?.value || '';
+
+  const query =
+    status
+      ? `?status=${encodeURIComponent(status)}`
+      : '';
+
+  try{
+
+    const {r,d} =
+      await api(
+        `/admin/orders${query}`
+      );
+
+    if(
+      !r.ok ||
+      !d?.success
+    ){
+      throw new Error(
+        d?.error ||
+        `HTTP ${r.status}`
+      );
+    }
+
+    adminOrdersCache =
+      Array.isArray(d.orders)
+        ? d.orders
+        : [];
+
+    renderAdminOrders();
+
+    showStatus(
+      'adminOrdersStatus',
+      `✅ ${adminOrdersCache.length} sipariş yüklendi.`,
+      true
+    );
+
+  }catch(error){
+
+    showStatus(
+      'adminOrdersStatus',
+      '❌ ' + esc(error.message || error),
+      false
+    );
+
+  }
+}
+
+function renderAdminOrders(){
+
+  const body =
+    document.getElementById(
+      'adminOrdersBody'
+    );
+
+  if(!body) return;
+
+  const search =
+    String(
+      document
+        .getElementById(
+          'adminOrderSearch'
+        )
+        ?.value || ''
+    )
+    .trim()
+    .toLocaleLowerCase('tr-TR');
+
+  const items =
+    adminOrdersCache.filter(o => {
+
+      if(!search){
+        return true;
+      }
+
+      const text = [
+        o.username,
+        o.productName,
+        o.productId,
+        o.deliveryCode,
+        o.id
+      ]
+      .filter(Boolean)
+      .join(' ')
+      .toLocaleLowerCase('tr-TR');
+
+      return text.includes(search);
+    });
+
+  document
+    .getElementById(
+      'purchaseAdminCount'
+    )
+    .innerText =
+      `${items.length} sipariş gösteriliyor`;
+
+  body.innerHTML = '';
+
+  if(items.length === 0){
+
+    body.innerHTML = `
+      <tr>
+        <td colspan="8" class="muted">
+          Gösterilecek sipariş bulunamadı.
+        </td>
+      </tr>
+    `;
+
+    return;
+  }
+
+  for(const o of items){
+
+    const tr =
+      document.createElement('tr');
+
+    const total =
+      o.paymentType === 'points'
+        ? points(o.totalPoints)
+        : tlFromCents(o.totalTlCents);
+
+    const deliveryCode =
+      o.deliveryCode || '-';
+
+    tr.innerHTML = `
+      <td>
+        <strong>${esc(o.username || '-')}</strong>
+      </td>
+
+      <td>
+        ${esc(
+          o.productName ||
+          o.productId ||
+          '-'
+        )}
+      </td>
+
+      <td>
+        ${esc(o.quantity ?? '-')}
+      </td>
+
+      <td>
+        ${esc(total)}
+      </td>
+
+      <td class="code">
+        ${esc(deliveryCode)}
+      </td>
+
+      <td>
+        <span class="badge ${orderStatusBadge(o.status)}">
+          ${esc(orderStatusText(o.status))}
+        </span>
+      </td>
+
+      <td>
+        ${esc(dateText(o.paidAt || o.createdAt))}
+      </td>
+
+      <td>
+        <button
+          class="smallBtn secondary"
+          onclick="openAdminOrder(
+            '${encodeURIComponent(o.id)}'
+          )">
+          Detayları Aç
+        </button>
+      </td>
+    `;
+
+    body.appendChild(tr);
+  }
+}
+
+function openAdminOrder(encodedId){
+
+  const id =
+    decodeURIComponent(encodedId);
+
+  const order =
+    adminOrdersCache.find(
+      o => o.id === id
+    );
+
+  if(!order){
+    return;
+  }
+
+  currentOrder = order;
+
+  renderOrder(currentOrder);
+
+  openTab('orders');
+
+  document
+    .getElementById(
+      'deliveryCode'
+    )
+    .value =
+      order.deliveryCode || '';
+
+  showStatus(
+    'lookupStatus',
+    '✅ Sipariş Satın Alınanlar listesinden açıldı.',
+    true
+  );
+
+  document
+    .getElementById(
+      'orderCard'
+    )
+    .scrollIntoView({
+      behavior:'smooth',
+      block:'start'
+    });
+}
 
 /* =========================================================
    ORDER LOOKUP
@@ -2053,7 +2455,9 @@ function renderOrder(o){
     o.uid || '-';
 
   document.getElementById('oProduct').innerText =
-    o.productId || '-';
+  o.productName
+    ? `${o.productName} (${o.productId})`
+    : o.productId || '-';
 
   document.getElementById('oQty').innerText =
     o.quantity ?? '-';
@@ -2101,13 +2505,180 @@ function renderOrder(o){
       'completeButton'
     );
 
+  const refundButton =
+  document.getElementById('refundButton');
+
+const refundable =
+  o.paymentType === 'points' &&
+  ['paid','delivery_pending'].includes(o.status);
+
+if(
+  o.refund?.status === 'pending'
+){
+
+  refundButton.style.display = 'block';
+  refundButton.disabled = true;
+
+  refundButton.innerText =
+    `⏳ ${points(o.refund.amountPoints)} İADE BEKLENİYOR`;
+
+}else if(
+  o.refund?.status === 'completed'
+){
+
+  refundButton.style.display = 'block';
+  refundButton.disabled = true;
+
+  refundButton.innerText =
+    `✅ ${points(o.refund.amountPoints)} İADE EDİLDİ`;
+
+}else if(refundable){
+
+  refundButton.style.display = 'block';
+  refundButton.disabled = false;
+
+  refundButton.innerText =
+    `❌ SİPARİŞİ İPTAL ET VE ${points(o.totalPoints)} İADE ET`;
+
+}else{
+
+  refundButton.style.display = 'none';
+  refundButton.disabled = true;
+
+}
+
   button.disabled =
-    o.status === 'delivered';
+  !['paid','delivery_pending'].includes(o.status) ||
+  o.refund?.status === 'pending' ||
+  o.refund?.status === 'completed';
 
   button.innerText =
-    o.status === 'delivered'
-      ? '✅ DAHA ÖNCE TESLİM EDİLDİ'
-      : '✅ TESLİM EDİLDİ';
+  o.refund?.status === 'pending'
+    ? '⏳ PUAN İADESİ BEKLENİYOR'
+    : o.refund?.status === 'completed'
+      ? '✅ PUAN İADE EDİLDİ'
+      : o.status === 'delivered'
+        ? '✅ DAHA ÖNCE TESLİM EDİLDİ'
+        : o.status === 'cancelled'
+          ? '❌ SİPARİŞ İPTAL EDİLDİ'
+          : '✅ TESLİM EDİLDİ';
+}
+
+  async function refundOrder(){
+
+  if(!currentOrder?.id){
+    return;
+  }
+
+  if(
+    currentOrder.paymentType !== 'points'
+  ){
+    return showStatus(
+      'lookupStatus',
+      '⚠️ Bu sipariş puanla alınmamış. TL/BynoGame iadeleri ayrı yönetilmelidir.',
+      false
+    );
+  }
+
+  const amount =
+    Number(
+      currentOrder.totalPoints || 0
+    );
+
+  const username =
+    currentOrder.username || 'kullanıcı';
+
+  if(
+    !confirm(
+      `${username} kullanıcısının siparişi iptal edilecek ve ${points(amount)} iade edilecek.\n\nDevam edilsin mi?`
+    )
+  ){
+    return;
+  }
+
+  const button =
+    document.getElementById(
+      'refundButton'
+    );
+
+  button.disabled = true;
+  button.innerText =
+    '⏳ İADE BAŞLATILIYOR...';
+
+  try{
+
+    const {r,d} =
+      await api(
+        '/admin/order/refund',
+        {
+          method:'POST',
+
+          headers:{
+            'Content-Type':
+              'application/json'
+          },
+
+          body:
+            JSON.stringify({
+              orderId:
+                currentOrder.id
+            })
+        }
+      );
+
+    if(
+      !r.ok ||
+      !d?.success
+    ){
+
+      throw new Error(
+        d?.error ||
+        `HTTP ${r.status}`
+      );
+
+    }
+
+    if(d.order){
+      currentOrder = d.order;
+      renderOrder(currentOrder);
+    }
+
+    showStatus(
+      'lookupStatus',
+      d.alreadyPending
+        ? '⏳ Bu siparişin puan iadesi zaten bekleniyor.'
+        : `✅ ${points(amount)} iade işlemi başlatıldı. BotRix puanı eklediğinde işlem otomatik tamamlanacak.`,
+      true
+    );
+
+    await loadAdminOrders();
+
+  }catch(error){
+
+    showStatus(
+      'lookupStatus',
+      '❌ ' + esc(error.message || error),
+      false
+    );
+
+    // Siparişi tekrar sorgulayarak
+    // gerçek durumunu sunucudan öğren.
+    const code =
+      currentOrder?.deliveryCode;
+
+    if(code){
+
+      document
+        .getElementById(
+          'deliveryCode'
+        )
+        .value = code;
+
+      await lookupOrder();
+
+    }
+
+  }
 }
 
 async function completeOrder(){
